@@ -16,19 +16,22 @@ set.EEG         = 0;        % set to 1 when running in the eeglab
 
 % create a list of settings and parameters for the rts task 
 % BASIC IMPORTANT SETTINGS
-set.blocks      = 3;    % number of blocks 
+set.blocks      = 4;    % number of blocks 
 % set.blinks    = 3;    % run only with eeg - instruct subject to blink after n number of trials 
 
 % EXPERIMENTAL SETTINGS
-set.instr_dur   = 2.5;  % instruction duration = 2.5 sec
-set.bead_dur    = 1;    % bead duration in seconds
-set.response    = 2.5;  % duration of theresponse window 
-set.feed_dur    = 3;    % duration of the feedback window in sec
-set.isi         = 1;    % in seconds
-set.jitter      = 2;    % 4 sec
+set.welcomedur  = 2.5;  % welcome screen duration = 2.5 sec
+set.infoscreen  = 2.5;  % this screen appears at the beginning of every sequence and informs the participant abou sequence number and probabilities of draws 
+set.bead_dur    = 0.6;  % bead duration in seconds
+set.response    = 2.5;  % self-paced or up to 2.5 sec 
+set.confrating  = 15;   % duration of the confidence rating screen. Self-paced or up to 15 sec
+set.fix_dur     = 0.5;  % duration of the fixation cross
+set.feed_dur    = 2.5;    % duration of the feedback window self-paced or up to 3 sec
+set.isi         = .6;  % in seconds
+set.jitter      = .5;    % 4 sec
 
 % TASK PARAMETERS 
-set.trials      = 48;                       % total trials
+set.trials      = 52;                       % total trials
 set.blocktrials = set.trials/set.blocks;    % number of trials per block
 set.draws       = 10;                       % draws per sequence/trial
 set.conds       = 2;

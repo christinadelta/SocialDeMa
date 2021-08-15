@@ -12,6 +12,10 @@
 %%% TODO: %%%
 % ALLOW SUBJECT TO ABORT THE EXPERIMENT AT ANY TIME (BY PRESSING ESC)
 
+% CLEAN UP
+clear;
+clc
+close all hidden;
 
 %% ---------------------------------------
 % INITIAL EXPERIMENTAL SETUP 
@@ -28,7 +32,7 @@ basedir     = pwd;
 
 % get directories and add utility functions to the path
 workingdir      = fullfile(basedir, 'experiments');
-addpath(genpath(fullfile(workingdir,'utils')));                         % add subfunctions to the path
+addpath(genpath(fullfile(workingdir,'utils')));                              % add subfunctions to the path
 
 %% ---------------------------------------
 % SET OUTPUT INFO AND LOGS FILE
@@ -50,7 +54,7 @@ if ~exist(logs.resultsfolder, 'dir')
 end
 
 % Add PTB to your path and start the experiment 
-ptbdir          = '/Applications/Psychtoolbox'; % change to your ptb directory
+ptbdir          = '/Applications/Psychtoolbox';                             % change to your ptb directory
 addpath(genpath(ptbdir))
 
 scrn.ptbdir     = ptbdir;
@@ -76,9 +80,9 @@ try
     % Screen('Preference', 'SkipSyncTests', 0) % set a Psychtoolbox global preference.
     Screen('Preference', 'SkipSyncTests', 1) % for testing I have set this to 1. When running the actuall task uncomment the above
 
-    screenNumber        = max(Screen('Screens'));
+    screenNumber            = max(Screen('Screens'));
     
-    [window, windrect]  = Screen('OpenWindow',screenNumber, scrn.grey);     % open window
+    [window, windrect]      = Screen('OpenWindow',screenNumber, scrn.grey); % open window
     
     AssertOpenGL;                                                           % Break and issue an error message if PTB is not based on OpenGL or Screen() is not working properly.
     Screen('Preference', 'Enable3DGraphics', 1);                            % enable 3d graphics
@@ -125,27 +129,34 @@ try
     % CREATE AND RUN INSTRUCTIONS
     
     % UNPACK SETTINGS
-    iduration       = set.instr_dur;
-    spacekey        = keys.code8;
+    iduration           = set.welcomedur;
+    spacekey            = keys.code8;
+    esckey              = keys.code9;
+    
+    % prepare a general window (this will be used for instruction and
+    % information display 
+    generalwindow = Screen('OpenOffscreenWindow', window, windrect);
+    Screen('TextSize', generalwindow, scrn.textsize);
+    Screen('FillRect', generalwindow, scrn.grey ,windrect);
     
     % Start instructions
-    DrawFormattedText(window,'Pay attentions to the instructions','center','center',scrn.white);
+    DrawFormattedText(window,'Hello! Plaease pay attentions to the instructions','center',scrn.ycenter,scrn.white);
     expstart = Screen('Flip', window);
     duration = expstart + iduration;
     
-    % display instructions 
+    % display instructions window 1
     instructions = Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', instructions, scrn.textsize);
     Screen('FillRect', instructions, scrn.grey ,windrect);
     DrawFormattedText(instructions, 'There are two urns:', 'center', scrn.ycenter-300, scrn.white);
     DrawFormattedText(instructions, 'The Blue Urn has more blue balls than green balls. The Green Urn has more green balls than blue balls.', 'center', scrn.ycenter-250, scrn.white);
     DrawFormattedText(instructions, 'On each trial, you will draw a sequence of balls from one of these two urns. Your job is to decide whether', 'center', scrn.ycenter-200, scrn.white);
-    DrawFormattedText(instructions, 'the balls are drawn from the blue urn or the green urn. After each ball is drawn, you may choose: ','center', scrn.ycenter-150, scrn.white);
-    DrawFormattedText(instructions, '(1) Guess The Blue Urn','center', scrn.ycenter-100, scrn.white);
-    DrawFormattedText(instructions, '(2) Guess The Green Urn','center', scrn.ycenter-50, scrn.white); 
-    DrawFormattedText(instructions, '(3) Draw another ball','center', 'center', scrn.white);
-    DrawFormattedText(instructions, 'You may make a decision after any draw but you may not draw more than 10 balls','center', scrn.ycenter+50, scrn.white);
-    DrawFormattedText(instructions, 'Please press SPACE BAR when you are ready to begin the first trial','center', scrn.ycenter+100, scrn.white); 
+    DrawFormattedText(instructions, 'the balls are drawn from the blue urn or the green urn. After each ball is drawn, you may choose to: ','center', scrn.ycenter-150, scrn.white);
+    DrawFormattedText(instructions, 'Guess The Blue Urn by pressing the keycode 1', 'center', scrn.ycenter-100, scrn.white);
+    DrawFormattedText(instructions, 'Guess The Green Urn by pressing the keycode 3', 'center', scrn.ycenter-50, scrn.white); 
+    DrawFormattedText(instructions, 'Draw another ball by pressing the keycode 3', 'center', scrn.ycenter, scrn.white);
+    DrawFormattedText(instructions, 'You may make a decision after any draw but you may not draw more than 9 balls', 'center', scrn.ycenter+50, scrn.white);
+    DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to change page', 'center', scrn.ycenter+100, scrn.white); 
     
      
     % copy the instructions window  and flip.
@@ -153,33 +164,85 @@ try
     Screen('Flip', window, duration);
     
     % WAIT FOR THEM TO PRESS SPACE
-    waitforresp = 1;
-    while waitforresp
+    responsemade = 1;
+    while responsemade
         [~, secs, keycode]= KbCheck;
         WaitSecs(0.001) % delay to prevent CPU logging
 
         % spacebar is pressed 
         if keycode(1, spacekey)
-            waitforresp = 0;
+            responsemade = 0;
         end
     end
+    
+    WaitSecs(1); % wait one sec before flipping to the block/trial/sequence information screen 
+    
+    % display instructions window 2
+    instructions2 = Screen('OpenOffscreenWindow', window, windrect);
+    Screen('TextSize', instructions2, scrn.textsize);
+    Screen('FillRect', instructions2, scrn.grey ,windrect);
+    DrawFormattedText(instructions2, 'After an urn is chosen, you will be asked to rate how confident you are about', 'center', scrn.ycenter-150, scrn.white);
+    DrawFormattedText(instructions2, 'the choice that you made on a scale of 1 to 3. Press:', 'center', scrn.ycenter-100, scrn.white);
+    DrawFormattedText(instructions2, '"Left Arrow" key, if you are not confident about your choice.', 'center', scrn.ycenter-50, scrn.white);
+    DrawFormattedText(instructions2, '"Down Arrow" key, if you are moderately confident about your choice.','center', scrn.ycenter, scrn.white);
+    DrawFormattedText(instructions2, '"Right Arrow" key, if you are very confident about your choice.', 'center', scrn.ycenter+50, scrn.white);
+    DrawFormattedText(instructions2, 'If you have understood the instructions, press SPACE to take a short quiz before starting the experiment.', 'center', scrn.ycenter+100, scrn.white)
+    
+    % copy the instructions2 window  and flip.
+    Screen('CopyWindow',instructions2,window,windrect, windrect);
+    Screen('Flip', window, duration);
+    
+    % WAIT FOR THEM TO PRESS SPACE
+    responsemade = 1;
+    while responsemade
+        [~, secs, keycode]= KbCheck;
+        WaitSecs(0.001) % delay to prevent CPU logging
+
+        % spacebar is pressed 
+        if keycode(1, spacekey)
+            responsemade = 0;
+        end
+    end
+    
+    WaitSecs(1); % wait one sec before flipping to the block/trial/sequence information screen 
     
     %% ---------------------------------------
     % START THE BLOCK & SEQUENCE/TRIAL LOOPS
     
-    % UNPACK SETTINGS STRUCT
-    ntrials         = set.trials; % total trials
-    nb_blocks       = set.blocks; % total blocks
-    blocktrials     = set.condtrials; % trials per block
+    abort           = 0;                % when 1 subject can quit the experiment
     
-    abort           = 0; % when 1 subject can quit the experiment
+    % UNPACK SETTINGS STRUCT
+    ntrials         = set.trials;       % total trials
+    nb_blocks       = set.blocks;       % total blocks
+    blocktrials     = set.blocktrials;  % trials per block
     
     % INIT BLOCKS LOOP
     for iBlock = 1:nb_blocks
         
+        % first allow subject to exit experiment if they pressed the esc key 
+        [keyisdown,secs,keycode] = KbCheck;
+        if keyisdown && keycode(esckey)
+            
+            % if the subject pressed ESC
+            responsemade = 1;
+            while responsemade
+                [~, secs, keycode]= KbCheck;
+                WaitSecs(0.001) % delay to prevent CPU logging
+
+                % ESC is pressed 
+                if keycode(1, esckey)
+                    abort       = 1;
+                    responsemade = 0;
+                end
+            end
+        end
+        if abort == 1
+            break;
+        end
+        
         % UNPACK TRIALS STRUCT
-        block_seq       = trials.sequence{iBlock};
-        block_urns      = trials.urns{iBlock};
+        block_seq           = trials.sequence{iBlock};
+        block_urns          = trials.urns{iBlock};
         
         % INIT TRIALS LOOP
         for thistrial = 1:blocktrials
@@ -193,69 +256,98 @@ try
             
             % count the proportions of bead colours in the current sequence
             % list to dettermine the difficulty condition
-            condition = sum(set.sequence(1,:)==2);
+            condition       = sum(set.sequence(1,:)==2);
             
             if condition == 2 % if 2 appears 2 times in the sequence
                 
-                high_p  = 80;
-                low_p   = 20;
+                high_p      = 80;
+                low_p       = 20;
             else % if 2 appears 4 times in the sequence 
-                high_p  = 60;
-                low_p   = 40;
+                high_p      = 60;
+                low_p       = 40;
             end
             
             % display trial/sequence information window 
             Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', window, scrn.textsize);
             Screen('FillRect', window, scrn.grey ,windrect);
-            DrawFormattedText(window, sprintf('Great! Starting sequence %d of block %d',thistrial, iBlock), 'center', ycenter-50, scrn.white);
-            DrawFormattedText(window, sprintf('The urns have a %02d:%02d color split',high_p, low_p), 'center', 'center', scrn.white);
+            DrawFormattedText(window, sprintf('Starting sequence %d of block %d.',thistrial, iBlock), 'center', scrn.ycenter-100, scrn.white);
+            DrawFormattedText(window, sprintf('The urns have a %02d:%02d color split.',high_p, low_p), 'center', scrn.ycenter-50, scrn.white);
+            DrawFormattedText(window, 'Press SPACE to continue.', 'center', scrn.ycenter, scrn.white);
+            DrawFormattedText(window, 'Or press ESC to quit.', 'center', scrn.ycenter+50, scrn.white);
             Screen('Flip', window); 
             
             % WAIT FOR THEM TO PRESS SPACE
-            waitforresp = 1;
-            while waitforresp
+            responsemade = 1;
+            while responsemade
                 [~, secs, keycode]= KbCheck;
                 WaitSecs(0.001) % delay to prevent CPU logging
 
                 % spacebar is pressed 
                 if keycode(1, spacekey)
-                    waitforresp = 0;
+                    responsemade    = 0;
+                    
+                    % or esc is pressed
+                elseif keycode(1, esckey)
+                    abort           = 1;
+                    responsemade    = 0;
                 end
+            end
+            if abort == 1 % exit 
+                break;
             end
             
             [set,logs]     = RunTrials(set, scrn, logs, keys);
             
-        end % end of trials loop
+        end % end of trial/sequence for loop
+        
+        % IF THIS IS THE LAST BLOCK BREAK FROM THE LOOP AND GO DIRECTLY TO
+        % THE GOODBYE SCREEN
+        if iBlock == nb_blocks
+            break;
+        end
         
         % if this is the end of the block 
         % allow subject to take a short break (if they want to)
         Screen('OpenOffscreenWindow', window, windrect);
         Screen('TextSize', window, scrn.textsize);
         Screen('FillRect', window, scrn.grey ,windrect);
-        DrawFormattedText(window, 'Time for a break! When ready to continue, press SPACE', 'center', 'center', scrn.white);
+        DrawFormattedText(window, 'Time for a break! When ready to continue, press SPACE', 'center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(window, 'Or press ESC to quit.', 'center', scrn.ycenter, scrn.white);
         Screen('Flip', window); 
         
         % WAIT FOR THEM TO PRESS SPACE
-        waitforresp = 1;
-        while waitforresp
+        responsemade = 1;
+        while responsemade
             [~, secs, keycode]= KbCheck;
             WaitSecs(0.001) % delay to prevent CPU logging
 
             % spacebar is pressed 
             if keycode(1, spacekey)
-                waitforresp = 0;
+                responsemade    = 0;
+                
+            % or esc is pressed
+            elseif keycode(1, esckey)
+                abort           = 1;
+                responsemade    = 0;
             end
         end
+        
+        WaitSecs(1) % wait one sec before moving to the next window
+        
+        if abort == 1 % exit if subject pressed ESC
+            break;
+        end
 
-    end % end of blocks loop
- 
+    end % end of block for loop
+        
+        
     % THIS IS IT...
     % show thank you window
     Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', window, scrn.textsize);
     Screen('FillRect', window, scrn.grey ,windrect);
-    DrawFormattedText(window, 'This is the end of the experiment. Thank you for your time', 'center', 'center', scrn.white);
+    DrawFormattedText(window, 'This is the end of the experiment. Thank you for your time', 'center', scrn.ycenter, scrn.white);
     Screen('Flip',window);
     WaitSecs(3);
     

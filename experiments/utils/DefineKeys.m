@@ -13,10 +13,13 @@ keys.taskNb = taskNb;
 % 2. Space key (allows subject to start the trials after instructions)
 
 KbName('UnifyKeyNames');
-keys.code1        = KbName('1!'); % z animate
-keys.code2        = KbName('2@'); % m inanimate
-keys.code3        = KbName('3#');
-keys.code8        = KbName('space');
-keys.code9        = KbName('ESCAPE');
+keys.code1      = KbName('1!'); % 1! = Blue
+keys.code2      = KbName('2@'); % 2@ = Green
+keys.code3      = KbName('3#'); % 3# = Draw again
+keys.code4      = KbName('LeftArrow'); % not confident
+keys.code5      = KbName('DownArrow'); % moderately confident
+keys.code6      = KbName('RightArrow'); % very confident 
+keys.code8      = KbName('space');
+keys.code9      = KbName('ESCAPE');
 
 end
