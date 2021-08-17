@@ -143,6 +143,7 @@ try
     DrawFormattedText(window,'Hello! Plaease pay attentions to the instructions','center',scrn.ycenter,scrn.white);
     expstart = Screen('Flip', window);
     duration = expstart + iduration;
+   
     
     % display instructions window 1
     instructions = Screen('OpenOffscreenWindow', window, windrect);
@@ -153,7 +154,7 @@ try
     DrawFormattedText(instructions, 'On each trial, you will draw a sequence of balls from one of these two urns. Your job is to decide whether', 'center', scrn.ycenter-200, scrn.white);
     DrawFormattedText(instructions, 'the balls are drawn from the blue urn or the green urn. After each ball is drawn, you may choose to: ','center', scrn.ycenter-150, scrn.white);
     DrawFormattedText(instructions, 'Guess The Blue Urn by pressing the keycode 1', 'center', scrn.ycenter-100, scrn.white);
-    DrawFormattedText(instructions, 'Guess The Green Urn by pressing the keycode 3', 'center', scrn.ycenter-50, scrn.white); 
+    DrawFormattedText(instructions, 'Guess The Green Urn by pressing the keycode 2', 'center', scrn.ycenter-50, scrn.white); 
     DrawFormattedText(instructions, 'Draw another ball by pressing the keycode 3', 'center', scrn.ycenter, scrn.white);
     DrawFormattedText(instructions, 'You may make a decision after any draw but you may not draw more than 9 balls', 'center', scrn.ycenter+50, scrn.white);
     DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to change page', 'center', scrn.ycenter+100, scrn.white); 
@@ -204,7 +205,17 @@ try
         end
     end
     
-    WaitSecs(1); % wait one sec before flipping to the block/trial/sequence information screen 
+    WaitSecs(1); % wait one sec before flipping to the Instructions quiz 
+    
+    %% ---------------------------------------
+    % RUN THE INSTRUCTIONS QUIZ 
+    
+    % Start instructions
+    DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
+    Screen('Flip', window);
+    WaitSecs(1);
+    
+    set = ShortQuiz(taskNb, set, scrn, keys); % RUN the instructions quiz 
     
     %% ---------------------------------------
     % START THE BLOCK & SEQUENCE/TRIAL LOOPS
