@@ -1,4 +1,4 @@
-function [set] = ShortQuiz(set, scrn, keys)
+function [set] = ShortQuiz(taskNb, set, scrn, keys)
 
 % this function runs a short quiz related to the general instructions of
 % the tasks.
@@ -144,46 +144,17 @@ while i <= qs
     responded       = NaN;
     resp_input      = 0;
     
-    while resp_input == 0 && (GetSecs - startquiz) < resptime - 2*slack
+    while resp_input == 0 && (GetSecs - startquiz) < resptime
         
         [~, secs, keycode] = KbCheck; % check for input 
         
         if keycode(1, choiceA)
-            resp_input  = choiceA;
-            rt          = secs - startquiz; 
-            responded   = 1; % answered A
-            responset   = secs;
-            
-        elseif keycode(1, choiceB)
-            resp_input  = choiceB;
-            rt          = secs - startquiz; 
-            responded   = 2; % answered A
-            responset   = secs;
-            
-        elseif keycode(1, choiceC)
-            resp_input  = choiceC;
-            rt          = secs - startquiz; 
-            responded   = 3; % answered A
-            responset   = secs;
-            
-        elseif keycode(1, choiceD)
-            resp_input  = choiceD;
-            rt          = secs - startquiz; 
-            responded   = 4; % answered A
-            responset   = secs;
-            
-        else
-            resp_input = 0; 
-            rt          = nan; 
-            responded   = nan; % answered A
-            responset   = GetSecs;
-            
             
         end % end of response if 
         
     end % end of response while loop
     
-    objectoff   = responset + isi - ifi;                                  % question-response window self paced or on for 2500 ms
+    objectoff   = respmade + resptime - ifi;                                  % question-response window self paced or on for 2500 ms
     
     % First see if this was an even or odd question
     if mod(thisquestion,2) == 0 % if this is an even question
@@ -219,9 +190,11 @@ while i <= qs
         objectoff = objecton + fix_dur - ifi; 
         
         %i = i; % stay in the same question until subject gets it right 
-        i = i;
+        i = i +1;
         
-
+        set.quizresp{i} = responded;
+        set.quizrt{i}   = rt;
+ 
     end % end of correct statement 
     
     % bring white fixation back on
