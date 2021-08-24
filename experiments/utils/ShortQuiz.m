@@ -47,10 +47,10 @@ fixation        = set.fixation;     % draw fixation
 resptime        = 10;               % 2 sec to respond. after that the question will re-appear
 fix_dur         = set.fix_dur;      % duration of the fixation
 
-choiceA          = keys.code1; % subject pressed A
-choiceB          = keys.code2; % subject pressed B
-choiceC          = keys.code3; % subject pressed C
-choiceD          = keys.code4; % subject pressed D
+choiceA          = keys.code10; % subject pressed A
+choiceB          = keys.code11; % subject pressed B
+choiceC          = keys.code12; % subject pressed C
+choiceD          = keys.code13; % subject pressed D
 
 % create fixation cross offscreen and paste later (faster)
 fixationdisplay = Screen('OpenOffscreenWindow',window);
@@ -108,7 +108,7 @@ strings.answers = {'red-green', 'blue-green', 'green-yellow', 'red-blue',
     'confident', 'not confident', 'moderately confident', 'very confident'};
 
 % Field 3: Alphabetical order 
-strings.order = {'A: ', 'B: ', 'C: ', 'D: '};
+strings.order = {'A) ', 'B) ', 'C) ', 'D) '};
 
 Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
 fliptime    = Screen('Flip', window); % flip fixation window
@@ -130,7 +130,7 @@ while i <= qs
     background_window = Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', background_window, textsize);
     Screen('FillRect', background_window, grey ,windrect);
-    DrawFormattedText(background_window, strings.questions{thisquestion}, 'center', ycenter-300, white);
+    DrawFormattedText(background_window, strings.questions{thisquestion}, 'center', ycenter-200, white);
     DrawFormattedText(background_window, [strings.order{1}, strings.answers{thisquestion, rand_answ(1)}], 'center', ycenter-100, white); 
     DrawFormattedText(background_window, [strings.order{2}, strings.answers{thisquestion, rand_answ(2)}], 'center', ycenter-50, white);
     DrawFormattedText(background_window, [strings.order{3}, strings.answers{thisquestion, rand_answ(3)}], 'center', ycenter, white);
@@ -218,9 +218,8 @@ while i <= qs
         
         objectoff = objecton + fix_dur - ifi; 
         
-        %i = i; % stay in the same question until subject gets it right 
-        i = i;
-        
+        i = i; % stay in the same question until subject gets it right 
+        % i = i + 1; % for testing. while loops are weird
 
     end % end of correct statement 
     

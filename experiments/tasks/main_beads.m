@@ -43,8 +43,9 @@ logs.sess           = sess;
 logs.date           = datestr(now, 'ddmmyy');
 logs.time           = datestr(now, 'hhmm');
 
-logs.matoutput      = 'subject_%02d_task_%s_ses_%02d_logs.mat';
-logs.txtoutput      = 'subject_%02d_task_%s_ses_%02d_events.txt';
+logs.drawslog    = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_draw_logs.mat';
+logs.trialog       = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_logs.mat';
+logs.txtlog         = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_events.tsv';
 
 % % setup study output file
 logs.resultsfolder  = fullfile(workingdir, 'results',taskName, sprintf('sub-%02d', sub));
@@ -210,13 +211,13 @@ try
     %% ---------------------------------------
     % RUN THE INSTRUCTIONS QUIZ 
     
-    % Start instructions
-    DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
-    Screen('Flip', window);
-    WaitSecs(1);
-    
-    set = ShortQuiz(set, scrn, keys); % RUN the instructions quiz 
-    
+%     % Start instructions
+%     DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
+%     Screen('Flip', window);
+%     WaitSecs(1);
+%     
+%     set = ShortQuiz(set, scrn, keys); % RUN the instructions quiz 
+%     
     %% ---------------------------------------
     % START THE BLOCK & SEQUENCE/TRIAL LOOPS
     
@@ -237,13 +238,13 @@ try
             % if the subject pressed ESC
             responsemade = 1;
             while responsemade
-                [~, secs, keycode]= KbCheck;
+                [~, secs, keycode] = KbCheck;
                 WaitSecs(0.001) % delay to prevent CPU logging
 
                 % ESC is pressed 
                 if keycode(1, esckey)
-                    abort       = 1;
-                    responsemade = 0;
+                    abort           = 1;
+                    responsemade    = 0;
                 end
             end
         end
@@ -261,6 +262,7 @@ try
             % show the sequence information screen and wait until subject
             % presses space to continue 
             
+            set.thisblock   = iBlock;                       % send the current block number to the RUN fuction
             set.thistrial   = thistrial;                    % send the current trial number to the RUN function
             set.sequence    = block_seq{thistrial};         % send the current sequence to the RUN function
             set.urn         = block_urns(thistrial);        % send the current urn to the RUN function
@@ -349,6 +351,10 @@ try
         if abort == 1 % exit if subject pressed ESC
             break;
         end
+        
+        % save trial info
+        sub_log             = fullfile(logs.resultsfolder,sprintf(logs.trialog,sub,taskName,iBlock,thistrial,sess));
+        save(sub_log,'logs');
 
     end % end of block for loop
         

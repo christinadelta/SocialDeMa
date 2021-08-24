@@ -11,6 +11,7 @@ function [set, logs] = RunTrials(set, scrn, logs, keys)
 taskNb          = set.taskNb;       % number of task (needed to run the correct task)
 total_trials    = set.trials;       % total number of trials
 thistrial       = set.thistrial;    % this is the current sequence/trial number 
+thisblock       = set.thisblock;     % this is the current block number 
 
 isi             = set.isi;          % interstimulus interval
 jitter          = set.jitter; 
@@ -28,6 +29,11 @@ black           = scrn.black;
 fixsize         = scrn.fixationsize;
 textfont        = scrn.textfont;
 textsize        = scrn.textsize;
+
+thisession      = logs.sess;
+sub             = logs.sub;
+taskname        = logs.task;
+resfolder       = logs.resultsfolder;
 
 % create fixation cross offscreen and paste later (faster)
 fixationdisplay = Screen('OpenOffscreenWindow',window);
@@ -49,6 +55,9 @@ red         = scrn.red;
 sequence    = set.sequence;     % this is the current sequence/trial 
 thisurn     = set.urn;          % this is the current urn, contains the high prob colour beads 1=blue, 0=green
 drawlen     = set.draws;        % length of each sequence (up to 10 draws)
+penalty     = set.penalty;      % £0.25 loss for every draw
+win         = set.win;          % £10 for every win!
+balance     = set.balance;      % balance starts as zero and updates from correct/incorrect (loss) responses & draws
 
 bead_dur    = set.bead_dur;     % duration of each bead in sec
 response    = set.response;     % response duration in sec
@@ -64,6 +73,13 @@ esckey      = keys.code9;       % keycode for aborting the experiment
 notconfkey  = keys.code4;       % not confindent (in confidence rating)
 modconfkey  = keys.code5;       % moderately confindent (in confidence rating)   
 confkey     = keys.code6;       % very confindent (in confidence rating)
+
+% ADD A FEW MORE VARIABLES
+trials      = [];   % store trial info
+draws       = []; % store info specifically about the sequence/draws [1-10]
+draw_count  = 0;    % drawing counter
+accuracy    = nan;
+
 
 % SET ALL RELEVANT WINDOWS (BEAD WINDOWS, RESPONSE WINDOWS, CONFIDENCE RATING & FEEDBACK WINDOWS)
 
@@ -123,11 +139,6 @@ DrawFormattedText(confidence_window, 'Left Arrow: Not Confident', 'center', ycen
 DrawFormattedText(confidence_window, 'Down Arrow: Moderately Confident', 'center', ycenter+50, white);
 DrawFormattedText(confidence_window, 'Right Arrow: Very Confident', 'center', ycenter+100, white);
 
-trials      = [];   % store trial info
-draw_count  = 0;    % drawing counter
-balance     = 0;    % balance comes from correct/incorrect (loss) responses & draws
-accuracy    = 0;
-
 % START THE TRIAL WITH A FIXATION CROSS
 Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
 fliptime    = Screen('Flip', window); % flip fixation window
@@ -147,7 +158,7 @@ for thisdraw = 1:drawlen
     end
     
     % STATEMENT 1. Is it a high or a low probability draw?
-    if sequence(thisdraw) == 1  % high prob draw
+    if sequence(thisdraw, 1) == 1  % high prob draw
         
         % STATEMENT 2. Is it a blue or a green bead?
         if thisurn == 1         % blue urn and blue bead
@@ -159,7 +170,7 @@ for thisdraw = 1:drawlen
             Screen('CopyWindow', green_window, window, windrect, windrect)
         end
             
-    elseif sequence(thisdraw) == 2 % low prob draw
+    elseif sequence(thisdraw, 1) == 2 % low prob draw
         
         if thisurn == 1 % blue urn and green bead
             % show green window
@@ -219,30 +230,29 @@ for thisdraw = 1:drawlen
             
         elseif ~isempty(pressedKeys) % if subject pressed a valid key
             
-            if keycode(1,bluekey) % if subject chose the green urn 
+            if keycode(1,bluekey) % if subject chose the blue urn 
                 resp_input  = bluekey;
                 rt          = secs - prompton;
-                answer      = 1; % green urn 
+                answer      = 1; % blue urn 
                 respmade    = secs;
                 
-            elseif keycode(1,greenkey) % subject pressed the inanimate key
+            elseif keycode(1,greenkey) % if subject chose the green urn 
                 resp_input  = greenkey;
                 rt          = secs - prompton;
-                answer      = 2; % blue
+                answer      = 2; % green urn
                 respmade    = secs;
                 
-            elseif keycode(1,drawkey) % subject pressed the inanimate key
+            elseif keycode(1,drawkey) % if subject chose to draw again
                 resp_input  = drawkey;
                 rt          = secs - prompton;
                 answer      = 3; % draw-again 
                 respmade    = secs;
                 draw_count  = draw_count + 1; 
-            end %  % need to add escape key here 
+            end %  
         end % if responded statement
     end % end of response while loop 
     
     promptoff   = respmade + isi - ifi;                                     % response prompt self paced or on for 2500 ms
-    set.answer  = answer;
     
    % 4. BRING BACK FIXATION. NEXT STEP:
    % A) if answer = 3, draw again,
@@ -309,20 +319,28 @@ for thisdraw = 1:drawlen
        objectoff = respmade + isi + randperm(jitter*1000,1)/1000 - ifi;
        
        if answer == 1 % if subject chose blue urn
-           if thisurn == 1 % if thisurn is in fact a blue urn
-           
-               Screen('CopyWindow', feedback_window1,window, windrect, windrect) % show "you win" feedback window
+           if thisurn == 1                                                      % if thisurn is in fact a blue urn
                
+               accuracy = 1;                                                    % update the accuracy var
+               balance  = balance + win;                                        % update winings 
+               
+               Screen('CopyWindow', feedback_window1,window, windrect, windrect)% show "you win" feedback window
 
            else % if "thisurn" is a green urn 
-
-               Screen('CopyWindow', feedback_window2,window, windrect, windrect) % show "you lose" feedback window
+               accuracy         = 0;
+               
+               if sequence(thisdraw, 2) == 0
+                   balance      = balance;                                      % no loss 
+               else
+                   balance      = balance - win;                                % £10 loss
+               end
+               Screen('CopyWindow', feedback_window2,window, windrect, windrect)% show "you lose" feedback window
 
            end
            
            feedbackon = Screen('Flip', window, objectoff - slack);          % feedback window on 
            
-           fprintf('fixation was on for %3.4f\n', feedbackon - fixon); 
+           fprintf('rating was on for %3.4f\n', feedbackon - ratingon); 
            
            objectoff = feedbackon + dfeedback - ifi;
            
@@ -333,17 +351,27 @@ for thisdraw = 1:drawlen
            
            if thisurn == 1 % if thisurn is a blue urn
                
+               accuracy         = 0;
+               
+               if sequence(thisdraw, 2) == 0
+                   balance      = balance;                                      % no loss 
+               else
+                   balance      = balance - win;                                % £10 loss
+               end
+               
                Screen('CopyWindow', feedback_window2,window, windrect, windrect) % show "you lose" feedback window
 
            else % if "thisurn" is a green urn 
 
                Screen('CopyWindow', feedback_window1,window, windrect, windrect) % show "you win" feedback window
+               accuracy = 1;                                                    % update the accuracy var
+               balance  = balance + win;                                        % update winings 
 
            end
            
            feedbackon = Screen('Flip', window, objectoff - slack);      % feedback window on 
            
-           fprintf('fixation was on for %3.4f\n', feedbackon - fixon); 
+           fprintf('rating was on for %3.4f\n', feedbackon - ratingon); 
            
            objectoff = feedbackon + dfeedback - ifi;
            
@@ -372,17 +400,55 @@ for thisdraw = 1:drawlen
            fprintf('fixation was on for %3.4f\n', objecton - fixon); 
            
            objectoff = objecton + isi - ifi;
+           
+           % deal with balance
+           if balance ~= 0 
+               balance = balance - penalty; % subtract £0.25 for each time they draw 
+           else
+               balance = balance; % if balance is zero, keep it that way (for now) 
+           end
+           
        end
    end
            
- 
-   % add trial related info here 
+   % add sequence/draws related info here 
+   draws(thisdraw).session = thisession;
+   draws(thisdraw).block = thisblock;
+   draws(thisdraw).trialnumber = thistrial;
+   draws(thisdraw).trialonset  = trialstart;
+   draws(thisdraw).currentdraw  = thisdraw;
+   draws(thisdraw).rt  = rt;
+   draws(thisdraw).trialonset  = trialstart;
    
    if abort; fclose('all');break; end
 
 end % end of draw for loop
 
+% add trial related info here 
+trials(thistrial).session  = thisession;
+trials(thistrial).block  = thisblock;
+trials(thistrial).trialnumber  = thistrial;
+trials(thistrial).trialonset  = trialstart;
+trials(thistrial).urntype  = thisurn;
+trials(thistrial).sequence  = sequence(:,1)';
+trials(thistrial).loss  = unique(sequence(:,2));
+trials(thistrial).draws = draw_count;
+trials(thistrial).response = answer;
+trials(thistrial).accuracy = accuracy;
+trials(thistrial).balance = balance;
+
 WaitSecs(2); %  1= force wait for actual pulse; 0=return this many ms after pulse
+
+% store draws and trials info in the logs mat file 
+logs.trialstart         = trialstart;
+logs.trials             = trials;
+logs.draws              = draws;
+
+
+sub_log             = fullfile(resfolder,sprintf(logs.drawslog,sub,taskname,thisblock,thistrial,thisession));
+save(sub_log,'logs');
+
+
 % end of block
 
 
