@@ -57,7 +57,7 @@ thisurn     = set.urn;          % this is the current urn, contains the high pro
 drawlen     = set.draws;        % length of each sequence (up to 10 draws)
 penalty     = set.penalty;      % £0.25 loss for every draw
 win         = set.win;          % £10 for every win!
-balance     = set.balance;      % balance starts as zero and updates from correct/incorrect (loss) responses & draws
+balance     = set.balance;      % balance starts as zero and updates from correct/incorrect (loss) responses & draw choices
 
 bead_dur    = set.bead_dur;     % duration of each bead in sec
 response    = set.response;     % response duration in sec
@@ -247,7 +247,8 @@ for thisdraw = 1:drawlen
                 rt          = secs - prompton;
                 answer      = 3; % draw-again 
                 respmade    = secs;
-                draw_count  = draw_count + 1; 
+                draw_count  = draw_count + 1;
+                
             end %  
         end % if responded statement
     end % end of response while loop 
@@ -321,19 +322,13 @@ for thisdraw = 1:drawlen
        if answer == 1 % if subject chose blue urn
            if thisurn == 1                                                      % if thisurn is in fact a blue urn
                
-               accuracy = 1;                                                    % update the accuracy var
-               balance  = balance + win;                                        % update winings 
+               accuracy         = 1;                                                    % update the accuracy var
                
                Screen('CopyWindow', feedback_window1,window, windrect, windrect)% show "you win" feedback window
 
            else % if "thisurn" is a green urn 
                accuracy         = 0;
                
-               if sequence(thisdraw, 2) == 0
-                   balance      = balance;                                      % no loss 
-               else
-                   balance      = balance - win;                                % £10 loss
-               end
                Screen('CopyWindow', feedback_window2,window, windrect, windrect)% show "you lose" feedback window
 
            end
@@ -353,20 +348,13 @@ for thisdraw = 1:drawlen
                
                accuracy         = 0;
                
-               if sequence(thisdraw, 2) == 0
-                   balance      = balance;                                      % no loss 
-               else
-                   balance      = balance - win;                                % £10 loss
-               end
-               
                Screen('CopyWindow', feedback_window2,window, windrect, windrect) % show "you lose" feedback window
 
            else % if "thisurn" is a green urn 
 
                Screen('CopyWindow', feedback_window1,window, windrect, windrect) % show "you win" feedback window
                accuracy = 1;                                                    % update the accuracy var
-               balance  = balance + win;                                        % update winings 
-
+               
            end
            
            feedbackon = Screen('Flip', window, objectoff - slack);      % feedback window on 
@@ -383,70 +371,82 @@ for thisdraw = 1:drawlen
        
        if draw_count == drawlen % if this is the last (10th) draw ans subject requested another draw
            
+           accuracy     = 0;
            % PUT FIXATION BACK ON 
            Screen('CopyWindow', feedback_window3,window, windrect, windrect)
-           feedbackon = Screen('Flip', window, objectoff - slack);      % feedback window on 
+           feedbackon   = Screen('Flip', window, objectoff - slack);      % feedback window on 
            
            fprintf('fixation was on for %3.4f\n', feedbackon - fixon); 
            
-           objectoff = feedbackon + dfeedback - ifi;
+           objectoff    = feedbackon + dfeedback - ifi;
            break
            
        else % if this is not the last draw and subject wants to draw again
            
            Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-           objecton   = Screen('Flip', window, objectoff - slack); 
+           objecton     = Screen('Flip', window, objectoff - slack); 
            
            fprintf('fixation was on for %3.4f\n', objecton - fixon); 
            
-           objectoff = objecton + isi - ifi;
-           
-           % deal with balance
-           if balance ~= 0 
-               balance = balance - penalty; % subtract £0.25 for each time they draw 
-           else
-               balance = balance; % if balance is zero, keep it that way (for now) 
-           end
+           objectoff    = objecton + isi - ifi;
            
        end
    end
            
    % add sequence/draws related info here 
-   draws(thisdraw).session = thisession;
-   draws(thisdraw).block = thisblock;
-   draws(thisdraw).trialnumber = thistrial;
-   draws(thisdraw).trialonset  = trialstart;
+   draws(thisdraw).session      = thisession;
+   draws(thisdraw).block        = thisblock;
+   draws(thisdraw).trialnumber  = thistrial;
+   draws(thisdraw).trialonset   = trialstart;
    draws(thisdraw).currentdraw  = thisdraw;
-   draws(thisdraw).rt  = rt;
-   draws(thisdraw).trialonset  = trialstart;
+   draws(thisdraw).rt           = rt;
    
-   if abort; fclose('all');break; end
+   if abort; fclose('all');break; end 
 
 end % end of draw for loop
 
+% UPDATE BALANCE 
+% 1. First subtract the penalty (0.25p for every draw)
+balance = balance - (penalty * draw_count);
+
+% 2. Now add winnings of sabtract loss based on the accuracy and loss function 
+if accuracy == 1
+    balance = balance + win;
+    
+elseif accuracy == 0 && unique(sequence(:,2)) == 0
+    balance = balance;
+    
+elseif accuracy == 0 && unique(sequence(:,2)) == 1
+    balance = balance - win;
+    
+end
+
+% update the current balance
+set.balance                  = balance; 
+   
+
 % add trial related info here 
-trials(thistrial).session  = thisession;
-trials(thistrial).block  = thisblock;
-trials(thistrial).trialnumber  = thistrial;
-trials(thistrial).trialonset  = trialstart;
-trials(thistrial).urntype  = thisurn;
-trials(thistrial).sequence  = sequence(:,1)';
-trials(thistrial).loss  = unique(sequence(:,2));
-trials(thistrial).draws = draw_count;
-trials(thistrial).response = answer;
-trials(thistrial).accuracy = accuracy;
-trials(thistrial).balance = balance;
+trials.session      = thisession;
+trials.block        = thisblock;
+trials.trialnumber  = thistrial;
+trials.trialonset   = trialstart;
+trials.urntype      = thisurn;
+trials.sequence     = sequence(:,1)';
+trials.loss         = unique(sequence(:,2));
+trials.draws        = draw_count;
+trials.response     = answer;
+trials.accuracy     = accuracy;
+trials.balance      = balance;
 
 WaitSecs(2); %  1= force wait for actual pulse; 0=return this many ms after pulse
 
 % store draws and trials info in the logs mat file 
 logs.trialstart         = trialstart;
-logs.trials             = trials;
 logs.draws              = draws;
+set.trials              = trials;
 
-
-sub_log             = fullfile(resfolder,sprintf(logs.drawslog,sub,taskname,thisblock,thistrial,thisession));
-save(sub_log,'logs');
+sub_drawslog             = fullfile(resfolder,sprintf(logs.drawslog,sub,taskname,thisblock,thistrial,thisession));
+save(sub_drawslog,'logs');
 
 
 % end of block

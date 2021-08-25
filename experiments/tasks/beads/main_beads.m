@@ -13,22 +13,27 @@
 % ALLOW SUBJECT TO ABORT THE EXPERIMENT AT ANY TIME (BY PRESSING ESC)
 
 % CLEAN UP
-clear;
-clc
-close all hidden;
+% clear;
+% clc
+% close all hidden;
 
 %% ---------------------------------------
 % INITIAL EXPERIMENTAL SETUP 
 
-% current directory should be: ./SocialDeMa
+% Initialize the random number generator
+rand('state', sum(100*clock)); 
 
-% get participant nb session and task name 
-sub         = 1; 
-taskName    = 'beads';
-taskNb      = 1; 
-sess        = 1;
 
-basedir     = pwd;
+% get participant nb and task name 
+answer          = startup.answer;
+
+% initial experimental settings
+sub             = str2num(answer{2}); % participant number
+taskName        = answer{1}; 
+taskNb          = 1; 
+sess            = 1;
+
+basedir         = pwd;
 
 % get directories and add utility functions to the path
 workingdir      = fullfile(basedir, 'experiments');
@@ -43,8 +48,8 @@ logs.sess           = sess;
 logs.date           = datestr(now, 'ddmmyy');
 logs.time           = datestr(now, 'hhmm');
 
-logs.drawslog    = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_draw_logs.mat';
-logs.trialog       = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_logs.mat';
+logs.drawslog       = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_draw_logs.mat';
+logs.trialog        = 'subject_%02d_task_%s_block_%02d_ses_%02d_logs.mat';
 logs.txtlog         = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_events.tsv';
 
 % % setup study output file
@@ -226,10 +231,13 @@ try
     % UNPACK SETTINGS STRUCT
     ntrials         = set.trials;       % total trials
     nb_blocks       = set.blocks;       % total blocks
-    blocktrials     = set.blocktrials;  % trials per block
+    trialsPerBlock  = set.blocktrials;  % trials per block
     
     % INIT BLOCKS LOOP
     for iBlock = 1:nb_blocks
+        
+        % init block-log struct
+        blocktrials     = [];
         
         % first allow subject to exit experiment if they pressed the esc key 
         [keyisdown,secs,keycode] = KbCheck;
@@ -257,7 +265,7 @@ try
         block_urns          = trials.urns{iBlock};
         
         % INIT TRIALS LOOP
-        for thistrial = 1:blocktrials
+        for thistrial = 1:trialsPerBlock
             
             % show the sequence information screen and wait until subject
             % presses space to continue 
@@ -269,25 +277,35 @@ try
             
             % count the proportions of bead colours in the current sequence
             % list to dettermine the difficulty condition
-            condition       = sum(set.sequence(1,:)==2);
+            condition       = sum(set.sequence(:,1)==2);
             
             if condition == 2 % if 2 appears 2 times in the sequence
                 
+                cond        = 1; % add this to the blocktrials struct
+                 
                 high_p      = 80;
                 low_p       = 20;
             else % if 2 appears 4 times in the sequence 
+                
+                cond        = 2;
                 high_p      = 60;
                 low_p       = 40;
+            end
+            
+            % check if this is a £0 or £10 loss trial
+            if unique(set.sequence(:,2)) == 0
+               loss         = 0;
+            else 
+                loss        = 10;
             end
             
             % display trial/sequence information window 
             Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', window, scrn.textsize);
             Screen('FillRect', window, scrn.grey ,windrect);
-            DrawFormattedText(window, sprintf('Starting sequence %d of block %d.',thistrial, iBlock), 'center', scrn.ycenter-100, scrn.white);
-            DrawFormattedText(window, sprintf('The urns have a %02d:%02d color split.',high_p, low_p), 'center', scrn.ycenter-50, scrn.white);
-            DrawFormattedText(window, 'Press SPACE to continue.', 'center', scrn.ycenter, scrn.white);
-            DrawFormattedText(window, 'Or press ESC to quit.', 'center', scrn.ycenter+50, scrn.white);
+            DrawFormattedText(window, sprintf('Starting sequence %d of block %d',thistrial, iBlock), 'center', scrn.ycenter-50, scrn.white);
+            DrawFormattedText(window, sprintf('The urns have a %02d:%02d color split. You will lose £%d if you are wrong',high_p, low_p, loss), 'center', scrn.ycenter, scrn.white);
+            DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
             Screen('Flip', window); 
             
             % WAIT FOR THEM TO PRESS SPACE
@@ -312,8 +330,27 @@ try
             
             [set,logs]     = RunTrials(set, scrn, logs, keys);
             
-        end % end of trial/sequence for loop
+            % UNPACK SET AND ADD THE TRIAL INFO TO THE "BLOCK"-LOG FILE 
+            blocktrials(thistrial).session     = set.trials.session;
+            blocktrials(thistrial).block       = set.trials.block;
+            blocktrials(thistrial).trialnumber = set.trials.trialnumber;
+            blocktrials(thistrial).trialonset  = set.trials.trialonset;
+            blocktrials(thistrial).urntype     = set.trials.urntype;
+            blocktrials(thistrial).sequence    = set.trials.sequence;
+            blocktrials(thistrial).loss        = set.trials.loss;
+            blocktrials(thistrial).draws       = set.trials.draws;
+            blocktrials(thistrial).response    = set.trials.response;
+            blocktrials(thistrial).accuracy    = set.trials.accuracy;
+            blocktrials(thistrial).balance     = set.trials.balance;
+            blocktrials(thistrial).condition   = cond;
+               
+        end % end of trial/sequence for loop   
         
+        % save trial info
+        logs.blocktrials    = blocktrials;
+        sub_log             = fullfile(logs.resultsfolder,sprintf(logs.trialog,sub,taskName,iBlock,sess));
+        save(sub_log,'logs');
+
         % IF THIS IS THE LAST BLOCK BREAK FROM THE LOOP AND GO DIRECTLY TO
         % THE GOODBYE SCREEN
         if iBlock == nb_blocks
@@ -352,10 +389,6 @@ try
             break;
         end
         
-        % save trial info
-        sub_log             = fullfile(logs.resultsfolder,sprintf(logs.trialog,sub,taskName,iBlock,thistrial,sess));
-        save(sub_log,'logs');
-
     end % end of block for loop
         
         
