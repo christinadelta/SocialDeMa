@@ -131,11 +131,13 @@ try
     
     [trials, set]       = CreateTrialList(set);                                 % create trials, sequences, split in runs, etc..
     
+    
     %% ---------------------------------------
     % CREATE AND RUN INSTRUCTIONS
     
     % UNPACK SETTINGS
     iduration           = set.welcomedur;
+    EEG                 = set.EEG; % should be EEG = 1 when running at the EEGlab
     spacekey            = keys.code8;
     esckey              = keys.code9;
     
@@ -223,6 +225,24 @@ try
 %     
 %     set = ShortQuiz(set, scrn, keys); % RUN the instructions quiz 
 %     
+
+    %% ---------------------------------------
+    % ADD THE TRIGGER INFORMATION (IF EEG = 1) 
+
+    if EEG == 1
+
+        % INIT COMMUNICATION WITH EXTERNAL DEVICES
+        sp      = BioSemiSerialPort();
+        set.sp  = sp;
+        fprintf(' >>> OPENING USB TRIGGER LINK  <<<')
+
+        % UNPACK TRIGGERS FROM THE SETTINGS STRUCTURE
+        trigger100 = set.trigger100; % condition trigger -- condition (easy)
+        trigger101 = set.trigger101; % condition trigger -- condition (difficult) 
+        trigger102 = set.trigger102; % start of sequence 
+        trigger103 = set.trigger103; % end of sequence
+    end
+
     %% ---------------------------------------
     % START THE BLOCK & SEQUENCE/TRIAL LOOPS
     
@@ -308,6 +328,15 @@ try
             DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
             Screen('Flip', window); 
             
+            % send a condition trigger
+            if EEG == 1
+                if condition == 2
+                    sp.sendTrigger(trigger100)
+                else
+                    sp.sendTrigger(trigger101)
+                end
+            end
+            
             % WAIT FOR THEM TO PRESS SPACE
             responsemade = 1;
             while responsemade
@@ -344,7 +373,7 @@ try
             blocktrials(thistrial).balance     = set.trials.balance;
             blocktrials(thistrial).condition   = cond;
                
-        end % end of trial/sequence for loop   
+        end % end of trial/sequence for loop        
         
         % save trial info
         logs.blocktrials    = blocktrials;

@@ -19,7 +19,6 @@ if taskNb == 1 % if this is the beads task
    
     % BASIC IMPORTANT SETTINGS
     set.blocks      = 4;    % number of blocks 
-    % set.blinks    = 3;    % run only with eeg - instruct subject to blink after n number of trials 
 
     % EXPERIMENTAL SETTINGS
     set.welcomedur  = 2.5;  % welcome screen duration = 2.5 sec
@@ -46,10 +45,10 @@ if taskNb == 1 % if this is the beads task
     if EEG == 1
         
         % 1. start with the sequence related triggers
-        set.trigger1    = 1;    % BLUE URN - high probability blue bead 
-        set.trigger2    = 2;    % BLUE URN - low probability green bead
-        set.trigger3    = 3;    % GREEN URN - high probability green bead
-        set.trigger4    = 5;    % GREEN URN - low probability blue bead
+        set.trigger1    = 1;    % BLUE URN - blue bead (high prob)
+        set.trigger2    = 2;    % BLUE URN - green bead (low prob)
+        set.trigger3    = 3;    % GREEN URN - green bead (high prob)
+        set.trigger4    = 4;    % GREEN URN - blue bead (low prob)
         
         set.trigger5    = 5;    % response prompt
         set.trigger6    = 6;    % blue urn (choice)
@@ -64,16 +63,17 @@ if taskNb == 1 % if this is the beads task
         
         set.trigger13   = 13;   % feedback screen (you win!)
         set.trigger14   = 14;   % feedback screen (you lose!)
+        set.trigger15   = 15;   % feedback screen (you lose - out of draws)
         
-        set.trigger15   = 15;   % correct response 
-        set.trigger16   = 16;   % incorrect response
+        set.trigger16   = 16;   % correct response 
+        set.trigger17   = 17;   % incorrect response
         
         % 3. main script triggers 
-        set.trigger100  = 100;  % block start
-        set.trigger101  = 101;  % end block
-        set.trigger102  = 102;  % sequence start (mainly condition trigger)
-        set.trigger103  = 103;  % end of sequence 
-    end
+        set.trigger100  = 100;  % condition trigger -- condition (easy)
+        set.trigger101  = 101;  % condition trigger -- condition (difficult) 
+        set.trigger102  = 102;  % sequence start 
+        set.trigger103  = 103;  % sequence end
+    end % end of if EEG statement
     
 end % end of if statement 
 
