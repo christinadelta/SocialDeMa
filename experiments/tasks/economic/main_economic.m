@@ -13,17 +13,11 @@
 % add logs txt file 
 % now we save only in .mat files 
 
-% CLEAN UP
-% clear;
-% clc
-% close all hidden;
-
 %% ---------------------------------------
 % INITIAL EXPERIMENTAL SETUP 
 
 % Initialize the random number generator
-rand('state', sum(100*clock)); 
-
+rand('state', sum(100*clock));
 
 % get participant nb and task name 
 answer          = startup.answer;
@@ -31,30 +25,41 @@ answer          = startup.answer;
 % initial experimental settings
 sub             = str2num(answer{2}); % participant number
 taskName        = answer{1}; 
-taskNb          = 1; 
-sess            = 1;
+taskNb          = 2; 
 
 basedir         = pwd;
 
+% add a new prompt to identify the phase of the task 
+prompt          = {'Which phase is it?'};
+dlgtitle        = 'Info window';
+dims            = [1 30];
+definput        = {'1'}; % this is a default input (this should change)
+taskphase       = inputdlg(prompt,dlgtitle,dims,definput);
+
+phase           = str2num(taskphase{1});                                    % convert task phase to number
+sess            = phase;
 % get directories and add utility functions to the path
-workingdir      = fullfile(basedir, 'experiments');
-addpath(genpath(fullfile(workingdir,'utils')));                              % add subfunctions to the path
+wd              = fullfile(basedir, 'experiments');
+addpath(genpath(fullfile(wd,'utils')));                                     % add subfunctions to the path
+
 
 %% ---------------------------------------
 % SET OUTPUT INFO AND LOGS FILE
 
-logs.sub            = sub;
-logs.task           = taskName;
-logs.sess           = sess;
-logs.date           = datestr(now, 'ddmmyy');
-logs.time           = datestr(now, 'hhmm');
+logs.sub                = sub;
+logs.task               = taskName;
+logs.sess               = sess;
+logs.date               = datestr(now, 'ddmmyy');
+logs.time               = datestr(now, 'hhmm');
 
-logs.drawslog       = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_draw_logs.mat';
-logs.trialog        = 'subject_%02d_task_%s_block_%02d_ses_%02d_logs.mat';
-logs.txtlog         = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_events.tsv';
+logs.trialog            = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_logs.mat';
+logs.txtlog             = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_events.tsv';
+if phase == 2
+    logs.blocktrialog   = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_blocktrials_logs.mat';
+end
 
 % % setup study output file
-logs.resultsfolder  = fullfile(workingdir, 'results',taskName, sprintf('sub-%02d', sub));
+logs.resultsfolder      = fullfile(wd, 'results',taskName, sprintf('sub-%02d', sub));
 
 if ~exist(logs.resultsfolder, 'dir')
     mkdir(logs.resultsfolder)
@@ -83,6 +88,13 @@ try
     scrn.textsize       = 20;
     scrn.fixationsize   = 30;
     scrn.textbold       = 1; 
+    
+    % create text settings for the previous sample (this should be very
+    % small to appear at the bottom of the screen
+    if phase == 2
+        scrn.ptextsize      = 8;
+        scrn.ptextbold      = 1;
+    end
     
     % Screen('Preference', 'SkipSyncTests', 0) % set a Psychtoolbox global preference.
     Screen('Preference', 'SkipSyncTests', 1) % for testing I have set this to 1. When running the actuall task uncomment the above
@@ -124,15 +136,16 @@ try
     %% ---------------------------------------
     % RUN A FEW IMPORTANT UTIL FUNCTIONS
     
-    set                 = TaskSettings(taskNb);                                 % Define the first task-specific parameters
-
-    set                = Definekeys(taskNb);                                   % Define set of the task
+    set                 = TaskSettings(taskNb, sess);                       % Define the first task-specific parameters
     
-    scrn                = screenSettings(scrn, set);                            % Define screen setup
+    set                 = DefineKeys(taskNb, set);                          % Define keys of the task
     
-    [trials, set]       = CreateTrialList(set);                                 % create trials, sequences, split in runs, etc..
+    set                 = loaditems(set, wd);                               % read the excel file with the items (contracts)
     
+    scrn                = screenSettings(scrn, set);                        % Define screen setup
     
+    [trials, set]       = CreateTrialList(set);                             % create trials, sequences, split in runs, etc..
+   
     %% ---------------------------------------
     % CREATE AND RUN INSTRUCTIONS
     
@@ -149,24 +162,42 @@ try
     Screen('FillRect', generalwindow, scrn.grey ,windrect);
     
     % Start instructions
-    DrawFormattedText(window,'Hello! Plaease pay attentions to the instructions','center',scrn.ycenter,scrn.white);
+    DrawFormattedText(window,'Hello! Please pay attentions to the instructions','center',scrn.ycenter,scrn.white);
     expstart = Screen('Flip', window);
     duration = expstart + iduration;
-   
     
-    % display instructions window 1
-    instructions = Screen('OpenOffscreenWindow', window, windrect);
-    Screen('TextSize', instructions, scrn.textsize);
-    Screen('FillRect', instructions, scrn.grey ,windrect);
-    DrawFormattedText(instructions, 'There are two urns:', 'center', scrn.ycenter-300, scrn.white);
-    DrawFormattedText(instructions, 'The Blue Urn has more blue balls than green balls. The Green Urn has more green balls than blue balls.', 'center', scrn.ycenter-250, scrn.white);
-    DrawFormattedText(instructions, 'On each trial, you will draw a sequence of balls from one of these two urns. Your job is to decide whether', 'center', scrn.ycenter-200, scrn.white);
-    DrawFormattedText(instructions, 'the balls are drawn from the blue urn or the green urn. After each ball is drawn, you may choose to: ','center', scrn.ycenter-150, scrn.white);
-    DrawFormattedText(instructions, 'Guess The Blue Urn by pressing the keycode 1', 'center', scrn.ycenter-100, scrn.white);
-    DrawFormattedText(instructions, 'Guess The Green Urn by pressing the keycode 2', 'center', scrn.ycenter-50, scrn.white); 
-    DrawFormattedText(instructions, 'Draw another ball by pressing the keycode 3', 'center', scrn.ycenter, scrn.white);
-    DrawFormattedText(instructions, 'You may make a decision after any draw but you may not draw more than 9 balls', 'center', scrn.ycenter+50, scrn.white);
-    DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to change page', 'center', scrn.ycenter+100, scrn.white); 
+    if phase == 1 % show the instructions of phase 1 of the economic best choice task
+        
+        % display instructions for phase 1
+        instructions = Screen('OpenOffscreenWindow', window, windrect);
+        Screen('TextSize', instructions, scrn.textsize);
+        Screen('FillRect', instructions, scrn.grey ,windrect);
+        DrawFormattedText(instructions, 'This is the first phase of the experiment. You will be presented with smartphone contracts', 'center', scrn.ycenter-200, scrn.white);
+        DrawFormattedText(instructions, 'one-by-one at the centre of the screen. Your task is to carefully view each contract and rate', 'center', scrn.ycenter-150, scrn.white);
+        DrawFormattedText(instructions, '"how likely it would be to choose this contract in real life" on a scale of 1 to 9, where 1 means "I would not never choose this contract"', 'center', scrn.ycenter-100, scrn.white);
+        DrawFormattedText(instructions, 'and 9 means "I would definitely choose this contract".','center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(instructions, 'For you responses, press the keyboard keys 1 to 9 which correspond to your rating for each contract.', 'center', scrn.ycenter, scrn.white);
+        DrawFormattedText(instructions, 'Please rate the smartphone contracts exactly as you would you in a real life scenario.', 'center', scrn.ycenter+50, scrn.white); 
+        DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to continue', 'center', scrn.ycenter+100, scrn.white);
+        
+    else % if this is the second phase of the experiment 
+        
+        % display instructions for phase 2
+        instructions = Screen('OpenOffscreenWindow', window, windrect);
+        Screen('TextSize', instructions, scrn.textsize);
+        Screen('FillRect', instructions, scrn.grey ,windrect);
+        DrawFormattedText(instructions, 'This is the second phase of the experiment. This phase is plit in 30 sequences.', 'center', scrn.ycenter-250, scrn.white);
+        DrawFormattedText(instructions, 'On each sequence, you will be presented with 10 smartphone contracts from the the previous phase, one-by-one.', 'center', scrn.ycenter-200, scrn.white);
+        DrawFormattedText(instructions, 'Every time you are presented with a contract, you may either "chooce to accept it" or you may "reject it" and', 'center', scrn.ycenter-150, scrn.white);
+        DrawFormattedText(instructions, 'view the next contract. Please note that for each sequence you can choose only one contract. If you reject','center', scrn.ycenter-100, scrn.white);
+        DrawFormattedText(instructions, 'a contract, you may not go back and choose it. If, by the end of a sequence you have not chosen', 'center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(instructions, 'a contract, by default, the last contract will be saved as your chosen contract.', 'center', scrn.ycenter, scrn.white); 
+        DrawFormattedText(instructions, 'Note that each contract that you reject will be desplayed at the bottom of the screen', 'center', scrn.ycenter+50, scrn.white);
+        DrawFormattedText(instructions, 'so that you have an idea of the contracts you rejected, and the number of contracts left in the sequence.', 'center', scrn.ycenter+100, scrn.white);
+        DrawFormattedText(instructions, 'Press keyboard key "1" to reject a contract and view then next one or press key "2" to accept a contract.', 'center', scrn.ycenter+150, scrn.white);
+        DrawFormattedText(instructions, 'If you have understood the instructions, press SPACE to continue', 'center', scrn.ycenter+200, scrn.white);
+        
+    end % end of phase statement 
     
     % copy the instructions window  and flip.
     Screen('CopyWindow',instructions,window,windrect, windrect);
@@ -186,46 +217,6 @@ try
     
     WaitSecs(1); % wait one sec before flipping to the block/trial/sequence information screen 
     
-    % display instructions window 2
-    instructions2 = Screen('OpenOffscreenWindow', window, windrect);
-    Screen('TextSize', instructions2, scrn.textsize);
-    Screen('FillRect', instructions2, scrn.grey ,windrect);
-    DrawFormattedText(instructions2, 'After an urn is chosen, you will be asked to rate how confident you are about', 'center', scrn.ycenter-150, scrn.white);
-    DrawFormattedText(instructions2, 'the choice that you made on a scale of 1 to 3. Press:', 'center', scrn.ycenter-100, scrn.white);
-    DrawFormattedText(instructions2, '"Left Arrow" key, if you are not confident about your choice.', 'center', scrn.ycenter-50, scrn.white);
-    DrawFormattedText(instructions2, '"Down Arrow" key, if you are moderately confident about your choice.','center', scrn.ycenter, scrn.white);
-    DrawFormattedText(instructions2, '"Right Arrow" key, if you are very confident about your choice.', 'center', scrn.ycenter+50, scrn.white);
-    DrawFormattedText(instructions2, 'If you have understood the instructions, press SPACE to take a short quiz before starting the experiment.', 'center', scrn.ycenter+100, scrn.white)
-    
-    % copy the instructions2 window  and flip.
-    Screen('CopyWindow',instructions2,window,windrect, windrect);
-    Screen('Flip', window, duration);
-    
-    % WAIT FOR THEM TO PRESS SPACE
-    responsemade = 1;
-    while responsemade
-        [~, secs, keycode]= KbCheck;
-        WaitSecs(0.001) % delay to prevent CPU logging
-
-        % spacebar is pressed 
-        if keycode(1, spacekey)
-            responsemade = 0;
-        end
-    end
-    
-    WaitSecs(1); % wait one sec before flipping to the Instructions quiz 
-    
-    %% ---------------------------------------
-    % RUN THE INSTRUCTIONS QUIZ 
-    
-%     % Start instructions
-%     DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
-%     Screen('Flip', window);
-%     WaitSecs(1);
-%     
-%     set = ShortQuiz(set, scrn, set); % RUN the instructions quiz 
-%     
-
     %% ---------------------------------------
     % ADD THE TRIGGER INFORMATION (IF EEG = 1) 
 
@@ -236,11 +227,6 @@ try
         set.sp  = sp;
         fprintf(' >>> OPENING USB TRIGGER LINK  <<<')
 
-        % UNPACK TRIGGERS FROM THE SETTINGS STRUCTURE
-        trigger100 = set.trigger100; % condition trigger -- condition (easy)
-        trigger101 = set.trigger101; % condition trigger -- condition (difficult) 
-        trigger102 = set.trigger102; % start of sequence 
-        trigger103 = set.trigger103; % end of sequence
     end
 
     %% ---------------------------------------
@@ -249,20 +235,17 @@ try
     abort           = 0;                % when 1 subject can quit the experiment
     
     % UNPACK SETTINGS STRUCT
-    ntrials         = set.trials;       % total trials
+    ntrials         = set.totaltrials;  % total trials
     nb_blocks       = set.blocks;       % total blocks
     trialsPerBlock  = set.blocktrials;  % trials per block
     
     % INIT BLOCKS LOOP
     for iBlock = 1:nb_blocks
         
-        % init block-log struct
-        blocktrials     = [];
-        
         % first allow subject to exit experiment if they pressed the esc key 
         [keyisdown,secs,keycode] = KbCheck;
         if keyisdown && keycode(esckey)
-            
+
             % if the subject pressed ESC
             responsemade = 1;
             while responsemade
@@ -279,63 +262,19 @@ try
         if abort == 1
             break;
         end
-        
-        % UNPACK TRIALS STRUCT
-        block_seq           = trials.sequence{iBlock};
-        block_urns          = trials.urns{iBlock};
-        
-        % INIT TRIALS LOOP
-        for thistrial = 1:trialsPerBlock
+
+        if phase == 1 % run the phase 1 blocks 
             
-            % show the sequence information screen and wait until subject
-            % presses space to continue 
-            
-            set.thisblock   = iBlock;                       % send the current block number to the RUN fuction
-            set.thistrial   = thistrial;                    % send the current trial number to the RUN function
-            set.sequence    = block_seq{thistrial};         % send the current sequence to the RUN function
-            set.urn         = block_urns(thistrial);        % send the current urn to the RUN function
-            
-            % count the proportions of bead colours in the current sequence
-            % list to dettermine the difficulty condition
-            condition       = sum(set.sequence(:,1)==2);
-            
-            if condition == 2 % if 2 appears 2 times in the sequence
-                
-                cond        = 1; % add this to the blocktrials struct
-                 
-                high_p      = 80;
-                low_p       = 20;
-            else % if 2 appears 4 times in the sequence 
-                
-                cond        = 2;
-                high_p      = 60;
-                low_p       = 40;
-            end
-            
-            % check if this is a £0 or £10 loss trial
-            if unique(set.sequence(:,2)) == 0
-               loss         = 0;
-            else 
-                loss        = 10;
-            end
+            % UNPACK TRIALS STRUCT
+            block_seq           = trials.sequence{iBlock};
             
             % display trial/sequence information window 
             Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', window, scrn.textsize);
             Screen('FillRect', window, scrn.grey ,windrect);
-            DrawFormattedText(window, sprintf('Starting sequence %d of block %d',thistrial, iBlock), 'center', scrn.ycenter-50, scrn.white);
-            DrawFormattedText(window, sprintf('The urns have a %02d:%02d color split. You will lose £%d if you are wrong',high_p, low_p, loss), 'center', scrn.ycenter, scrn.white);
-            DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
+            DrawFormattedText(window, sprintf('Starting block %d',iBlock), 'center', scrn.ycenter-50, scrn.white);
+            DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter, scrn.white);
             Screen('Flip', window); 
-            
-            % send a condition trigger
-            if EEG == 1
-                if condition == 2
-                    sp.sendTrigger(trigger100)
-                else
-                    sp.sendTrigger(trigger101)
-                end
-            end
             
             % WAIT FOR THEM TO PRESS SPACE
             responsemade = 1;
@@ -357,29 +296,69 @@ try
                 break;
             end
             
-            [set,logs]     = RunBeads(set, scrn, logs);
+            set.iBlock      = iBlock;
+            set.sequence    = block_seq;         % send the current sequence to the RUN function
+            [set,logs]      = RunEconomic(set, scrn, logs);
             
-            % UNPACK SET AND ADD THE TRIAL INFO TO THE "BLOCK"-LOG FILE 
-            blocktrials(thistrial).session     = set.trials.session;
-            blocktrials(thistrial).block       = set.trials.block;
-            blocktrials(thistrial).trialnumber = set.trials.trialnumber;
-            blocktrials(thistrial).trialonset  = set.trials.trialonset;
-            blocktrials(thistrial).urntype     = set.trials.urntype;
-            blocktrials(thistrial).sequence    = set.trials.sequence;
-            blocktrials(thistrial).loss        = set.trials.loss;
-            blocktrials(thistrial).draws       = set.trials.draws;
-            blocktrials(thistrial).response    = set.trials.response;
-            blocktrials(thistrial).accuracy    = set.trials.accuracy;
-            blocktrials(thistrial).balance     = set.trials.balance;
-            blocktrials(thistrial).condition   = cond;
-               
-        end % end of trial/sequence for loop        
+        else % if phase == 2
+            
+            % UNPACK TRIALS STRUCT
+            block_seq           = trials.sequence{iBlock};
+            
+            for trial = 1:trialsPerBlock
+                
+                set.iBlock = iBlock;
+                set.thisTrial = trial;
+                set.sequence    = block_seq{trial}; 
+                
+                % display trial/sequence information window 
+                Screen('OpenOffscreenWindow', window, windrect);
+                Screen('TextSize', window, scrn.textsize);
+                Screen('FillRect', window, scrn.grey ,windrect);
+                DrawFormattedText(window, sprintf('Starting sequence %d of block %d',trial, iBlock), 'center', scrn.ycenter-50, scrn.white);
+                DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter, scrn.white);
+                Screen('Flip', window); 
+                
+                 % WAIT FOR THEM TO PRESS SPACE
+                responsemade = 1;
+                while responsemade
+                    [~, secs, keycode]= KbCheck;
+                    WaitSecs(0.001) % delay to prevent CPU logging
+
+                    % spacebar is pressed 
+                    if keycode(1, spacekey)
+                        responsemade    = 0;
+
+                        % or esc is pressed
+                    elseif keycode(1, esckey)
+                        abort           = 1;
+                        responsemade    = 0;
+                    end
+                end
+                if abort == 1 % exit 
+                    break;
+                end
+                
+                [set,logs]      = RunEconomic(set, scrn, logs); % run trials
+                
+                % UNPACK SET AND ADD THE TRIAL INFO TO THE "BLOCK"-LOG FILE 
+                blocktrials(trial).session     = set.blocktrials.session;
+                blocktrials(trial).block       = set.blocktrials.block;
+                blocktrials(trial).trialnumber = set.blocktrials.trialnumber;
+                blocktrials(trial).trialonset  = set.blocktrials.trialonset;
+                blocktrials(trial).sequence    = set.blocktrials.sequence;
+                blocktrials(trial).numsamples  = set.blocktrials.numsamples;
+                blocktrials(trial).chosenitem  = set.blocktrials.chosenitem;
+
+            end % End of trials loop
+
+        end % end of phase if statement
         
         % save trial info
         logs.blocktrials    = blocktrials;
-        sub_log             = fullfile(logs.resultsfolder,sprintf(logs.trialog,sub,taskName,iBlock,sess));
+        sub_log             = fullfile(logs.resultsfolder,sprintf(logs.blocktrialog,sub,taskName,iBlock,sess));
         save(sub_log,'logs');
-
+        
         % IF THIS IS THE LAST BLOCK BREAK FROM THE LOOP AND GO DIRECTLY TO
         % THE GOODBYE SCREEN
         if iBlock == nb_blocks
@@ -417,11 +396,9 @@ try
         if abort == 1 % exit if subject pressed ESC
             break;
         end
-        
-    end % end of block for loop
-        
-        
-    % THIS IS IT...
+    end % end of blocks loop
+    
+     % THIS IS IT...
     % show thank you window
     Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', window, scrn.textsize);
@@ -435,12 +412,10 @@ try
     ShowCursor;
     Priority(0);
     fclose('all');
-
-catch % catch last errors
     
+catch % ... catch last errors 
     Screen('CloseAll');
     ShowCursor;
     Priority(0);
     psychrethrow(psychlasterror);
-    
-end % end try... catch
+end

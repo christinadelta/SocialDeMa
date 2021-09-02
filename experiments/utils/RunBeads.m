@@ -1,4 +1,4 @@
-function [set, logs] = RunTrials(set, scrn, logs, keys)
+function [set, logs] = RunBeads(set, scrn, logs)
 
 % THIS IS A SUBFUNCTION, PART OF THE "OPTIMAL STOPPING EXPERIMENTS". 
 
@@ -43,7 +43,7 @@ Screen('TextFont',fixationdisplay, textfont);
 Screen('TextSize',fixationdisplay, fixsize);
 DrawFormattedText(fixationdisplay, fixation, 'center', ycenter, white);
 
-%% ----- Run the correct task ------ %%
+%% ----- Run the beads task ------ %%
 
 abort       = 0;
 HideCursor;
@@ -66,14 +66,14 @@ dfeedback   = set.feed_dur;     % duration of feedback window in sec
 confrating  = set.confrating;   % duration of the confidence rating 
 fix_dur     = set.fix_dur;      % fixation duration
 
-bluekey     = keys.code1;       % keycode for blue option
-greenkey    = keys.code2;       % keycode for green option
-drawkey     = keys.code3;       % keycode for draw-again option
-esckey      = keys.code9;       % keycode for aborting the experiment 
+bluekey     = set.code1;       % keycode for blue option
+greenkey    = set.code2;       % keycode for green option
+drawkey     = set.code3;       % keycode for draw-again option
+esckey      = set.code21;      % keycode for aborting the experiment 
     
-notconfkey  = keys.code4;       % not confindent (in confidence rating)
-modconfkey  = keys.code5;       % moderately confindent (in confidence rating)   
-confkey     = keys.code6;       % very confindent (in confidence rating)
+notconfkey  = set.code4;       % not confindent (in confidence rating)
+modconfkey  = set.code5;       % moderately confindent (in confidence rating)   
+confkey     = set.code6;       % very confindent (in confidence rating)
 
 % ADD A FEW MORE VARIABLES
 trials      = [];   % store trial info
@@ -84,25 +84,26 @@ accuracy    = nan;
 % UNPACK EEG TRIGGERS
 if EEG == 1 
     
-    trigger1 = set.trigger1;
-    trigger2 = set.trigger2;
-    trigger3 = set.trigger3;
-    trigger4 = set.trigger4;
-    trigger5 = set.trigger5;
+    sp          = set.sp;
+    trigger1    = set.trigger1;
+    trigger2    = set.trigger2;
+    trigger3    = set.trigger3;
+    trigger4    = set.trigger4;
+    trigger5    = set.trigger5;
     
-    trigger6 = set.trigger6;
-    trigger7 = set.trigger7;
-    trigger8 = set.trigger8;
-    trigger9 = set.trigger9;
-    trigger10 = set.trigger10;
-    trigger11 = set.trigger11;
-    trigger12 = set.trigger12;
-    trigger13 = set.trigger13;
-    trigger14 = set.trigger14;
-    trigger15 = set.trigger15;
+    trigger6    = set.trigger6;
+    trigger7    = set.trigger7;
+    trigger8    = set.trigger8;
+    trigger9    = set.trigger9;
+    trigger10   = set.trigger10;
+    trigger11   = set.trigger11;
+    trigger12   = set.trigger12;
+    trigger13   = set.trigger13;
+    trigger14   = set.trigger14;
+    trigger15   = set.trigger15;
     
-    trigger102 = set.trigger102; % start of sequence
-    trigger103 = set.trigger103; % end of sequence
+    trigger102  = set.trigger102; % start of sequence
+    trigger103  = set.trigger103; % end of sequence
     
 end
     
@@ -175,7 +176,7 @@ if EEG == 1
 end
 
 % object offset
-objectoff   = trialstart + isi + randperm(jitter*1000,1)/1000 - ifi;
+object_offset   = trialstart + isi + randperm(jitter*1000,1)/1000 - ifi;
 
 % 1. BEGIN DRAWING 
 for thisdraw = 1:drawlen
@@ -194,7 +195,7 @@ for thisdraw = 1:drawlen
         if thisurn == 1         % blue urn and blue bead
             % show blue window
             Screen('CopyWindow', blue_window, window, windrect, windrect)
-            beadon      = Screen('Flip', window, objectoff - slack);                % here the blue bead is fliped
+            beadon      = Screen('Flip', window, object_offset - slack);                % here the blue bead is fliped
             
             % send sequence start trigger
             if EEG == 1
@@ -204,7 +205,7 @@ for thisdraw = 1:drawlen
         else % green urn and green beed
             % show green window
             Screen('CopyWindow', green_window, window, windrect, windrect)
-            beadon      = Screen('Flip', window, objectoff - slack); 
+            beadon      = Screen('Flip', window, object_offset - slack); 
             
             % send sequence start trigger
             if EEG == 1 
@@ -217,7 +218,7 @@ for thisdraw = 1:drawlen
         if thisurn == 1 % blue urn and green bead
             % show green window
             Screen('CopyWindow', green_window, window, windrect, windrect)
-            beadon      = Screen('Flip', window, objectoff - slack);  
+            beadon      = Screen('Flip', window, object_offset - slack);  
             
             % send sequence start trigger
             if EEG == 1 
@@ -227,7 +228,7 @@ for thisdraw = 1:drawlen
         else % green urn and blue bead
             % show blue window
             Screen('CopyWindow', blue_window, window, windrect, windrect)
-            beadon      = Screen('Flip', window, objectoff - slack);  
+            beadon      = Screen('Flip', window, object_offset - slack);  
             
             % send sequence start trigger
             if EEG == 1 
@@ -237,7 +238,7 @@ for thisdraw = 1:drawlen
         end 
     end % end of statment 1 if 
     
-    beadon      = Screen('Flip', window, objectoff - slack);                % here the current bead is fliped
+    beadon      = Screen('Flip', window, object_offset - slack);                % here the current bead is fliped
     beadoff     = beadon + bead_dur - ifi;                                  % bead on for 1000 ms
     
     % 2. BRING FIXATION BACK ON
@@ -246,7 +247,7 @@ for thisdraw = 1:drawlen
     
     fprintf('bead was on for %3.4f\n', fixon - beadon);                     % time interval from the flip of the bead until the fixation
    
-    objectoff    = fixon + fix_dur - ifi;     % add jitter here?
+    object_offset    = fixon + fix_dur - ifi;     % add jitter here?
     
     % 3. SHOW RESPONSE PROMPT 
     if thisdraw < drawlen % show response window 1
@@ -257,7 +258,7 @@ for thisdraw = 1:drawlen
       
     end % end of resp prompt if statement
     
-    prompton    = Screen('Flip', window, objectoff - slack); 
+    prompton    = Screen('Flip', window, object_offset - slack); 
     
     % send response prompt trigger
     if EEG == 1 
@@ -326,7 +327,7 @@ for thisdraw = 1:drawlen
         end % if responded statement
     end % end of response while loop 
     
-    promptoff   = respmade + isi - ifi;                                     % response prompt self paced or on for 2500 ms
+    promptoffset   = respmade + isi - ifi;                                     % response prompt self paced or on for 2500 ms
     
    % 4. BRING BACK FIXATION. NEXT STEP:
    % A) if answer = 3, draw again,
@@ -336,20 +337,20 @@ for thisdraw = 1:drawlen
    % wrong answer 
    
    Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-   fixon        = Screen('Flip', window, promptoff - slack);                % fixation on, prepare for next draw or for feedback      
+   fixon        = Screen('Flip', window, promptoffset - slack);                % fixation on, prepare for next draw or for feedback      
    
    fprintf('prompt was on for %3.4f\n', fixon - prompton);                  % time interval from the the flip of the prompt until the next
    
-   objectoff    = fixon + fix_dur + randperm(jitter*1000,1)/1000 - ifi;     % add jitter here?
+   object_offset    = fixon + fix_dur + randperm(jitter*1000,1)/1000 - ifi;     % add jitter here?
    
-   % fprintf('fixation was on for %3.4f\n', objectoff); 
+   % fprintf('fixation was on for %3.4f\n', object_offset); 
    
    if answer ~= 3
        
        % if subject chose an urn, before moving to feedback, ask them to
        % rate the confidence of their choice 
        Screen('CopyWindow', confidence_window, window, windrect, windrect)
-       ratingon = Screen('Flip', window, objectoff - slack);  % rating window is on
+       ratingon = Screen('Flip', window, object_offset - slack);  % rating window is on
        
        % send confidence screen trigger
         if EEG == 1 
@@ -416,7 +417,7 @@ for thisdraw = 1:drawlen
             end % if responded statement
         end % end of response while loop
          
-       objectoff = respmade + isi + randperm(jitter*1000,1)/1000 - ifi;
+       object_offset = respmade + isi + randperm(jitter*1000,1)/1000 - ifi;
        
        if answer == 1 % if subject chose blue urn
            if thisurn == 1                                                      % if thisurn is in fact a blue urn
@@ -424,7 +425,7 @@ for thisdraw = 1:drawlen
                accuracy         = 1;                                                    % update the accuracy var
                
                Screen('CopyWindow', feedback_window1,window, windrect, windrect)% show "you win" feedback window
-               feedbackon = Screen('Flip', window, objectoff - slack);          % feedback window on 
+               feedbackon = Screen('Flip', window, object_offset - slack);          % feedback window on 
            
                % send you win trigger
                 if EEG == 1
@@ -435,7 +436,7 @@ for thisdraw = 1:drawlen
                accuracy         = 0;
                
                Screen('CopyWindow', feedback_window2,window, windrect, windrect)% show "you lose" feedback window
-               feedbackon = Screen('Flip', window, objectoff - slack);          % feedback window on 
+               feedbackon = Screen('Flip', window, object_offset - slack);          % feedback window on 
            
                % send you lose trigger
                 if EEG == 1
@@ -445,7 +446,7 @@ for thisdraw = 1:drawlen
            
            fprintf('rating was on for %3.4f\n', feedbackon - ratingon); 
            
-           objectoff = feedbackon + dfeedback - ifi;
+           object_offset = feedbackon + dfeedback - ifi;
            
            break;
            
@@ -457,7 +458,7 @@ for thisdraw = 1:drawlen
                accuracy         = 0;
                
                Screen('CopyWindow', feedback_window2,window, windrect, windrect) % show "you lose" feedback window
-               feedbackon = Screen('Flip', window, objectoff - slack);           % feedback window on 
+               feedbackon = Screen('Flip', window, object_offset - slack);           % feedback window on 
                % send you lose trigger
                 if EEG == 1
                     sp.sendTrigger(trigger14);
@@ -467,7 +468,7 @@ for thisdraw = 1:drawlen
                
                Screen('CopyWindow', feedback_window1,window, windrect, windrect) % show "you win" feedback window
                accuracy = 1;                                                     % update the accuracy var
-               feedbackon = Screen('Flip', window, objectoff - slack);           % feedback window on 
+               feedbackon = Screen('Flip', window, object_offset - slack);           % feedback window on 
                % send you lose trigger
                if EEG == 1
                    sp.sendTrigger(trigger13);
@@ -476,7 +477,7 @@ for thisdraw = 1:drawlen
 
            fprintf('rating was on for %3.4f\n', feedbackon - ratingon); 
            
-           objectoff = feedbackon + dfeedback - ifi;
+           object_offset = feedbackon + dfeedback - ifi;
            
            break
            
@@ -489,7 +490,7 @@ for thisdraw = 1:drawlen
            accuracy     = 0;
            % PUT FIXATION BACK ON 
            Screen('CopyWindow', feedback_window3,window, windrect, windrect)
-           feedbackon   = Screen('Flip', window, objectoff - slack);      % feedback window on 
+           feedbackon   = Screen('Flip', window, object_offset - slack);      % feedback window on 
            % send you lose (out of draws) trigger
            if EEG == 1
                sp.sendTrigger(trigger15);
@@ -497,17 +498,17 @@ for thisdraw = 1:drawlen
 
            fprintf('fixation was on for %3.4f\n', feedbackon - fixon); 
            
-           objectoff    = feedbackon + dfeedback - ifi;
+           object_offset    = feedbackon + dfeedback - ifi;
            break
            
        else % if this is not the last draw and subject wants to draw again
            
            Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-           objecton     = Screen('Flip', window, objectoff - slack); 
+           objecton     = Screen('Flip', window, object_offset - slack); 
            
            fprintf('fixation was on for %3.4f\n', objecton - fixon); 
            
-           objectoff    = objecton + isi - ifi;
+           object_offset    = objecton + isi - ifi;
            
        end
    end

@@ -47,10 +47,10 @@ fixation        = set.fixation;     % draw fixation
 resptime        = 10;               % 2 sec to respond. after that the question will re-appear
 fix_dur         = set.fix_dur;      % duration of the fixation
 
-choiceA          = keys.code10; % subject pressed A
-choiceB          = keys.code11; % subject pressed B
-choiceC          = keys.code12; % subject pressed C
-choiceD          = keys.code13; % subject pressed D
+choiceA          = keys.code7;  % subject pressed A
+choiceB          = keys.code8;  % subject pressed B
+choiceC          = keys.code9;  % subject pressed C
+choiceD          = keys.code10; % subject pressed D
 
 % create fixation cross offscreen and paste later (faster)
 fixationdisplay = Screen('OpenOffscreenWindow',window);

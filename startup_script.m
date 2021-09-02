@@ -55,7 +55,7 @@ switch getpath
         
         taskpath = fullfile(workingpath, 'economic');
         addpath(genpath(taskpath));
-        main_eco % run main script
+        main_economic % run main script
         
     case 'face'
         
