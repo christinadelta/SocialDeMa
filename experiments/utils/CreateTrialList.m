@@ -76,7 +76,7 @@ elseif taskNb == 2 % if this is the economic task
     if phase == 1 % if this is the ratings phase 
         
         % UNPACK SETTINGS
-        totaltrials     = set.trials;
+        totaltrials     = set.totaltrials;
         blocks          = set.blocks;
         blocktrials     = set.blocktrials; 
         itemReps        = set.itemReps;
@@ -133,6 +133,72 @@ elseif taskNb == 2 % if this is the economic task
         end
    
     end % end of phase if statement 
+    
+elseif taskNb == 3
+    
+    % which phase is it?
+    phase = set.phase;
+    
+    if phase == 1
+        
+        % UNPACK SETTINGS
+        totaltrials     = set.totaltrials;
+        blocks          = set.blocks;
+        blocktrials     = set.blocktrials; 
+        itemReps        = set.itemReps;
+        
+        tempArray       = set.items'; % create an array with all the trials
+        trialArray      = repmat(tempArray,1,itemReps);
+        
+        order           = randperm(numel(trialArray));% randomise the trial array
+        trialArray      = trialArray(order); % 
+        
+        temp            = 0; % for splitting trials in blocks 
+        
+        % trials split in blocks 
+        for i = 1:blocks
+            
+            trials.sequence{i}      = trialArray(1 + temp:blocktrials*i);
+            temp                    = temp + blocktrials; % update i
+            
+            
+        end
+        
+    else % if this is phase 2
+        
+        % UNPACK SETTINGS
+        blocks          = set.blocks;       % number of blocks
+        samples         = set.samples;      % number of samples per trial
+        totaltrials     = set.totaltrials;  % number of trials
+        blocktrials     = set.blocktrials;  % number of trials per block
+        phaseitems      = set.phaseitems;   % number of items in the 2nd phase (62% of phase 1 items)
+        items           = set.items;        % total faces
+        
+        % choose a 62% subset from the total contracts/items (that should
+        % be 300)
+        arraysize       = numel(items);
+        idx             = randperm(arraysize);
+        templist        = items(idx(1:phaseitems));
+        
+        % split the list in 30 sequences of 10 samples 
+        temp            = 0; 
+        for s = 1:totaltrials 
+            
+            list{s}     = templist(1 + temp:samples*s);
+            temp        = temp + samples;
+            
+        end
+        
+        % no split sequences in blocks (10 per block)
+        temp            = 0; % for splitting trials in blocks 
+        for i = 1:blocks
+            
+            trials.sequence{i}      = list(1 + temp:blocktrials*i);
+            temp                    = temp + blocktrials;
+            
+        end
+        
+    end % end of phase statement 
     
 end % end of taskNb if statement 
 

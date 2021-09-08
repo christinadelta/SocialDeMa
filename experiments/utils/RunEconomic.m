@@ -113,67 +113,67 @@ if phase == 1
         DrawFormattedText(background_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
         
         Screen('CopyWindow',background_window, window, windrect, windrect);
-        objecton        = Screen('Flip', window, object_offset - slack); 
+        object_onset        = Screen('Flip', window, object_offset - slack); 
         
         rt                  = NaN;
         answer              = NaN;
         resp_input          = 0;
         
-        while resp_input == 0 && (GetSecs - objecton) < response - 2*slack
+        while resp_input == 0 && (GetSecs - object_onset) < response - 2*slack
             
             [~, secs, keycode] = KbCheck; % check for input
             
             if keycode(1,code1) % if subject chose the green urn 
                 resp_input  = code1;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 1; % green urn
                 respmade    = secs;
                 
             elseif keycode(1,code2) % if subject chose the green urn 
                 resp_input  = code2;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 2; % green urn
                 respmade    = secs;
                 
             elseif keycode(1,code3) % if subject chose to draw again
                 resp_input  = code3;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 3; % draw-again 
                 respmade    = secs;
                 
             elseif keycode(1,code4)
                 resp_input  = code4;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 4; % draw-again 
                 respmade    = secs;
                 
             elseif keycode(1,code5)
                 resp_input  = code5;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 5; % draw-again 
                 respmade    = secs;
                 
             elseif keycode(1,code6)
                 resp_input  = code6;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 6; % draw-again 
                 respmade    = secs;
                 
             elseif keycode(1,code7)
                 resp_input  = code7;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 7; % draw-again 
                 respmade    = secs;
                 
             elseif keycode(1,code8)
                 resp_input  = code8;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 8; % draw-again 
                 respmade    = secs;
                 
             elseif keycode(1,code9)
                 resp_input  = code9;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 9; % draw-again 
                 respmade    = secs;
                 
@@ -189,11 +189,11 @@ if phase == 1
         object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
         
         Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-        fixationon      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+        fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
 
-        fprintf('prompt was on for %3.4f\n', fixationon - objecton);        % time interval from the the flip of the contract until fixation
+        fprintf('prompt was on for %3.4f\n', fixation_onset - object_onset);        % time interval from the the flip of the contract until fixation
 
-        object_offset   = fixationon + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
+        object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
         
         % SAVE TRIAL INFO
         trials(iTrial).sub          = sub;
@@ -301,7 +301,7 @@ else % if phase == 2
 
         Screen('CopyWindow',background_window, window, windrect, windrect);
 
-        objecton        = Screen('Flip', window, object_offset - slack);    % flip window
+        object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
         
         % send sequence start trigger
         if EEG == 1
@@ -314,13 +314,13 @@ else % if phase == 2
         resp_input          = 0;
         responseTrigNotSent = 1;
         
-        while resp_input == 0 && (GetSecs - objecton) < response - 2*slack
+        while resp_input == 0 && (GetSecs - object_onset) < response - 2*slack
             
             [~, secs, keycode] = KbCheck; % check for input
             
             if keycode(1,code1) % 
                 resp_input  = code1;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 1; % subject accepted a contract
                 respmade    = secs;
                 
@@ -332,7 +332,7 @@ else % if phase == 2
                 
             elseif keycode(1,code2) %  
                 resp_input  = code2;
-                rt          = secs - objecton;
+                rt          = secs - object_onset;
                 answer      = 2; % subject sampled again
                 respmade    = secs;
                 
@@ -355,8 +355,9 @@ else % if phase == 2
        
         % BRING FIXATION BACK ON
         Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-        fixationon      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
-        object_offset   = fixationon + fixduration - ifi; % add jitter here?
+        fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+        
+        object_offset   = fixation_onset + fixduration - ifi; % add jitter here?
 
         % IF SUBJECT ACCEPTED A CONTRACT SHOW FFEDBACK AND BREAK SEQUENCE
         % IF SUBJECT CHOSE TO SAMPLE AGAIN, SHOW FIXATION AND MOVE TO THE
@@ -373,7 +374,7 @@ else % if phase == 2
             DrawFormattedText(feedback_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
             
             Screen('CopyWindow',feedback_window, window, windrect, windrect);
-            objecton        = Screen('Flip', window, object_offset - slack);    % flip window
+            object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
             
             % send confidence screen trigger
             if EEG == 1 
@@ -381,13 +382,13 @@ else % if phase == 2
             end
             
             % DISPLAY OFFSET 
-            object_offset   = objecton + feedbacktime - ifi;
+            object_offset   = object_onset + feedbacktime - ifi;
             
             % BRING FIXATION BACK ON  
             Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-            fixationon      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+            fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
 
-            object_offset   = fixationon + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
+            object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
             
             break; % break from sequence 
             
@@ -403,10 +404,10 @@ else % if phase == 2
                 DrawFormattedText(feedback_sampling, 'Oh No! :(', 'center', ycenter-50, white);
                 DrawFormattedText(feedback_sampling, 'You you are not allowed to sample again', 'center', ycenter, white);
                 Screen('CopyWindow',feedback_sampling, window, windrect, windrect);
-                objecton        = Screen('Flip', window, object_offset - slack);    % flip window
+                object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
             
                 % DISPLAY OFFSET 
-                object_offset   = objecton + feedbacktime - ifi;
+                object_offset   = object_onset + feedbacktime - ifi;
                 
                 % DISPLAY CHOSEN CONTRACT
                 feedback_window = Screen('OpenOffscreenWindow', window, windrect);
@@ -418,28 +419,21 @@ else % if phase == 2
                 DrawFormattedText(feedback_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
 
                 Screen('CopyWindow',feedback_window, window, windrect, windrect);
-                objecton        = Screen('Flip', window, object_offset - slack);    % flip window
+                object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
 
                 % DISPLAY OFFSET 
-                object_offset   = objecton + feedbacktime - ifi;
+                object_offset   = object_onset + feedbacktime - ifi;
                 
             end
             
             % BRING FIXATION BACK ON  
             Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-            fixationon      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+            fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
 
-            fprintf('prompt was on for %3.4f\n', fixationon - objecton);        % time interval from the the flip of the contract until fixation
+            fprintf('prompt was on for %3.4f\n', fixation_onset - object_onset);        % time interval from the the flip of the contract until fixation
 
-            object_offset   = fixationon + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
+            object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
             
-            % now that we are at the end of the current sample, save the model
-            % and price to display at the bottom of the screen during the next
-            % sample
-%             previous.item{s}    = thisitem;
-%             previous.model{s}   = thismodel;
-%             previous.price{s}   = thisprice;
-              
         end
         
         % save the sequence-sampling info 
@@ -458,26 +452,28 @@ else % if phase == 2
         sp.sendTrigger(trigger101)
     end
     
+    chosenitem               = thisitem;
+
+    % save the current trial info
+    blocktrials.session      = thisession;
+    blocktrials.block        = thisblock;
+    blocktrials.trialnumber  = thistrial;
+    blocktrials.trialonset   = trialstart;
+    blocktrials.sequence     = sequence';
+    blocktrials.numsamples   = s;
+    blocktrials.chosenitem   = chosenitem;
+
+    set.blocktrials          = blocktrials; % (save the info of this trial) this will go to the main script
+    
+    WaitSecs(1); % wait two sec before flipping to the next block/
+
+    logs.trials              = trials; % save the samples 
+
+    sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
+    save(sublogs,'logs');
+
+    
 end % end of phase statement
 
-chosenitem               = thisitem;
-
-% save the current trial info
-blocktrials.session      = thisession;
-blocktrials.block        = thisblock;
-blocktrials.trialnumber  = thistrial;
-blocktrials.trialonset   = trialstart;
-blocktrials.sequence     = sequence';
-blocktrials.numsamples   = s;
-blocktrials.chosenitem   = chosenitem;
-
-set.blocktrials          = blocktrials; % (save the info of this trial) this will go to the main script
-
-WaitSecs(1); % wait two sec before flipping to the next block/
-
-logs.trials              = trials; % save the samples 
-
-sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
-save(sublogs,'logs');
 
 end

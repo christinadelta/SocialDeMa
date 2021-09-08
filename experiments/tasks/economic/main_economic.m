@@ -1,7 +1,7 @@
 %% ---------------------------------------
 % DESCRIPTION:
 
-% First version of the Beads task implemented with the PsychToolbox
+% First version of the Economic Best-Choice task implemented with the PsychToolbox
 % Depependencies:
 % 1. Matlab 2021a 
 % 2. Psychtoolbox 3
@@ -54,6 +54,7 @@ logs.time               = datestr(now, 'hhmm');
 
 logs.trialog            = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_logs.mat';
 logs.txtlog             = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_events.tsv';
+
 if phase == 2
     logs.blocktrialog   = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_blocktrials_logs.mat';
 end
@@ -145,6 +146,7 @@ try
     scrn                = screenSettings(scrn, set);                        % Define screen setup
     
     [trials, set]       = CreateTrialList(set);                             % create trials, sequences, split in runs, etc..
+    
    
     %% ---------------------------------------
     % CREATE AND RUN INSTRUCTIONS
@@ -351,14 +353,14 @@ try
                 blocktrials(trial).chosenitem  = set.blocktrials.chosenitem;
 
             end % End of trials loop
+            
+            % save trial info
+            logs.blocktrials    = blocktrials;
+            sub_log             = fullfile(logs.resultsfolder,sprintf(logs.blocktrialog,sub,taskName,iBlock,sess));
+            save(sub_log,'logs');
 
         end % end of phase if statement
-        
-        % save trial info
-        logs.blocktrials    = blocktrials;
-        sub_log             = fullfile(logs.resultsfolder,sprintf(logs.blocktrialog,sub,taskName,iBlock,sess));
-        save(sub_log,'logs');
-        
+  
         % IF THIS IS THE LAST BLOCK BREAK FROM THE LOOP AND GO DIRECTLY TO
         % THE GOODBYE SCREEN
         if iBlock == nb_blocks
@@ -398,7 +400,7 @@ try
         end
     end % end of blocks loop
     
-     % THIS IS IT...
+    % THIS IS IT...
     % show thank you window
     Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', window, scrn.textsize);

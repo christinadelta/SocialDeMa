@@ -16,8 +16,6 @@ set.EEG         = 0;        % set to 1 when running in the eeglab
 set.welcomedur  = 2.5;      % welcome screen duration = 2.5 sec
 set.jitter      = .5;       % 0.5 sec
 set.isi         = .6;   % in seconds
-phase           = sess;     %
-set.phase       = phase;
 
  % create a list of settings and parameters for the rts task 
 if taskNb == 1 % if this is the beads task
@@ -44,7 +42,7 @@ if taskNb == 1 % if this is the beads task
     set.balance     = 0;                        % balance starts from zero
     
     % DEFINE EEG TRIGGER CODES IF EEG = 1
-    if EEG == 1
+    if set.EEG == 1
         
         % 1. start with the sequence related triggers
         set.trigger1    = 1;    % BLUE URN - blue bead (high prob)
@@ -79,6 +77,9 @@ if taskNb == 1 % if this is the beads task
     
 elseif taskNb == 2
     
+    phase           = sess;     % this is only for the economic and facial attarctivenes tasks
+    set.phase       = phase;
+
     if phase == 1
         
         % EXPERIMENTAL SETTINGS
@@ -89,7 +90,7 @@ elseif taskNb == 2
         set.blocks          = 15; 
         set.itemReps        = 2; 
         set.totaltrials     = 480*set.itemReps;
-        set.blocktrials     = set.trials/set.blocks;
+        set.blocktrials     = set.totaltrials/set.blocks;
         
     else % if phase is 2
         
@@ -106,7 +107,7 @@ elseif taskNb == 2
         set.phaseitems      = set.samples*set.totaltrials; % that's ~65% of the total phase 1 contracts
         
         % DEFINE EEG TRIGGERS 
-        if EEG == 1
+        if set.EEG == 1
             
             set.trigger11 = 11; % response trigger -- subject accepted a contract
             set.trigger12 = 12; % response trigger -- subject samples again
@@ -117,6 +118,58 @@ elseif taskNb == 2
         end
        
     end % end of phase if statement
+    
+elseif taskNb == 3
+    
+    phase           = sess;     % this is only for the economic and facial attarctivenes tasks
+    set.phase       = phase;
+    
+    if phase == 1
+        
+        % EXPERIMENTAL SETTINGS
+        set.fixdur          = .7;   % in sec
+        set.response        = 10;   % indicative of max response time 
+        
+        % STIMULUS SETTINGS
+        set.stimsize        = 252;  % resize images or not?
+        set.stimsize_deg    = 5;    % degrees of visual angle
+        
+        % TASK/PHASE SETTINGS
+        set.blocks          = 15; 
+        set.itemReps        = 2; 
+        set.totaltrials     = 480*set.itemReps;
+        set.blocktrials     = set.totaltrials/set.blocks;
+        
+    else % if phase is 2
+        
+        % EXPERIMENTAL SETTINGS
+        set.fixdur          = .7;   % in sec
+        set.response        = 10;   % indicative of max response time 
+        set.feedback        = 3;    % this will be just the presentation of the accepted contract
+        
+        % STIMULUS SETTINGS
+        set.stimsize        = 252;  % resize images or not?
+        set.stimsize_deg    = 5;    % degrees of visual angle
+        
+        % TASK/PHASE SETTINGS
+        set.blocks          = 3; 
+        set.samples         = 10; 
+        set.totaltrials     = 30;
+        set.blocktrials     = set.totaltrials/set.blocks;
+        set.phaseitems      = set.samples*set.totaltrials; % that's ~62% of the total phase 1 faces
+        
+        % DEFINE EEG TRIGGERS 
+        if set.EEG == 1
+            
+            set.trigger11 = 11; % response trigger -- subject accepted a contract
+            set.trigger12 = 12; % response trigger -- subject samples again
+            set.trigger13 = 13; % feedback trigger
+            
+            set.trigger100 = 100; % sequence start
+            set.trigger101 = 101; % sequence end
+        end
+
+    end % end of phase statement 
     
 end % end of if statement 
 
