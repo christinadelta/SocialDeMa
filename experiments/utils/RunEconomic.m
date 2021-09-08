@@ -232,7 +232,7 @@ else % if phase == 2
     response        = set.response;     % response time (5 sec or self-paced)
     feedbacktime    = set.feedback;     % feedback duration
     
-    ptextsize       = scrn.ptextsize;
+    smalltext       = scrn.smalltext;
     ptextbold       = scrn.ptextbold;
     
     % UNPACK STIMULI 
@@ -248,14 +248,8 @@ else % if phase == 2
 
     samples         = set.samples;
     trials          = [];     % store trial info
-    previous        = [];     % store the previous contracts here to show at the bottom of the screen
+    previous        = [];     % store the previous prices here to show at the bottom of the screen
     blocktrials     = [];     % here we store the info of the current sequence
-    
-    % create a widnow that will correspond to the previous sample presented
-    % at the bottom of the screen
-    previous_s_window = Screen('OpenOffscreenWindow', window, windrect);
-    Screen('TextSize', previous_s_window, ptextsize);
-    Screen('FillRect', previous_s_window, grey ,windrect);
 
     % START THE TRIAL WITH A FIXATION CROSS
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
@@ -290,18 +284,50 @@ else % if phase == 2
         thisprice       = price{thisitem};
         thismodel       = model{thisitem};
         
-        % DISPLAY CONTRACT
-        background_window = Screen('OpenOffscreenWindow', window, windrect);
-        Screen('TextSize', background_window, textsize);
-        Screen('FillRect', background_window, grey ,windrect);
-        DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
-        DrawFormattedText(background_window, thismodel, 'center', ycenter-50, white); 
-        DrawFormattedText(background_window, [pricestr, thisprice], 'center', ycenter, white); 
-        DrawFormattedText(background_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
+        xcenters        = xcenter - 600; % start adding the previous prices at xcenter - 350
+        
+        % DISPLAY CONTRACT 
+        if s == 1
+            
+            % if this is the 1st sample show only the 1st contract
+            background_window = Screen('OpenOffscreenWindow', window, windrect);
+            Screen('TextSize', background_window, textsize);
+            Screen('FillRect', background_window, grey ,windrect);
+            DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+            DrawFormattedText(background_window, thismodel, 'center', ycenter-50, white); 
+            DrawFormattedText(background_window, [pricestr, thisprice], 'center', ycenter, white); 
+            DrawFormattedText(background_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
 
-        Screen('CopyWindow',background_window, window, windrect, windrect);
+            Screen('CopyWindow',background_window, window, windrect, windrect);
 
-        object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
+            object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
+
+        else
+            
+            previous_len = length(previous); % how many previous prices?
+            
+            % background_window = Screen('OpenOffscreenWindow', window, windrect);
+            Screen('TextSize', window, textsize);
+            Screen('FillRect', window, grey ,windrect);
+            DrawFormattedText(window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+            DrawFormattedText(window, thismodel, 'center', ycenter-50, white); 
+            DrawFormattedText(window, [pricestr, thisprice], 'center', ycenter, white); 
+            DrawFormattedText(window, [thisdescription, thisdata], 'center', ycenter+50, white); 
+            
+            for l = 1:previous_len
+                % show the previous prices at the bottom of the screen
+                Screen('TextSize', window, smalltext);
+                DrawFormattedText(window, previous{l}, xcenters, ycenter+350, white); 
+                
+                % update xcenters, so that previous prices are not
+                % displayed on top of each other
+                xcenters = xcenters+80;
+            end
+
+            Screen('CopyWindow',window, window, windrect, windrect);
+            object_onset = Screen('Flip', window, object_offset - slack);    % flip window
+            
+        end
         
         % send sequence start trigger
         if EEG == 1
@@ -353,16 +379,16 @@ else % if phase == 2
         % object offset 
         object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
        
-        % BRING FIXATION BACK ON
-        Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-        fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
-        
-        object_offset   = fixation_onset + fixduration - ifi; % add jitter here?
-
         % IF SUBJECT ACCEPTED A CONTRACT SHOW FFEDBACK AND BREAK SEQUENCE
         % IF SUBJECT CHOSE TO SAMPLE AGAIN, SHOW FIXATION AND MOVE TO THE
         % NEXT ITEM
         if answer == 1
+            
+            % BRING FIXATION BACK ON
+            Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+            fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+
+            object_offset   = fixation_onset + fixduration - ifi; % add jitter here?
  
             % DISPLAY CHOSEN CONTRACT
             feedback_window = Screen('OpenOffscreenWindow', window, windrect);
@@ -381,7 +407,7 @@ else % if phase == 2
                 sp.sendTrigger(trigger13)
             end
             
-            % DISPLAY OFFSET 
+            % DISPLAY REQUESTED OBJECT OFFSET 
             object_offset   = object_onset + feedbacktime - ifi;
             
             % BRING FIXATION BACK ON  
@@ -398,6 +424,13 @@ else % if phase == 2
             % if by the 10th sample subject chooses to sample again 
             if s == samples 
                 
+                % BRING FIXATION BACK ON
+                Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+                fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+
+                object_offset   = fixation_onset + fixduration - ifi; % add jitter here?
+
+                % DISPLAY FEEDBACK (WARNING) 
                 feedback_sampling = Screen('OpenOffscreenWindow',window);
                 Screen('TextSize', feedback_sampling, textsize);
                 Screen('FillRect', feedback_sampling, grey ,windrect);
@@ -406,7 +439,7 @@ else % if phase == 2
                 Screen('CopyWindow',feedback_sampling, window, windrect, windrect);
                 object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
             
-                % DISPLAY OFFSET 
+                % DISPLAY REQUESTED OBJECT OFFSET 
                 object_offset   = object_onset + feedbacktime - ifi;
                 
                 % DISPLAY CHOSEN CONTRACT
@@ -426,7 +459,7 @@ else % if phase == 2
                 
             end
             
-            % BRING FIXATION BACK ON  
+            % BRING FIXATION BACK ON AND MOVE TO THE NEXT TRIAL/SAMPLE
             Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
             fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
 
@@ -435,6 +468,10 @@ else % if phase == 2
             object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
             
         end
+        
+        % store the current price to show at the bottom of the screen
+        % (during the next samples)
+        previous{s}             = thisprice;
         
         % save the sequence-sampling info 
         trials(s).session      = thisession;

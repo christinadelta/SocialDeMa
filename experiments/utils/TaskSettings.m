@@ -104,7 +104,7 @@ elseif taskNb == 2
         set.samples         = 10; 
         set.totaltrials     = 30;
         set.blocktrials     = set.totaltrials/set.blocks;
-        set.phaseitems      = set.samples*set.totaltrials; % that's ~65% of the total phase 1 contracts
+        set.phaseitems      = set.samples*set.totaltrials; % that's ~62% of the total phase 1 contracts
         
         % DEFINE EEG TRIGGERS 
         if set.EEG == 1

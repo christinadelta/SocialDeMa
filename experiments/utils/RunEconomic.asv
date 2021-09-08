@@ -1,4 +1,4 @@
-function [set, logs] = RunFace(set, scrn, logs)
+function [set, logs] = RunEconomic(set, scrn, logs)
 
 % THIS IS A SUBFUNCTION, PART OF THE "OPTIMAL STOPPING EXPERIMENTS". 
 
@@ -24,8 +24,6 @@ window          = scrn.window;      % main window
 windrect        = scrn.windrect;
 xcenter         = scrn.xcenter;
 ycenter         = scrn.ycenter;
-objectx         = scrn.objectx;
-objecty         = scrn.objecty;
 ifi             = scrn.ifi;          % frame duration
 slack           = scrn.slack;        % slack is ifi/2 (important for timing)
 white           = scrn.white;
@@ -47,17 +45,13 @@ Screen('TextFont',fixationdisplay, textfont);
 Screen('TextSize',fixationdisplay, fixsize);
 DrawFormattedText(fixationdisplay, fixation, 'center', ycenter, white);
 
-% Compute destination rectangle location
-destrect        = [xcenter-objectx/2, ycenter-objecty/2, xcenter+objectx/2, ycenter+objecty/2];
-
-
 %% ----- Run the best-choice economic task ------ %%
 
 abort       = 0;
 HideCursor;
 
 if phase == 1
-     
+    
     % UNPACK PHASE ONE PARAMETERS 
     sequence        = set.sequence;     % this is the current sequence/trial
     fixduration     = set.fixdur;       % fixation duration 
@@ -65,19 +59,11 @@ if phase == 1
     
     % UNPACK STIMULI 
     data            = set.data;
-    objects         = set.objects;
+    description     = set.description;
+    price           = set.price;
+    model           = set.model; 
     
-    % make a cell to store the image textures
-    textures                 = cell(1,objects);
-    
-    for i=1:objects
-        
-        % make textures
-        textures{i} = Screen('MakeTexture', window, data(i).file); 
-        
-    end
-    
-     % UNPACK RESPONSE KEYS
+    % UNPACK RESPONSE KEYS
     code1       = set.code1;
     code2       = set.code2;
     code3       = set.code3;
@@ -110,10 +96,24 @@ if phase == 1
         
         % get current trial details 
         thisitem        = sequence(iTrial); % index of the current item 
+        thisdata        = data{thisitem};
+        thisdescription = description{thisitem};
+        thisprice       = price{thisitem};
+        thismodel       = model{thisitem};
         
-        % DISPLAY THE CURRENT FACE
-        Screen('DrawTexture', window, textures{thisitem}, [], destrect);     % display thisitem
-        object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
+        pricestr        = 'Price: ';
+        
+        % DISPLAY THE CURRENT ITEM/CONTRACT  
+        background_window = Screen('OpenOffscreenWindow', window, windrect);
+        Screen('TextSize', background_window, textsize);
+        Screen('FillRect', background_window, grey ,windrect);
+        DrawFormattedText(background_window, 'Using keys 1 to 9, to rate the smartphone contract', 'center', ycenter-300, white);
+        DrawFormattedText(background_window, thismodel, 'center', ycenter-50, white); 
+        DrawFormattedText(background_window, [pricestr, thisprice], 'center', ycenter, white); 
+        DrawFormattedText(background_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
+        
+        Screen('CopyWindow',background_window, window, windrect, windrect);
+        object_onset        = Screen('Flip', window, object_offset - slack); 
         
         rt                  = NaN;
         answer              = NaN;
@@ -186,14 +186,14 @@ if phase == 1
         end % end of response while loop
         
         % object offset 
-        object_offset       = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
+        object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
         
         Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
         fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
 
         fprintf('prompt was on for %3.4f\n', fixation_onset - object_onset);        % time interval from the the flip of the contract until fixation
 
-        object_offset       = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
+        object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
         
         % SAVE TRIAL INFO
         trials(iTrial).sub          = sub;
@@ -208,18 +208,11 @@ if phase == 1
         
         if abort; fclose('all');break; end 
         
-    end % end of trials loop
+    end % end of trial loop
     
-    WaitSecs(1); % wait two sec before flipping to the next block/
-
-    logs.trials              = trials; % save the samples 
-
-    sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
-    save(sublogs,'logs');
+else % if phase == 2
     
-else % if this is phase 2 
-    
-     if EEG == 1 
+    if EEG == 1 
         
         % UNPACK TRIGGERS
         sp          = set.sp;
@@ -230,28 +223,24 @@ else % if this is phase 2
         trigger100  = set.trigger100; % start of sequence
         trigger101  = set.trigger101; % end of sequence
 
-     end
+    end
     
-      % UNPACK SETTINGS STRUCT for phase 2
+    % UNPACK SETTINGS STRUCT for phase 2
     thistrial       = set.thisTrial;    % current sequence/trial number
     sequence        = set.sequence;     % this is the current sequence/trial
     fixduration     = set.fixdur;       % fixation duration 
     response        = set.response;     % response time (5 sec or self-paced)
     feedbacktime    = set.feedback;     % feedback duration
     
+    smalltext       = scrn.smalltext;
+    ptextbold       = scrn.ptextbold;
+    
     % UNPACK STIMULI 
     data            = set.data;
-    objects         = set.objects;
-    
-    % make a cell to store the image textures
-    textures                 = cell(1,objects);
-    
-    for i=1:objects
-        
-        % make textures
-        textures{i} = Screen('MakeTexture', window, data(i).file); 
-        
-    end
+    description     = set.description;
+    price           = set.price;
+    model           = set.model; 
+    pricestr        = 'Price: ';
     
      % UNPACK RESPONSE KEYS
     code1           = set.code1;
@@ -259,8 +248,9 @@ else % if this is phase 2
 
     samples         = set.samples;
     trials          = [];     % store trial info
+    previous        = [];     % store the previous prices here to show at the bottom of the screen
     blocktrials     = [];     % here we store the info of the current sequence
-    
+
     % START THE TRIAL WITH A FIXATION CROSS
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
     fliptime    = Screen('Flip', window); % flip fixation window
@@ -273,7 +263,7 @@ else % if this is phase 2
     
     % object offset
     object_offset   = trialstart + isi + randperm(jitter*1000,1)/1000 - ifi;
-    
+
     % start sampling 
     for s = 1:samples
         
@@ -289,18 +279,55 @@ else % if this is phase 2
         end
         
         thisitem        = sequence(s); % index of the current item
+        thisdata        = data{thisitem};
+        thisdescription = description{thisitem};
+        thisprice       = price{thisitem};
+        thismodel       = model{thisitem};
         
-        % DISPLAY THE CURRENT FACE - Backround window (the number of
-        % sample)
-        background_window = Screen('OpenOffscreenWindow', window, windrect);
-        Screen('TextSize', background_window, textsize);
-        Screen('FillRect', background_window, grey ,windrect);
-        DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+        xcenters        = xcenter - 600; % start adding the previous prices at xcenter - 350
         
-         % DISPLAY THE CURRENT FACE - the
-        Screen('DrawTexture', window, textures{thisitem}, [], destrect);     % display thisitem
-        Screen('CopyWindow',background_window, window, windrect, windrect);
-        object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
+        % DISPLAY CONTRACT 
+        if s == 1
+            
+            % if this is the 1st sample show only the 1st contract
+            background_window = Screen('OpenOffscreenWindow', window, windrect);
+            Screen('TextSize', background_window, textsize);
+            Screen('FillRect', background_window, grey ,windrect);
+            DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+            DrawFormattedText(background_window, thismodel, 'center', ycenter-50, white); 
+            DrawFormattedText(background_window, [pricestr, thisprice], 'center', ycenter, white); 
+            DrawFormattedText(background_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
+
+            Screen('CopyWindow',background_window, window, windrect, windrect);
+
+            object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
+
+        else
+            
+            previous_len = length(previous); % how many previous prices?
+            
+            % background_window = Screen('OpenOffscreenWindow', window, windrect);
+            Screen('TextSize', window, textsize);
+            Screen('FillRect', window, grey ,windrect);
+            DrawFormattedText(window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+            DrawFormattedText(window, thismodel, 'center', ycenter-50, white); 
+            DrawFormattedText(window, [pricestr, thisprice], 'center', ycenter, white); 
+            DrawFormattedText(window, [thisdescription, thisdata], 'center', ycenter+50, white); 
+            
+            for l = 1:previous_len
+                % show the previous prices at the bottom of the screen
+                Screen('TextSize', window, smalltext);
+                DrawFormattedText(window, previous{l}, xcenters, ycenter+350, white); 
+                
+                % update xcenters, so that previous prices are not
+                % displayed on top of each other
+                xcenters = xcenters+80;
+            end
+
+            Screen('CopyWindow',window, window, windrect, windrect);
+            object_onset = Screen('Flip', window, object_offset - slack);    % flip window
+            
+        end
         
         % send sequence start trigger
         if EEG == 1
@@ -320,7 +347,7 @@ else % if this is phase 2
             if keycode(1,code1) % 
                 resp_input  = code1;
                 rt          = secs - object_onset;
-                answer      = 1; % subject accepted a face/date
+                answer      = 1; % subject accepted a contract
                 respmade    = secs;
                 
                 % send response trigger -- subject accepted an option
@@ -352,25 +379,26 @@ else % if this is phase 2
         % object offset 
         object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
        
-        % BRING FIXATION BACK ON
-        Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-        fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
-        
-        object_offset   = fixation_onset + fixduration +  isi + randperm(jitter*1000,1)/1000 - ifi;  % add jitter here?
-
-        % IF SUBJECT ACCEPTED A FACE/DATE SHOW FFEDBACK AND BREAK SEQUENCE
+        % IF SUBJECT ACCEPTED A CONTRACT SHOW FFEDBACK AND BREAK SEQUENCE
         % IF SUBJECT CHOSE TO SAMPLE AGAIN, SHOW FIXATION AND MOVE TO THE
-        % NEXT FACE
+        % NEXT ITEM
         if answer == 1
             
+            % BRING FIXATION BACK ON
+            Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+            fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+
+            object_offset   = fixation_onset + fixduration - ifi; % add jitter here?
+ 
             % DISPLAY CHOSEN CONTRACT
             feedback_window = Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', feedback_window, textsize);
             Screen('FillRect', feedback_window, grey ,windrect);
-            DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+            DrawFormattedText(feedback_window, 'Congratulations! This is your new smartphone contract.', 'center', ycenter-300, white);
+            DrawFormattedText(feedback_window, thismodel, 'center', ycenter-50, white); 
+            DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter, white); 
+            DrawFormattedText(feedback_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
             
-            % DISPLAY THE CURRENT FACE
-            Screen('DrawTexture', feedback_window, textures{thisitem}, [], destrect);     % display the chosen item
             Screen('CopyWindow',feedback_window, window, windrect, windrect);
             object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
             
@@ -379,7 +407,7 @@ else % if this is phase 2
                 sp.sendTrigger(trigger13)
             end
             
-            % DISPLAY OFFSET 
+            % DISPLAY REQUESTED OBJECT OFFSET 
             object_offset   = object_onset + feedbacktime - ifi;
             
             % BRING FIXATION BACK ON  
@@ -390,11 +418,19 @@ else % if this is phase 2
             
             break; % break from sequence 
             
+            
         else % if subject wants to sample again or if subject doesn't give a response, move to the next sample
             
             % if by the 10th sample subject chooses to sample again 
             if s == samples 
                 
+                % BRING FIXATION BACK ON
+                Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+                fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+
+                object_offset   = fixation_onset + fixduration - ifi; % add jitter here?
+
+                % 
                 feedback_sampling = Screen('OpenOffscreenWindow',window);
                 Screen('TextSize', feedback_sampling, textsize);
                 Screen('FillRect', feedback_sampling, grey ,windrect);
@@ -410,22 +446,18 @@ else % if this is phase 2
                 feedback_window = Screen('OpenOffscreenWindow', window, windrect);
                 Screen('TextSize', feedback_window, textsize);
                 Screen('FillRect', feedback_window, grey ,windrect);
-                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+                DrawFormattedText(feedback_window, 'Congratulations! This is your new smartphone contract.', 'center', ycenter-300, white);
+                DrawFormattedText(feedback_window, thismodel, 'center', ycenter-50, white); 
+                DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter, white); 
+                DrawFormattedText(feedback_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
 
-                % DISPLAY THE CURRENT FACE
-                Screen('DrawTexture', feedback_window, textures{thisitem}, [], destrect);     % display the chosen item
                 Screen('CopyWindow',feedback_window, window, windrect, windrect);
                 object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
 
-                % send confidence screen trigger
-                if EEG == 1 
-                    sp.sendTrigger(trigger13)
-                end
-
-                % DISPLAY OBJECT OFFSET 
+                % DISPLAY OFFSET 
                 object_offset   = object_onset + feedbacktime - ifi;
                 
-            end % end of s statement  
+            end
             
             % BRING FIXATION BACK ON  
             Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
@@ -435,7 +467,11 @@ else % if this is phase 2
 
             object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
             
-        end % end of feedback statement
+        end
+        
+        % store the current price to show at the bottom of the screen
+        % (during the next samples)
+        previous{s} = thisprice;
         
         % save the sequence-sampling info 
         trials(s).session      = thisession;
@@ -446,7 +482,8 @@ else % if this is phase 2
         trials(s).rt           = rt;
         
         if abort; fclose('all');break; end 
-    end % end of sampling loop
+        
+    end % end of sampling for loop  
     
     if EEG == 1 
         sp.sendTrigger(trigger101)
@@ -472,7 +509,8 @@ else % if this is phase 2
     sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
     save(sublogs,'logs');
 
-end % end of phase statement 
+    
+end % end of phase statement
 
 
 end

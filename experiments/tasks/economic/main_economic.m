@@ -80,20 +80,20 @@ try
     scrn.black      = [0 0 0];
     scrn.white      = [255 255 255];
     scrn.grey       = [128 128 128];
-    scrn.green      = [0 140 54];
-    scrn.blue       = [30 70 155];
-    scrn.red        = [225 25 0];
+%     scrn.green      = [0 140 54];
+%     scrn.blue       = [30 70 155];
+%     scrn.red        = [225 25 0];
 
     % text settings
     scrn.textfont       = 'Verdana';
-    scrn.textsize       = 20;
+    scrn.textsize       = 25;
     scrn.fixationsize   = 30;
     scrn.textbold       = 1; 
     
     % create text settings for the previous sample (this should be very
     % small to appear at the bottom of the screen
     if phase == 2
-        scrn.ptextsize      = 8;
+        scrn.smalltext      = 15;
         scrn.ptextbold      = 1;
     end
     
@@ -143,7 +143,7 @@ try
     
     set                 = loaditems(set, wd);                               % read the excel file with the items (contracts)
     
-    scrn                = screenSettings(scrn, set);                        % Define screen setup
+    scrn                = screenSettings(scrn, taskNb);                     % Define screen setup
     
     [trials, set]       = CreateTrialList(set);                             % create trials, sequences, split in runs, etc..
     

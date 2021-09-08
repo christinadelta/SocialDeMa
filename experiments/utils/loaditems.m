@@ -21,7 +21,7 @@ if taskNb == 2
     % remove headers)
     headers                 = 1; 
     % how many columns?
-    columns                 = 7; 
+    columns                 = 5; 
     
     % read the excel file
     [vars, txt ,~]          = xlsread(fullfile(exceldir, 'BestChoice_Economic_ItemList.xlsx'));
@@ -33,10 +33,10 @@ if taskNb == 2
 
     % keep the relevant information
     for i = 1:length(vars)
-        set.data{i}        = txt{i,5};
-        set.description{i} = txt{i,4};
-        set.price{i}       = txt{i,7};
-        set.model{i}       = txt{i,8};
+        set.data{i}        = txt{i,3};
+        set.description{i} = txt{i,2};
+        set.price{i}       = txt{i,4};
+        set.model{i}       = txt{i,5};
     end
     
 elseif taskNb == 3

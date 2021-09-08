@@ -1,4 +1,4 @@
-function [scrn] = screenSettings(scrn)
+function [scrn] = screenSettings(scrn, taskNb)
 
 % screen settings of the optimal stopping tasks
 % 1. defines screen settings
@@ -15,15 +15,19 @@ scrn.distview       = 700;
 scrn.width          = scrn.actwidth;
 scrn.height         = scrn.actheight;
 
-stimdeg             = scrn.stimdeg;
+
 
 %% define object x and y 
-
-% don't change anything here
-angleradn       = 2 * atan(scrn.width / 2 /scrn.distview);
-angledeg        = angleradn * (180/pi);
-pix             = scrn.screenRes(1) / angledeg;
-scrn.objectx    = round(stimdeg * pix);
-scrn.objecty    = round(stimdeg * pix);
+if taskNb == 3
+    
+    stimdeg             = scrn.stimdeg;
+    % don't change anything here
+    angleradn       = 2 * atan(scrn.width / 2 /scrn.distview);
+    angledeg        = angleradn * (180/pi);
+    pix             = scrn.screenRes(1) / angledeg;
+    scrn.objectx    = round(stimdeg * pix);
+    scrn.objecty    = round(stimdeg * pix);
+    
+end
 
 end
