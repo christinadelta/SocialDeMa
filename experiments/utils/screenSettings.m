@@ -27,7 +27,7 @@ if taskNb == 3
     pix             = scrn.screenRes(1) / angledeg;
     scrn.objectx    = round(stimdeg * pix);
     scrn.objecty    = round(stimdeg * pix);
-    
+   
 end
 
 end

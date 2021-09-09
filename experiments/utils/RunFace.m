@@ -18,6 +18,8 @@ jitter          = set.jitter;
 fixation        = set.fixation;     % draw fixation
 EEG             = set.EEG;          % is it a EEG session? 
 
+textures        = set.textures;     % this will be used to draw the textures on screen
+
 esckey          = set.code21;       % allows subject to abort experiment;
 
 window          = scrn.window;      % main window
@@ -30,7 +32,6 @@ ifi             = scrn.ifi;          % frame duration
 slack           = scrn.slack;        % slack is ifi/2 (important for timing)
 white           = scrn.white;
 grey            = scrn.grey;
-black           = scrn.black;
 fixsize         = scrn.fixationsize;
 textfont        = scrn.textfont;
 textsize        = scrn.textsize;
@@ -49,6 +50,7 @@ DrawFormattedText(fixationdisplay, fixation, 'center', ycenter, white);
 
 % Compute destination rectangle location
 destrect        = [xcenter-objectx/2, ycenter-objecty/2, xcenter+objectx/2, ycenter+objecty/2];
+%destrect        = [xcenter-objectx/4, ycenter-objecty/4, xcenter+objectx/4, ycenter+objecty/4];
 
 
 %% ----- Run the best-choice economic task ------ %%
@@ -62,20 +64,6 @@ if phase == 1
     sequence        = set.sequence;     % this is the current sequence/trial
     fixduration     = set.fixdur;       % fixation duration 
     response        = set.response;     % response time (5 sec or self-paced)
-    
-    % UNPACK STIMULI 
-    data            = set.data;
-    objects         = set.objects;
-    
-    % make a cell to store the image textures
-    textures                 = cell(1,objects);
-    
-    for i=1:objects
-        
-        % make textures
-        textures{i} = Screen('MakeTexture', window, data(i).file); 
-        
-    end
     
      % UNPACK RESPONSE KEYS
     code1       = set.code1;
@@ -218,7 +206,7 @@ if phase == 1
     save(sublogs,'logs');
     
 else % if this is phase 2 
-    
+
      if EEG == 1 
         
         % UNPACK TRIGGERS
@@ -238,28 +226,17 @@ else % if this is phase 2
     fixduration     = set.fixdur;       % fixation duration 
     response        = set.response;     % response time (5 sec or self-paced)
     feedbacktime    = set.feedback;     % feedback duration
+    smalltex        = set.smalltex;     % small textures 
     
-    % UNPACK STIMULI 
-    data            = set.data;
-    objects         = set.objects;
-    
-    % make a cell to store the image textures
-    textures                 = cell(1,objects);
-    
-    for i=1:objects
-        
-        % make textures
-        textures{i} = Screen('MakeTexture', window, data(i).file); 
-        
-    end
     
      % UNPACK RESPONSE KEYS
     code1           = set.code1;
     code2           = set.code2;
 
     samples         = set.samples;
-    trials          = [];     % store trial info
-    blocktrials     = [];     % here we store the info of the current sequence
+    trials          = [];   % store trial info
+    previous        = nan;   % store previous samples
+    blocktrials     = [];   % here we store the info of the current sequence
     
     % START THE TRIAL WITH A FIXATION CROSS
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
@@ -290,18 +267,50 @@ else % if this is phase 2
         
         thisitem        = sequence(s); % index of the current item
         
-        % DISPLAY THE CURRENT FACE - Backround window (the number of
-        % sample)
-        background_window = Screen('OpenOffscreenWindow', window, windrect);
-        Screen('TextSize', background_window, textsize);
-        Screen('FillRect', background_window, grey ,windrect);
-        DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+        Xchange         = xcenter-600; % this will help define x positions of the small images
+        Ychange         = ycenter+350; % this is the y position of the small images
         
-         % DISPLAY THE CURRENT FACE - the actual face
-        Screen('DrawTexture', background_window, textures{thisitem}, [], destrect);     % display thisitem
-        Screen('CopyWindow',background_window, window, windrect, windrect);
-        object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
-        
+        if s == 1
+            % DISPLAY THE CURRENT FACE - Backround window (the number of
+            % sample)
+            background_window = Screen('OpenOffscreenWindow', window, windrect);
+            Screen('TextSize', background_window, textsize);
+            Screen('FillRect', background_window, grey ,windrect);
+            DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+
+             % DISPLAY THE CURRENT FACE - the actual face
+            Screen('DrawTexture', background_window, textures{thisitem}, [], destrect);     % display thisitem
+            Screen('CopyWindow',background_window, window, windrect, windrect);
+            object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
+            
+        else % if it is not the first sample
+            
+            previous_len = length(previous);  % how many previous faces?
+            
+            % image size and position on screen (for the small images)
+            smallrects  = nan(4,previous_len); 
+            
+            for l = 1:previous_len
+                smallrects(:,l) = [Xchange-objectx/6, Ychange-objecty/6, Xchange+objectx/6, Ychange+objecty/6];
+                
+                Xchange = Xchange+100;
+            end
+            
+            % DISPLAY THE CURRENT FACE - Backround window (the number of
+            % sample)
+            background_window = Screen('OpenOffscreenWindow', window, windrect);
+            Screen('TextSize', background_window, textsize);
+            Screen('FillRect', background_window, grey ,windrect);
+            DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+
+             % DISPLAY THE CURRENT FACE - the actual face
+            Screen('DrawTexture', background_window, textures{thisitem}, [], destrect);     % display thisitem
+            Screen('DrawTextures', background_window, [smalltex{previous}], [], smallrects);     % display small items
+            
+            Screen('CopyWindow',background_window, window, windrect, windrect);
+            object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
+        end
+    
         % send sequence start trigger
         if EEG == 1
             sp.sendTrigger(trigger1) % blue urn -- high prob blue bead trigger
@@ -436,6 +445,10 @@ else % if this is phase 2
             object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
             
         end % end of feedback statement
+        
+        % store the cuurent face to show at the bottof of the screen during
+        % next samples
+        previous(s)            = thisitem;
         
         % save the sequence-sampling info 
         trials(s).session      = thisession;

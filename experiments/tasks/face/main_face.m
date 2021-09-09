@@ -145,9 +145,42 @@ try
     set                     = loaditems(set, wd);                           % read the excel file with the items (contracts)
    
     scrn.stimdeg            = set.stimsize_deg;
-    scrn                    = screenSettings(scrn);                         % Define screen setup
+    scrn                    = screenSettings(scrn, taskNb);                         % Define screen setup
        
     [trials, set]           = CreateTrialList(set);                         % create trials, sequences, split in runs, etc..
+    
+    %% ---------------------------------------
+    % MAKE IMAGE TEXTURES FOR BOTH SIZES (NORMAL AND SMALL)
+    % UNPACK STIMULI 
+    data            = set.data;
+    objects         = set.objects;
+    
+    % make a cell to store the image textures
+    textures        = cell(1,objects);
+    
+    
+    for i=1:objects
+        
+        % make textures
+        textures{i} = Screen('MakeTexture', window, data(i).file); 
+        
+    end
+    
+    % UPDATE SETTIGS STRUCT
+    set.textures = textures;
+    
+    if phase == 2
+        
+        % if this is the second phase, also include small textures
+        smalltex        = cell(1,objects);       
+        
+        for j = 1:objects
+            
+            smalltex{j} = Screen('MakeTexture', window, data(j).small); 
+        end
+        
+        set.smalltex = smalltex;
+    end 
     
     %% ---------------------------------------
     % CREATE AND RUN INSTRUCTIONS

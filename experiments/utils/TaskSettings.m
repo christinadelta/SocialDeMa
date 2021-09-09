@@ -149,7 +149,8 @@ elseif taskNb == 3
         
         % STIMULUS SETTINGS
         set.stimsize        = 252;  % resize images or not?
-        set.stimsize_deg    = 5;    % degrees of visual angle
+        set.smallsize       = 50;   % this size will be used to display all the previous samples at the bottom of the screen 
+        set.stimsize_deg    =4;    % degrees of visual angle
         
         % TASK/PHASE SETTINGS
         set.blocks          = 3; 
