@@ -15,7 +15,7 @@ set.fixation    = '+';      % fixation cross
 set.EEG         = 0;        % set to 1 when running in the eeglab
 set.welcomedur  = 2.5;      % welcome screen duration = 2.5 sec
 set.jitter      = .5;       % 0.5 sec
-set.isi         = .6;   % in seconds
+set.isi         = .5;       % in seconds
 
  % create a list of settings and parameters for the rts task 
 if taskNb == 1 % if this is the beads task
@@ -25,11 +25,11 @@ if taskNb == 1 % if this is the beads task
 
     % EXPERIMENTAL SETTINGS
     set.infoscreen  = 2.5;  % this screen appears at the beginning of every sequence and informs the participant abou sequence number and probabilities of draws 
-    set.bead_dur    = 0.6;  % bead duration in seconds
+    set.bead_dur    = 0.5;  % bead duration in seconds
     set.response    = 2.5;  % self-paced or up to 2.5 sec 
     set.confrating  = 15;   % duration of the confidence rating screen. Self-paced or up to 15 sec
     set.fix_dur     = 0.5;  % duration of the fixation cross
-    set.feed_dur    = 2.5;  % duration of the feedback window self-paced or up to 3 sec
+    set.feed_dur    = 2;    % duration of the feedback window self-paced or up to 3 sec
 
     % TASK PARAMETERS 
     set.trials      = 52;                       % total trials
@@ -39,6 +39,7 @@ if taskNb == 1 % if this is the beads task
     set.prob        = [0.8 0.6];                % 8:2 or 6:4 proportion of the beads in each of the two urns
     set.penalty     = 0.25;                     % every time subject chooses to draw they are panished with a £0.25 loss
     set.win         = 10;                       % £10 pounds if the subject gets the urn right
+    set.loss        = 10;                       % £10 pounds if the subject gets the urn wrong
     set.balance     = 0;                        % balance starts from zero
     
     % DEFINE EEG TRIGGER CODES IF EEG = 1
@@ -87,7 +88,7 @@ elseif taskNb == 2
         set.response        = 10;   % indicative of max response time 
         
         % TASK/PHASE SETTINGS
-        set.blocks          = 15; 
+        set.blocks          = 120; 
         set.itemReps        = 2; 
         set.totaltrials     = 480*set.itemReps;
         set.blocktrials     = set.totaltrials/set.blocks;
@@ -95,9 +96,12 @@ elseif taskNb == 2
     else % if phase is 2
         
         % EXPERIMENTAL SETTINGS
-        set.fixdur          = .7;   % in sec
-        set.response        = 10;   % indicative of max response time 
+        set.fixdur          = .5;   % in sec
+        set.stimdur         = 1.5;  % in sec
+        set.response        = 2.5;  % indicative of max response time 
         set.feedback        = 3;    % this will be just the presentation of the accepted contract
+        set.reward          = [1 0.5 0.25]; % rewards best on the 3 ranks
+        set.balance         = 0;
         
         % TASK/PHASE SETTINGS
         set.blocks          = 3; 
@@ -109,20 +113,20 @@ elseif taskNb == 2
         % DEFINE EEG TRIGGERS 
         if set.EEG == 1
             
-            set.trigger11 = 11; % response trigger -- subject accepted a contract
-            set.trigger12 = 12; % response trigger -- subject samples again
-            set.trigger13 = 13; % feedback trigger
+            set.trigger11   = 11; % response trigger -- subject accepted a contract
+            set.trigger12   = 12; % response trigger -- subject samples again
+            set.trigger13   = 13; % feedback trigger
             
-            set.trigger100 = 100; % sequence start
-            set.trigger101 = 101; % sequence end
+            set.trigger100  = 100; % sequence start
+            set.trigger101  = 101; % sequence end
         end
        
     end % end of phase if statement
     
 elseif taskNb == 3
     
-    phase           = sess;     % this is only for the economic and facial attarctivenes tasks
-    set.phase       = phase;
+    phase                   = sess;         % this is only for the economic and facial attarctivenes tasks
+    set.phase               = phase;
     
     if phase == 1
         
@@ -131,11 +135,11 @@ elseif taskNb == 3
         set.response        = 10;   % indicative of max response time 
         
         % STIMULUS SETTINGS
-        set.stimsize        = 252;  % resize images or not?
-        set.stimsize_deg    = 5;    % degrees of visual angle
+        set.stimsize        = 250;  % resize images or not?
+        set.stimsize_deg    = 4;    % degrees of visual angle
         
         % TASK/PHASE SETTINGS
-        set.blocks          = 15; 
+        set.blocks          = 120; 
         set.itemReps        = 2; 
         set.totaltrials     = 480*set.itemReps;
         set.blocktrials     = set.totaltrials/set.blocks;
@@ -143,14 +147,15 @@ elseif taskNb == 3
     else % if phase is 2
         
         % EXPERIMENTAL SETTINGS
-        set.fixdur          = .7;   % in sec
-        set.response        = 10;   % indicative of max response time 
+        set.fixdur          = .5;   % in sec
+        set.stimdur         = 1.5;    % in sec
+        set.response        = 2.5;  % indicative of max response time 
         set.feedback        = 3;    % this will be just the presentation of the accepted contract
         
+        
         % STIMULUS SETTINGS
-        set.stimsize        = 252;  % resize images or not?
-        set.smallsize       = 50;   % this size will be used to display all the previous samples at the bottom of the screen 
-        set.stimsize_deg    =4;    % degrees of visual angle
+        set.stimsize        = 200;  % resize images or not?
+        set.stimsize_deg    = 4;    % degrees of visual angle
         
         % TASK/PHASE SETTINGS
         set.blocks          = 3; 
@@ -162,12 +167,12 @@ elseif taskNb == 3
         % DEFINE EEG TRIGGERS 
         if set.EEG == 1
             
-            set.trigger11 = 11; % response trigger -- subject accepted a contract
-            set.trigger12 = 12; % response trigger -- subject samples again
-            set.trigger13 = 13; % feedback trigger
+            set.trigger11   = 11; % response trigger -- subject accepted a contract
+            set.trigger12   = 12; % response trigger -- subject samples again
+            set.trigger13   = 13; % feedback trigger
             
-            set.trigger100 = 100; % sequence start
-            set.trigger101 = 101; % sequence end
+            set.trigger100  = 100; % sequence start
+            set.trigger101  = 101; % sequence end
         end
 
     end % end of phase statement 

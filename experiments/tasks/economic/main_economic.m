@@ -38,10 +38,10 @@ taskphase       = inputdlg(prompt,dlgtitle,dims,definput);
 
 phase           = str2num(taskphase{1});                                    % convert task phase to number
 sess            = phase;
+
 % get directories and add utility functions to the path
 wd              = fullfile(basedir, 'experiments');
 addpath(genpath(fullfile(wd,'utils')));                                     % add subfunctions to the path
-
 
 %% ---------------------------------------
 % SET OUTPUT INFO AND LOGS FILE
@@ -80,13 +80,10 @@ try
     scrn.black      = [0 0 0];
     scrn.white      = [255 255 255];
     scrn.grey       = [128 128 128];
-%     scrn.green      = [0 140 54];
-%     scrn.blue       = [30 70 155];
-%     scrn.red        = [225 25 0];
 
     % text settings
     scrn.textfont       = 'Verdana';
-    scrn.textsize       = 25;
+    scrn.textsize       = 20;
     scrn.fixationsize   = 30;
     scrn.textbold       = 1; 
     
@@ -164,7 +161,7 @@ try
     Screen('FillRect', generalwindow, scrn.grey ,windrect);
     
     % Start instructions
-    DrawFormattedText(window,'Hello! Please pay attentions to the instructions','center',scrn.ycenter,scrn.white);
+    DrawFormattedText(window,'Hello! Please pay attention to the instructions','center',scrn.ycenter,scrn.white);
     expstart = Screen('Flip', window);
     duration = expstart + iduration;
     
@@ -188,13 +185,13 @@ try
         instructions = Screen('OpenOffscreenWindow', window, windrect);
         Screen('TextSize', instructions, scrn.textsize);
         Screen('FillRect', instructions, scrn.grey ,windrect);
-        DrawFormattedText(instructions, 'This is the second phase of the experiment. This phase is plit in 30 sequences.', 'center', scrn.ycenter-250, scrn.white);
+        DrawFormattedText(instructions, 'This is the second phase of the experiment which is split into sequences.', 'center', scrn.ycenter-250, scrn.white);
         DrawFormattedText(instructions, 'On each sequence, you will be presented with 10 smartphone contracts from the the previous phase, one-by-one.', 'center', scrn.ycenter-200, scrn.white);
-        DrawFormattedText(instructions, 'Every time you are presented with a contract, you may either "chooce to accept it" or you may "reject it" and', 'center', scrn.ycenter-150, scrn.white);
-        DrawFormattedText(instructions, 'view the next contract. Please note that for each sequence you can choose only one contract. If you reject','center', scrn.ycenter-100, scrn.white);
-        DrawFormattedText(instructions, 'a contract, you may not go back and choose it. If, by the end of a sequence you have not chosen', 'center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(instructions, 'Every time you are presented with a contract, you may either "choose to accept it" or you may "reject it" and', 'center', scrn.ycenter-150, scrn.white);
+        DrawFormattedText(instructions, 'view the next contract. Please note that on each sequence you should try to choose the contarct with the lowest price.','center', scrn.ycenter-100, scrn.white);
+        DrawFormattedText(instructions, 'If you reject a contract, you may not go back and choose it. If, by the end of a sequence you have not chosen', 'center', scrn.ycenter-50, scrn.white);
         DrawFormattedText(instructions, 'a contract, by default, the last contract will be saved as your chosen contract.', 'center', scrn.ycenter, scrn.white); 
-        DrawFormattedText(instructions, 'Note that each contract that you reject will be desplayed at the bottom of the screen', 'center', scrn.ycenter+50, scrn.white);
+        DrawFormattedText(instructions, 'Note that each contract that you reject will be displayed at the bottom of the screen', 'center', scrn.ycenter+50, scrn.white);
         DrawFormattedText(instructions, 'so that you have an idea of the contracts you rejected, and the number of contracts left in the sequence.', 'center', scrn.ycenter+100, scrn.white);
         DrawFormattedText(instructions, 'Press keyboard key "1" to reject a contract and view then next one or press key "2" to accept a contract.', 'center', scrn.ycenter+150, scrn.white);
         DrawFormattedText(instructions, 'If you have understood the instructions, press SPACE to continue', 'center', scrn.ycenter+200, scrn.white);
@@ -309,16 +306,19 @@ try
             
             for trial = 1:trialsPerBlock
                 
-                set.iBlock = iBlock;
-                set.thisTrial = trial;
+                set.iBlock      = iBlock;
+                set.thisTrial   = trial;
                 set.sequence    = block_seq{trial}; 
+                
+                currentbalance  = set.balance;
                 
                 % display trial/sequence information window 
                 Screen('OpenOffscreenWindow', window, windrect);
                 Screen('TextSize', window, scrn.textsize);
                 Screen('FillRect', window, scrn.grey ,windrect);
                 DrawFormattedText(window, sprintf('Starting sequence %d of block %d',trial, iBlock), 'center', scrn.ycenter-50, scrn.white);
-                DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter, scrn.white);
+                DrawFormattedText(window, sprintf('Your current balance is £%3.4f\n',currentbalance), 'center', scrn.ycenter, scrn.white);
+                DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
                 Screen('Flip', window); 
                 
                  % WAIT FOR THEM TO PRESS SPACE

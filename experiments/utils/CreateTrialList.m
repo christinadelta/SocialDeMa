@@ -28,27 +28,20 @@ if taskNb == 1
     urntemp                     = templist(master_order);
     urns                        = urntemp;
 
-    %  create sequences of draws for the two conditions 
+    % create sequences of draws for the two conditions 
     for cond = 1:diff_conds
         for i = 1:trials_cond
 
             this_prob               = ceil(p(cond) * total_draws); % if p =0.8, then high_prob = 8
-            tempseq                 = cat(2, ones(1,this_prob), ones(1,total_draws - this_prob)*2)';
-
-            % Add a loss index, when 0 = no loss, when 1 = £10 loss
-            if i <=13 
-                tempseq(:,2)        = 0;
-            else 
-                tempseq(:,2)        = 1;
-            end 
+            tempseq                 = cat(2, ones(1,this_prob), ones(1,total_draws - this_prob)*2);
 
             if length(triallist) >= trials_cond
 
                 i                   = length(triallist) + 1; % increment i so that it doesn't overwrite the trials.sequence struct
-                triallist{i}        = tempseq(randperm(total_draws),:);
+                triallist{i}        = tempseq(randperm(total_draws));
 
             else
-                triallist{i}        = tempseq(randperm(total_draws),:);
+                triallist{i}        = tempseq(randperm(total_draws));
 
             end % end of if statement
         end % end of sequence loop

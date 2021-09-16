@@ -28,7 +28,6 @@ ifi             = scrn.ifi;          % frame duration
 slack           = scrn.slack;        % slack is ifi/2 (important for timing)
 white           = scrn.white;
 grey            = scrn.grey;
-black           = scrn.black;
 fixsize         = scrn.fixationsize;
 textfont        = scrn.textfont;
 textsize        = scrn.textsize;
@@ -58,10 +57,8 @@ if phase == 1
     response        = set.response;     % response time (5 sec or self-paced)
     
     % UNPACK STIMULI 
-    data            = set.data;
-    description     = set.description;
     price           = set.price;
-    model           = set.model; 
+
     
     % UNPACK RESPONSE KEYS
     code1       = set.code1;
@@ -107,10 +104,8 @@ if phase == 1
         background_window = Screen('OpenOffscreenWindow', window, windrect);
         Screen('TextSize', background_window, textsize);
         Screen('FillRect', background_window, grey ,windrect);
-        DrawFormattedText(background_window, 'Using keys 1 to 9, to rate the smartphone contract', 'center', ycenter-300, white);
-        DrawFormattedText(background_window, thismodel, 'center', ycenter-50, white); 
+        DrawFormattedText(background_window, 'Using keys 1 to 9, rate the smartphone contract', 'center', ycenter-300, white);
         DrawFormattedText(background_window, [pricestr, thisprice], 'center', ycenter, white); 
-        DrawFormattedText(background_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
         
         Screen('CopyWindow',background_window, window, windrect, windrect);
         object_onset        = Screen('Flip', window, object_offset - slack); 
@@ -212,6 +207,20 @@ if phase == 1
     
 else % if phase == 2
     
+    % Create response prompt window
+    % RESPONSE WINDOW (with options choose price, sample-again)
+    response_window = Screen('OpenOffscreenWindow',window);
+    Screen('TextSize', response_window, textsize);
+    Screen('FillRect', response_window, grey ,windrect);
+    DrawFormattedText(response_window, 'Choose current contract price?', 'center', ycenter-50, white);
+    DrawFormattedText(response_window, 'Sample again?', 'center', ycenter, white);
+
+    % RESPONSE WINDOW 2
+    response_window2 = Screen('OpenOffscreenWindow',window);
+    Screen('TextSize', response_window2, textsize);
+    Screen('FillRect', response_window2, grey ,windrect);
+    DrawFormattedText(response_window2, 'This is the last sample!', 'center', ycenter, white);
+    
     if EEG == 1 
         
         % UNPACK TRIGGERS
@@ -231,26 +240,36 @@ else % if phase == 2
     fixduration     = set.fixdur;       % fixation duration 
     response        = set.response;     % response time (5 sec or self-paced)
     feedbacktime    = set.feedback;     % feedback duration
+    stimduration    = set.stimdur;      % stimulus duration
+    balance         = set.balance;      % current balance
+    rewards         = set.reward;
     
     smalltext       = scrn.smalltext;
-    ptextbold       = scrn.ptextbold;
     
     % UNPACK STIMULI 
-    data            = set.data;
-    description     = set.description;
-    price           = set.price;
-    model           = set.model; 
+    prices          = set.price;
     pricestr        = 'Price: ';
     
      % UNPACK RESPONSE KEYS
-    code1           = set.code1;
-    code2           = set.code2;
+    code1           = set.code1; % accept price 
+    code2           = set.code2; % sample again
 
-    samples         = set.samples;
+    samples         = set.samples; % total number of samples
     trials          = [];     % store trial info
     previous        = [];     % store the previous prices here to show at the bottom of the screen
     blocktrials     = [];     % here we store the info of the current sequence
-
+    sequenceprices  = nan(1,samples);
+    
+    % convert sequence prices to num and save them to get the ranks
+    for price = 1:samples
+        temp                    = sequence(price);
+        spl                     = split(prices{temp},"£");
+        sequenceprices(price)   = str2double(spl{2});
+    end
+    
+    % GET RANKS (three lowest prices)
+    minprices                   = mink(sequenceprices,3);
+ 
     % START THE TRIAL WITH A FIXATION CROSS
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
     fliptime    = Screen('Flip', window); % flip fixation window
@@ -279,12 +298,8 @@ else % if phase == 2
         end
         
         thisitem        = sequence(s); % index of the current item
-        thisdata        = data{thisitem};
-        thisdescription = description{thisitem};
-        thisprice       = price{thisitem};
-        thismodel       = model{thisitem};
-        
-        xcenters        = xcenter - 600; % start adding the previous prices at xcenter - 350
+        thisprice       = prices{thisitem};
+        xcenters        = xcenter - 600; % start adding the previous prices at xcenter - 600
         
         % DISPLAY CONTRACT 
         if s == 1
@@ -294,25 +309,21 @@ else % if phase == 2
             Screen('TextSize', background_window, textsize);
             Screen('FillRect', background_window, grey ,windrect);
             DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
-            DrawFormattedText(background_window, thismodel, 'center', ycenter-50, white); 
             DrawFormattedText(background_window, [pricestr, thisprice], 'center', ycenter, white); 
-            DrawFormattedText(background_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
 
             Screen('CopyWindow',background_window, window, windrect, windrect);
-
             object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
 
         else
             
-            previous_len = length(previous); % how many previous prices?
+            previous_len        = length(previous); % how many previous prices?
             
             % background_window = Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', window, textsize);
             Screen('FillRect', window, grey ,windrect);
-            DrawFormattedText(window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
-            DrawFormattedText(window, thismodel, 'center', ycenter-50, white); 
+            DrawFormattedText(window, sprintf('Contract %d/10',s), 'center', ycenter-300, white);
             DrawFormattedText(window, [pricestr, thisprice], 'center', ycenter, white); 
-            DrawFormattedText(window, [thisdescription, thisdata], 'center', ycenter+50, white); 
+            DrawFormattedText(window, 'Rejected contracts', xcenter - 600, ycenter+250, white); 
             
             for l = 1:previous_len
                 % show the previous prices at the bottom of the screen
@@ -334,13 +345,32 @@ else % if phase == 2
             sp.sendTrigger(trigger1) % blue urn -- high prob blue bead trigger
         end
         
+        object_offset   = object_onset + stimduration - ifi; % add jitter here?
+        
+        Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+        fixation_onset  = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial
+        
+        fixation_offset = fixation_onset + fixduration - ifi; % add jitter here?
+        
+        % DISPLAY RESPONSE PROMPT
+        if s < samples
+        
+            % DISPLAY RESPONSE PROMPT
+            Screen('CopyWindow', response_window, window, windrect, windrect)
+            
+        else
+            % DISPLAY RESPONSE PROMPT 2 
+            Screen('CopyWindow', response_window2, window, windrect, windrect)
+        end
+        prompt_onset    = Screen('Flip', window, fixation_offset - slack); 
+        
         % WAIT FOR RESPONSE 
         rt                  = NaN;
         answer              = NaN;
         resp_input          = 0;
         responseTrigNotSent = 1;
         
-        while resp_input == 0 && (GetSecs - object_onset) < response - 2*slack
+        while resp_input == 0 && (GetSecs - prompt_onset) < response - 2*slack
             
             [~, secs, keycode] = KbCheck; % check for input
             
@@ -378,7 +408,29 @@ else % if phase == 2
         
         % object offset 
         object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
-       
+        
+        % What is the rank of the accepted price?
+        numprice        = str2double(split(thisprice,"£"));
+        numprice        = numprice(2);
+        
+        % what is the reward and rank?
+        if numprice == minprices(1)
+            thisreward  = rewards(1);
+            thisrank = 1;
+            
+        elseif numprice == minprices(2)
+            thisreward  = rewards(2);
+            thisrank = 2;
+            
+        elseif numprice == minprices(3)
+            thisreward  = rewards(3);
+            thisrank = 3;
+            
+        else
+            thisreward  = nan; 
+            thisrank = 0;
+        end
+        
         % IF SUBJECT ACCEPTED A CONTRACT SHOW FFEDBACK AND BREAK SEQUENCE
         % IF SUBJECT CHOSE TO SAMPLE AGAIN, SHOW FIXATION AND MOVE TO THE
         % NEXT ITEM
@@ -389,15 +441,26 @@ else % if phase == 2
             fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
 
             object_offset   = fixation_onset + fixduration - ifi; % add jitter here?
+            
+            % DISPLAY FEEDBACK: SHOW THE ACCEPTED CONTRACT AND REWARD 
+            if thisrank == 0
  
-            % DISPLAY CHOSEN CONTRACT
-            feedback_window = Screen('OpenOffscreenWindow', window, windrect);
-            Screen('TextSize', feedback_window, textsize);
-            Screen('FillRect', feedback_window, grey ,windrect);
-            DrawFormattedText(feedback_window, 'Congratulations! This is your new smartphone contract.', 'center', ycenter-300, white);
-            DrawFormattedText(feedback_window, thismodel, 'center', ycenter-50, white); 
-            DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter, white); 
-            DrawFormattedText(feedback_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
+                % DISPLAY CHOSEN CONTRACT
+                feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+                Screen('TextSize', feedback_window, textsize);
+                Screen('FillRect', feedback_window, grey ,windrect);
+                DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-300, white);
+                DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter, white); 
+            
+            else
+                % DISPLAY CHOSEN CONTRACT
+                feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+                Screen('TextSize', feedback_window, textsize);
+                Screen('FillRect', feedback_window, grey ,windrect);
+                DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-300, white);
+                DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter-50, white); 
+                DrawFormattedText(feedback_window, sprintf('Your reward is: £%3.4f\n',thisreward), 'center', scrn.ycenter, scrn.white);
+            end
             
             Screen('CopyWindow',feedback_window, window, windrect, windrect);
             object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
@@ -415,6 +478,7 @@ else % if phase == 2
             fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
 
             object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
+            
             
             break; % break from sequence 
             
@@ -442,17 +506,28 @@ else % if phase == 2
                 % DISPLAY REQUESTED OBJECT OFFSET 
                 object_offset   = object_onset + feedbacktime - ifi;
                 
-                % DISPLAY CHOSEN CONTRACT
-                feedback_window = Screen('OpenOffscreenWindow', window, windrect);
-                Screen('TextSize', feedback_window, textsize);
-                Screen('FillRect', feedback_window, grey ,windrect);
-                DrawFormattedText(feedback_window, 'Congratulations! This is your new smartphone contract.', 'center', ycenter-300, white);
-                DrawFormattedText(feedback_window, thismodel, 'center', ycenter-50, white); 
-                DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter, white); 
-                DrawFormattedText(feedback_window, [thisdescription, thisdata], 'center', ycenter+50, white); 
+                % DISPLAY FEEDBACK: SHOW THE ACCEPTED CONTRACT AND REWARD 
+                if thisrank == 0
+
+                    % DISPLAY CHOSEN CONTRACT
+                    feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+                    Screen('TextSize', feedback_window, textsize);
+                    Screen('FillRect', feedback_window, grey ,windrect);
+                    DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-300, white);
+                    DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter, white); 
+
+                else
+                    % DISPLAY CHOSEN CONTRACT
+                    feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+                    Screen('TextSize', feedback_window, textsize);
+                    Screen('FillRect', feedback_window, grey ,windrect);
+                    DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-300, white);
+                    DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter-50, white); 
+                    DrawFormattedText(feedback_window, sprintf('Your reward is £%3.4f\n',thisreward), 'center', scrn.ycenter, scrn.white);
+                end
 
                 Screen('CopyWindow',feedback_window, window, windrect, windrect);
-                object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
+                object_onset        = Screen('Flip', window, object_offset - slack); % flip window
 
                 % DISPLAY OFFSET 
                 object_offset   = object_onset + feedbacktime - ifi;
@@ -462,9 +537,6 @@ else % if phase == 2
             % BRING FIXATION BACK ON AND MOVE TO THE NEXT TRIAL/SAMPLE
             Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
             fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
-
-            fprintf('prompt was on for %3.4f\n', fixation_onset - object_onset);        % time interval from the the flip of the contract until fixation
-
             object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
             
         end
@@ -479,6 +551,7 @@ else % if phase == 2
         trials(s).trialnumber  = thistrial;
         trials(s).trialonset   = trialstart;
         trials(s).thisitem     = thisitem;
+        trials(s).thisprice    = thisprice;
         trials(s).rt           = rt;
         
         if abort; fclose('all');break; end 
@@ -489,6 +562,9 @@ else % if phase == 2
         sp.sendTrigger(trigger101)
     end
     
+    % update balance 
+    balance                  = balance + thisreward;
+    set.balance              = balance;
     chosenitem               = thisitem;
 
     % save the current trial info
@@ -499,6 +575,10 @@ else % if phase == 2
     blocktrials.sequence     = sequence';
     blocktrials.numsamples   = s;
     blocktrials.chosenitem   = chosenitem;
+    blocktrials.chosenprice  = thisprice;
+    blocktrials.rank         = thisrank;
+    blocktrials.reward       = thisreward;
+    blocktrials.balance      = balance;
 
     set.blocktrials          = blocktrials; % (save the info of this trial) this will go to the main script
     

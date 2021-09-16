@@ -16,7 +16,7 @@ set.code21          = KbName('ESCAPE');
 
 if taskNb == 1 % if this is the  beads task
     %% TASK 1 KEYS
-
+    KbName('UnifyKeyNames');
     set.code1       = KbName('1!'); % 1! = Blue
     set.code2       = KbName('2@'); % 2@ = Green
     set.code3       = KbName('3#'); % 3# = Draw again
@@ -30,7 +30,7 @@ if taskNb == 1 % if this is the  beads task
     set.code10      = KbName('d'); % answer d
 
 elseif taskNb == 2 % if this is the the economic best-choice task
-    %% TASK 2 KEYS
+    % TASK 2 KEYS
     
     % Unpack variables
     phase               = set.phase;

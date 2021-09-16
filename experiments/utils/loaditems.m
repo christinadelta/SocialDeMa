@@ -70,21 +70,14 @@ elseif taskNb == 3
         img             = fullfile(stimdir,txt{i});
         image           = imread(img);
         data(i).file    = imresize(image,[set.stimsize set.stimsize]); % should resize or not?
-        data(i).small   = imresize(image,[set.smallsize set.smallsize]);
-
     end
     
     stimwidth           = size(data(1).file,1);   % width of objects
     stimhight           = stimwidth;
     
-    smallwidth          = size(data(1).small,1);   % width of small objects
-    smallhight          = smallwidth;
-    
     % UPDATE SETTINGS STRUCT
     set.stimwidth       = stimwidth;
     set.stimhight       = stimhight;
-    set.smallhight      = smallhight;
-    set.smallwidth      = smallwidth;
     set.objects         = objects;
     set.data            = data;
     set.items           = vars; 

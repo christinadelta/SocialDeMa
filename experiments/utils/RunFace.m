@@ -10,7 +10,7 @@ function [set, logs] = RunFace(set, scrn, logs)
 % UNPACK GLOBAL PARAMS FROM THE SETTINGS AND SCREEN STRUCTS
 taskNb          = set.taskNb;       % number of task (needed to run the correct task)
 blocktrials     = set.blocktrials;  % total number of trials
-thisblock       = set.iBlock;    % this is the current block number 
+thisblock       = set.iBlock;       % this is the current block number 
 phase           = set.phase;        % 
 
 isi             = set.isi;          % interstimulus interval
@@ -100,7 +100,12 @@ if phase == 1
         thisitem        = sequence(iTrial); % index of the current item 
         
         % DISPLAY THE CURRENT FACE
-        Screen('DrawTexture', window, textures{thisitem}, [], destrect);     % display thisitem
+        background_window = Screen('OpenOffscreenWindow', window, windrect);
+        Screen('TextSize', background_window, textsize);
+        Screen('FillRect', background_window, grey ,windrect);
+        DrawFormattedText(background_window, 'Using keys 1 to 9, rate the face below', 'center', ycenter-300, white);
+        Screen('DrawTexture', background_window, textures{thisitem}, [], destrect); % display thisitem
+        Screen('CopyWindow',background_window, window, windrect, windrect);
         object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
         
         rt                  = NaN;
@@ -179,7 +184,7 @@ if phase == 1
         Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
         fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
 
-        fprintf('prompt was on for %3.4f\n', fixation_onset - object_onset);        % time interval from the the flip of the contract until fixation
+        fprintf('prompt was on for %3.4f\n', fixation_onset - object_onset);    % time interval from the the flip of the contract until fixation
 
         object_offset       = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
         
@@ -206,6 +211,21 @@ if phase == 1
     save(sublogs,'logs');
     
 else % if this is phase 2 
+    
+    % Create response prompt window
+    % RESPONSE WINDOW (with options choose price, sample-again)
+    response_window = Screen('OpenOffscreenWindow',window);
+    Screen('TextSize', response_window, textsize);
+    Screen('FillRect', response_window, grey ,windrect);
+    DrawFormattedText(response_window, 'Choose current date?', 'center', ycenter-50, white);
+    DrawFormattedText(response_window, 'Sample again?', 'center', ycenter, white);
+
+    % RESPONSE WINDOW 2
+    response_window2 = Screen('OpenOffscreenWindow',window);
+    Screen('TextSize', response_window2, textsize);
+    Screen('FillRect', response_window2, grey ,windrect);
+    DrawFormattedText(response_window2, 'You cannot sample again.', 'center', ycenter, white);
+
 
      if EEG == 1 
         
@@ -227,7 +247,7 @@ else % if this is phase 2
     response        = set.response;     % response time (5 sec or self-paced)
     feedbacktime    = set.feedback;     % feedback duration
     smalltex        = set.smalltex;     % small textures 
-    
+    stimduration    = set.stimdur;      % stimulus duration
     
      % UNPACK RESPONSE KEYS
     code1           = set.code1;
@@ -276,7 +296,7 @@ else % if this is phase 2
             background_window = Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', background_window, textsize);
             Screen('FillRect', background_window, grey ,windrect);
-            DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+            DrawFormattedText(background_window,sprintf('Face %d/10',s), 'center', ycenter-300, white);
 
              % DISPLAY THE CURRENT FACE - the actual face
             Screen('DrawTexture', background_window, textures{thisitem}, [], destrect);     % display thisitem
@@ -301,12 +321,12 @@ else % if this is phase 2
             background_window = Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', background_window, textsize);
             Screen('FillRect', background_window, grey ,windrect);
-            DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
+            DrawFormattedText(background_window,sprintf('Face %d/10',s), 'center', ycenter-300, white);
+            DrawFormattedText(background_window, 'Rejected faces', xcenter - 600, ycenter+250, white);
 
              % DISPLAY THE CURRENT FACE - the actual face
             Screen('DrawTexture', background_window, textures{thisitem}, [], destrect);     % display thisitem
             Screen('DrawTextures', background_window, [smalltex{previous}], [], smallrects);     % display small items
-            
             Screen('CopyWindow',background_window, window, windrect, windrect);
             object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
         end
@@ -316,13 +336,31 @@ else % if this is phase 2
             sp.sendTrigger(trigger1) % blue urn -- high prob blue bead trigger
         end
         
+        object_offset   = object_onset + stimduration - ifi; % add jitter here?
+        
+        Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+        fixation_onset  = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial
+        fixation_offset = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
+        
+        % DISPLAY RESPONSE PROMPT
+        if s < samples
+        
+            % DISPLAY RESPONSE PROMPT
+            Screen('CopyWindow', response_window, window, windrect, windrect)
+            
+        else
+            % DISPLAY RESPONSE PROMPT
+            Screen('CopyWindow', response_window2, window, windrect, windrect)
+        end
+        prompt_onset    = Screen('Flip', window, fixation_offset - slack); 
+        
         % WAIT FOR RESPONSE 
         rt                  = NaN;
         answer              = NaN;
         resp_input          = 0;
         responseTrigNotSent = 1;
         
-        while resp_input == 0 && (GetSecs - object_onset) < response - 2*slack
+        while resp_input == 0 && (GetSecs - prompt_onset) < response - 2*slack
             
             [~, secs, keycode] = KbCheck; % check for input
             
@@ -361,17 +399,17 @@ else % if this is phase 2
         % object offset 
         object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
        
-        % BRING FIXATION BACK ON
-        Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-        fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
-        
-        object_offset   = fixation_onset + fixduration +  isi + randperm(jitter*1000,1)/1000 - ifi;  % add jitter here?
-
         % IF SUBJECT ACCEPTED A FACE/DATE SHOW FFEDBACK AND BREAK SEQUENCE
         % IF SUBJECT CHOSE TO SAMPLE AGAIN, SHOW FIXATION AND MOVE TO THE
         % NEXT FACE
         if answer == 1
             
+            % BRING FIXATION BACK ON
+            Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+            fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+
+            object_offset       = fixation_onset + fixduration - ifi;  % add jitter here?
+
             % DISPLAY CHOSEN CONTRACT
             feedback_window = Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', feedback_window, textsize);
@@ -404,6 +442,12 @@ else % if this is phase 2
             % if by the 10th sample subject chooses to sample again 
             if s == samples 
                 
+                % BRING FIXATION BACK ON
+                Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+                fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+
+                object_offset       = fixation_onset + fixduration - ifi; % add jitter here?
+
                 feedback_sampling = Screen('OpenOffscreenWindow',window);
                 Screen('TextSize', feedback_sampling, textsize);
                 Screen('FillRect', feedback_sampling, grey ,windrect);
@@ -413,7 +457,7 @@ else % if this is phase 2
                 object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
             
                 % DISPLAY OFFSET 
-                object_offset   = object_onset + feedbacktime - ifi;
+                object_offset       = object_onset + feedbacktime - ifi;
                 
                 % DISPLAY CHOSEN CONTRACT
                 feedback_window = Screen('OpenOffscreenWindow', window, windrect);

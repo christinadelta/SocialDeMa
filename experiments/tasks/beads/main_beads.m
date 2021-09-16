@@ -37,8 +37,8 @@ sess            = 1;
 basedir         = pwd;
 
 % get directories and add utility functions to the path
-workingdir      = fullfile(basedir, 'experiments');
-addpath(genpath(fullfile(workingdir,'utils')));                              % add subfunctions to the path
+wd      = fullfile(basedir, 'experiments');
+addpath(genpath(fullfile(wd,'utils')));                              % add subfunctions to the path
 
 %% ---------------------------------------
 % SET OUTPUT INFO AND LOGS FILE
@@ -54,7 +54,7 @@ logs.trialog        = 'subject_%02d_task_%s_block_%02d_ses_%02d_logs.mat';
 logs.txtlog         = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_events.tsv';
 
 % % setup study output file
-logs.resultsfolder  = fullfile(workingdir, 'results',taskName, sprintf('sub-%02d', sub));
+logs.resultsfolder  = fullfile(wd, 'results',taskName, sprintf('sub-%02d', sub));
 
 if ~exist(logs.resultsfolder, 'dir')
     mkdir(logs.resultsfolder)
@@ -124,11 +124,11 @@ try
     %% ---------------------------------------
     % RUN A FEW IMPORTANT UTIL FUNCTIONS
     
-    set                 = TaskSettings(taskNb);                                 % Define the first task-specific parameters
+    set                 = TaskSettings(taskNb, sess);                           % Define the first task-specific parameters
 
-    set                = Definekeys(taskNb);                                   % Define set of the task
+    set                 = DefineKeys(taskNb, set);                              % Define set of the task
     
-    scrn                = screenSettings(scrn, set);                            % Define screen setup
+    scrn                = screenSettings(scrn, taskNb);                         % Define screen setup
     
     [trials, set]       = CreateTrialList(set);                                 % create trials, sequences, split in runs, etc..
     
@@ -149,7 +149,7 @@ try
     Screen('FillRect', generalwindow, scrn.grey ,windrect);
     
     % Start instructions
-    DrawFormattedText(window,'Hello! Plaease pay attentions to the instructions','center',scrn.ycenter,scrn.white);
+    DrawFormattedText(window,'Hello! Please pay attention to the instructions','center',scrn.ycenter,scrn.white);
     expstart = Screen('Flip', window);
     duration = expstart + iduration;
    
@@ -224,7 +224,7 @@ try
 %     WaitSecs(1);
 %     
 %     set = ShortQuiz(set, scrn, set); % RUN the instructions quiz 
-%     
+    
 
     %% ---------------------------------------
     % ADD THE TRIGGER INFORMATION (IF EEG = 1) 
@@ -295,6 +295,8 @@ try
             set.sequence    = block_seq{thistrial};         % send the current sequence to the RUN function
             set.urn         = block_urns(thistrial);        % send the current urn to the RUN function
             
+            currentbalance  = set.balance;                  % show current balance at the beggining og each trial
+            loss            = set.loss;
             % count the proportions of bead colours in the current sequence
             % list to dettermine the difficulty condition
             condition       = sum(set.sequence(:,1)==2);
@@ -311,19 +313,13 @@ try
                 high_p      = 60;
                 low_p       = 40;
             end
-            
-            % check if this is a £0 or £10 loss trial
-            if unique(set.sequence(:,2)) == 0
-               loss         = 0;
-            else 
-                loss        = 10;
-            end
-            
+   
             % display trial/sequence information window 
             Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', window, scrn.textsize);
             Screen('FillRect', window, scrn.grey ,windrect);
-            DrawFormattedText(window, sprintf('Starting sequence %d of block %d',thistrial, iBlock), 'center', scrn.ycenter-50, scrn.white);
+            DrawFormattedText(window, sprintf('Starting sequence %d of block %d',thistrial, iBlock), 'center', scrn.ycenter-100, scrn.white);
+            DrawFormattedText(window, sprintf('Your current balance is: £%3.4f\n',currentbalance), 'center', scrn.ycenter-50, scrn.white);
             DrawFormattedText(window, sprintf('The urns have a %02d:%02d color split. You will lose £%d if you are wrong',high_p, low_p, loss), 'center', scrn.ycenter, scrn.white);
             DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
             Screen('Flip', window); 

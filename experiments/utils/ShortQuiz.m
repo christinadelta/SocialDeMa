@@ -10,14 +10,18 @@ function [set] = ShortQuiz(set, scrn, keys)
 % subject will try again 
 
 % BEADS QUIZ QUESTIONS:
-% 1. What are the colours of the urns
+% 1. What are the possible majority colours of the urns?
 % 2. What is the keycode for choosing the BLUE urn?
 % 3. What is the keycode for choosing the GREEN urn?
-% 4. What is the keycode for choosing the to draw again?
-% 5. How many times can you draw before making a decision?
+% 4. What is the keycode for choosing to draw again?
+% 5. Up to how many times can you draw before making a decision?
 % 6. What is the confidence rating for keycode "Left Arrow"?
 % 7. What is the confidence rating for keycode "Down Arrow"?
 % 8. What is the confidence rating for keycode "Righ Arrow"?
+
+% POSSIBLE QUESTIONS
+% 9. From how many urns can you draw?
+% 
 
 % The questions will displayed be randomised 
 
@@ -92,10 +96,10 @@ rand_qs     = questions(randperm(qs)); % randomise the questions
 strings = [];
 
 % Field 1: Questions  
-strings.questions = {'What are the colours of the urns?','what is the keycode for choosing the blue urn?',...
+strings.questions = {'what are the possible majority colours of the urns?','what is the keycode for choosing the blue urn?',...
     'what is the keycode for choosing the green urn?', 'what is the keycode for choosing to darw again?',...
-    'How many times can you draw before making a decision?', 'What is the confidence rating for keycode "Left Arrow"?',...
-    'What is the confidence rating for keycode "Down Arrow"?', 'What is the confidence rating for keycode "Right Arrow"?'};
+    'up to how many times can you draw before making a decision?', 'what is the confidence rating for keycode "Left Arrow"?',...
+    'what is the confidence rating for keycode "Down Arrow"?', 'what is the confidence rating for keycode "Right Arrow"?'};
 
 % Field 2: Answers 
 strings.answers = {'red-green', 'blue-green', 'green-yellow', 'red-blue',
@@ -125,7 +129,6 @@ while i <= qs
     rand_answ       = answers(randperm(answ)); 
     thisquestion    = rand_qs(i);
    
-    
     % DISPLAY THE CURRENT QUESTION WITH THE 4 POTENTIAL REPONSES 
     background_window = Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', background_window, textsize);

@@ -169,6 +169,11 @@ try
     % UPDATE SETTIGS STRUCT
     set.textures = textures;
     
+    % if phase is 2 make textures for the small images. The texture cell
+    % and the smalltex cell will be desplayed together. When I try to
+    % desplay all (main face and previous-small faces) using the texture
+    % cell only I get an error. Apparently, this is how it works? 
+    % the 
     if phase == 2
         
         % if this is the second phase, also include small textures
@@ -176,7 +181,7 @@ try
         
         for j = 1:objects
             
-            smalltex{j} = Screen('MakeTexture', window, data(j).small); 
+            smalltex{j} = Screen('MakeTexture', window, data(j).file); 
         end
         
         set.smalltex = smalltex;
@@ -198,7 +203,7 @@ try
     Screen('FillRect', generalwindow, scrn.grey ,windrect);
     
     % Start instructions
-    DrawFormattedText(window,'Hello! Please pay attentions to the instructions','center',scrn.ycenter,scrn.white);
+    DrawFormattedText(window,'Hello! Please pay attention to the instructions','center',scrn.ycenter,scrn.white);
     expstart = Screen('Flip', window);
     duration = expstart + iduration;
     
@@ -210,8 +215,8 @@ try
         Screen('FillRect', instructions, scrn.grey ,windrect);
         DrawFormattedText(instructions, 'This is the first phase of the experiment. You will be presented with images of faces', 'center', scrn.ycenter-200, scrn.white);
         DrawFormattedText(instructions, 'one-by-one at the centre of the screen. Your task is to carefully view each face and rate', 'center', scrn.ycenter-150, scrn.white);
-        DrawFormattedText(instructions, '"how likely it would be to date that person in real life" on a scale of 1 to 9, where 1 means "I would not never date that person"', 'center', scrn.ycenter-100, scrn.white);
-        DrawFormattedText(instructions, 'and 9 means "I would definitely date that person".','center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(instructions, '"how likely it would be for you to date that person in real life" on a scale of 1 to 9, where 1 means', 'center', scrn.ycenter-100, scrn.white);
+        DrawFormattedText(instructions, '"I would never date that person" and 9 means "I would definitely date that person".','center', scrn.ycenter-50, scrn.white);
         DrawFormattedText(instructions, 'For you responses, press the keyboard keys 1 to 9 which correspond to your rating for each face.', 'center', scrn.ycenter, scrn.white);
         DrawFormattedText(instructions, 'Please rate the images of faces exactly as you would you in a real life scenario.', 'center', scrn.ycenter+50, scrn.white); 
         DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to continue', 'center', scrn.ycenter+100, scrn.white);
@@ -222,15 +227,15 @@ try
         instructions = Screen('OpenOffscreenWindow', window, windrect);
         Screen('TextSize', instructions, scrn.textsize);
         Screen('FillRect', instructions, scrn.grey ,windrect);
-        DrawFormattedText(instructions, 'This is the second phase of the experiment. This phase is plit in 30 sequences. On each sequence,', 'center', scrn.ycenter-250, scrn.white);
-        DrawFormattedText(instructions, 'you will be presented with 10 images of faces from the the previous phase, at the centre of the screen one-by-one.', 'center', scrn.ycenter-200, scrn.white);
-        DrawFormattedText(instructions, 'Every time you are presented with a face, you may either "chooce to date that person" or you may "reject it" and', 'center', scrn.ycenter-150, scrn.white);
-        DrawFormattedText(instructions, 'view the next face. Please note that for each sequence you can choose only one face. If you reject','center', scrn.ycenter-100, scrn.white);
-        DrawFormattedText(instructions, 'a face, you may not go back and choose it. If, by the end of a sequence you have not chosen', 'center', scrn.ycenter-50, scrn.white);
-        DrawFormattedText(instructions, 'a face, by default, the last face will be saved as your chosen date (for that sequence).', 'center', scrn.ycenter, scrn.white); 
-        DrawFormattedText(instructions, 'Each face that you reject will be desplayed at the bottom of the screen so that you have an idea of the', 'center', scrn.ycenter+50, scrn.white);
-        DrawFormattedText(instructions, 'faces you rejected, and the number of faces left in the sequence. Press keyboard key "1" to reject a face', 'center', scrn.ycenter+100, scrn.white);
-        DrawFormattedText(instructions, 'and view then next one or press key "2" to accept a face/date.', 'center', scrn.ycenter+150, scrn.white);
+        DrawFormattedText(instructions, 'This is the second phase of the experiment. On each trial/sequence of this phase,', 'center', scrn.ycenter-250, scrn.white);
+        DrawFormattedText(instructions, 'you will be presented with up to 10 images of faces from the the previous phase, at the centre of the screen one-by-one.', 'center', scrn.ycenter-200, scrn.white);
+        DrawFormattedText(instructions, 'Every time you are presented with a face, you may either "choose to date that person" or you may "reject it" and', 'center', scrn.ycenter-150, scrn.white);
+        DrawFormattedText(instructions, 'view the next one. Please note that for each sequence you can choose only one face/date. If you reject','center', scrn.ycenter-100, scrn.white);
+        DrawFormattedText(instructions, 'a face, you may not go back and select it. If, by the end of a sequence you have not chosen', 'center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(instructions, 'a person to date, by default, the last face will be saved as your chosen date (for that sequence).', 'center', scrn.ycenter, scrn.white); 
+        DrawFormattedText(instructions, 'Each face that you reject will be displayed at the bottom of the screen so that you have an idea of the', 'center', scrn.ycenter+50, scrn.white);
+        DrawFormattedText(instructions, 'faces you rejected, and the number of faces left in the sequence. Press the keyboard key "1"', 'center', scrn.ycenter+100, scrn.white);
+        DrawFormattedText(instructions, 'to accept a face/date or press the keyboard key "2" to reject the current face and view then next one.', 'center', scrn.ycenter+150, scrn.white);
         DrawFormattedText(instructions, 'If you have understood the instructions, press SPACE to continue', 'center', scrn.ycenter+200, scrn.white);
         
     end % end of phase statement 
