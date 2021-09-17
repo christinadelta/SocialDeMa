@@ -28,6 +28,7 @@ grey            = scrn.grey;
 fixsize         = scrn.fixationsize;
 textfont        = scrn.textfont;
 textsize        = scrn.textsize;
+smalltext       = scrn.smalltext;
 
 thisession      = logs.sess;
 sub             = logs.sub;
@@ -74,9 +75,11 @@ modconfkey  = set.code5;       % moderately confindent (in confidence rating)
 confkey     = set.code6;       % very confindent (in confidence rating)
 
 % ADD A FEW MORE VARIABLES
-trials      = [];   % store trial info
+trials      = []; % store trial info
 draws       = []; % store info specifically about the sequence/draws [1-10]
-draw_count  = 0;    % drawing counter
+previous    = []; % store the previous draws here to show at the bottom of the screen
+colours     = []; % store the previous draw-colours here to show at the bottom of the screen
+draw_count  = 0;  % drawing counter
 accuracy    = nan;
 
 % UNPACK EEG TRIGGERS
@@ -186,6 +189,8 @@ for thisdraw = 1:drawlen
         break;
     end
     
+    xcenters        = xcenter - 600; % start adding the darws prices at xcenter - 600
+    
     % STATEMENT 1. Is it a high or a low probability draw?
     if sequence(thisdraw) == 1  % high prob draw
         
@@ -193,22 +198,21 @@ for thisdraw = 1:drawlen
         if thisurn == 1         % blue urn and blue bead
             % show blue window
             Screen('CopyWindow', blue_window, window, windrect, windrect)
-            bead_onset      = Screen('Flip', window, object_offset - slack);                % here the blue bead is fliped
-            
-            % send sequence start trigger
             if EEG == 1
-                sp.sendTrigger(trigger1) % blue urn -- high prob blue bead trigger
+                stimtrigger         = trigger1; % assign trigger 1 as stimulus triger
             end
+            previous_colour     = blue;
+            previous_bead       = 'blue';
             
         else % green urn and green beed
             % show green window
             Screen('CopyWindow', green_window, window, windrect, windrect)
-            bead_onset      = Screen('Flip', window, object_offset - slack); 
-            
-            % send sequence start trigger
-            if EEG == 1 
-                sp.sendTrigger(trigger3)
+            if EEG == 1
+                stimtrigger         = trigger3;
             end
+            previous_colour     = green;
+            previous_bead       = 'green';
+         
         end
             
     elseif sequence(thisdraw) == 2 % low prob draw
@@ -216,26 +220,51 @@ for thisdraw = 1:drawlen
         if thisurn == 1 % blue urn and green bead
             % show green window
             Screen('CopyWindow', green_window, window, windrect, windrect)
-            bead_onset      = Screen('Flip', window, object_offset - slack);  
-            
-            % send sequence start trigger
-            if EEG == 1 
-                sp.sendTrigger(trigger2)
+            if EEG == 1
+                stimtrigger         = trigger2;
             end
+            previous_colour     = green;
+            previous_bead       = 'green';
             
         else % green urn and blue bead
             % show blue window
             Screen('CopyWindow', blue_window, window, windrect, windrect)
-            bead_onset      = Screen('Flip', window, object_offset - slack);  
-            
-            % send sequence start trigger
-            if EEG == 1 
-                sp.sendTrigger(trigger4)
+            if EEG == 1
+                stimtrigger         = trigger4;
             end
+            previous_colour     = blue;
+            previous_bead       = 'blue';
             
         end 
     end % end of statment 1 if 
+    
+    % if this is not the first draw, show previous draw at the bottom of
+    % the screen
+    if thisdraw > 1
+        
+        previous_len        = length(previous); % how many previous prices?
+        
+        for i = 1:previous_len
+            
+            % show the previous prices at the bottom of the screen
+            Screen('TextSize', window, smalltext);
+            DrawFormattedText(window, 'Previous Draws', xcenter - 600, ycenter+250, white); 
+            DrawFormattedText(window, previous{i}, xcenters, ycenter+350, colours{i}); 
+
+            % update xcenters, so that previous prices are not
+            % displayed on top of each other
+            xcenters = xcenters+80;
+            
+        end
+    end
+    
+    bead_onset     = Screen('Flip', window, object_offset - slack); 
     bead_offset    = bead_onset + bead_dur - ifi;                          % bead on for 0.5 ms
+    
+    % send sequence start trigger
+    if EEG == 1
+        sp.sendTrigger(stimtrigger) % blue urn -- high prob blue bead trigger
+    end
     
     % 2. BRING FIXATION BACK ON
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
@@ -505,13 +534,18 @@ for thisdraw = 1:drawlen
            
        end
    end
+   
+   % store the current price to show at the bottom of the screen
+    % (during the next samples)
+    previous{thisdraw}          = previous_bead;
+    colours{thisdraw}           = previous_colour;
            
    % add sequence/draws related info here 
    draws(thisdraw).session      = thisession;
    draws(thisdraw).block        = thisblock;
    draws(thisdraw).trialnumber  = thistrial;
    draws(thisdraw).trialonset   = trialstart;
-   draws(thisdraw).currentdraw  = thisdraw;
+   draws(thisdraw).thisdraw     = thisdraw;
    draws(thisdraw).rt           = rt;
    
    if abort; fclose('all');break; end 

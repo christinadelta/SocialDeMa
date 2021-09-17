@@ -81,6 +81,7 @@ try
     % text settings
     scrn.textfont       = 'Verdana';
     scrn.textsize       = 20;
+    scrn.smalltext      = 15;
     scrn.fixationsize   = 30;
     scrn.textbold       = 1; 
     
