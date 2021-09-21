@@ -26,8 +26,10 @@ xcenter         = scrn.xcenter;
 ycenter         = scrn.ycenter;
 ifi             = scrn.ifi;          % frame duration
 slack           = scrn.slack;        % slack is ifi/2 (important for timing)
+globalrect      = scrn.globalrect;
 white           = scrn.white;
 grey            = scrn.grey;
+black           = scrn.black;
 fixsize         = scrn.fixationsize;
 textfont        = scrn.textfont;
 textsize        = scrn.textsize;
@@ -51,28 +53,34 @@ HideCursor;
 
 if phase == 1
     
+    % UNPACK THE SLIDER VARIABLES
+    anchors         = set.anchors;
+    scalelength     = set.scalelength;
+    maxtime         = set.maxtime;
+    mousebutton     = set.mousebutton;
+    leftclick       = set.leftclick;
+    rightclick      = set.rightclick;
+    midclick        = set.midclick;
+    horzline        = set.horzline;
+    width           = set.width;
+    scalepos        = set.scalepos;
+    line            = set.line;
+    scalerange      = set.scalerange;
+    scalecolour     = white;
+    slidercolour    = black;
+    
+    % calculate coordinates of scale line and text bounds
+    x               = globalrect(3)/2;
+    
     % UNPACK PHASE ONE PARAMETERS 
     sequence        = set.sequence;     % this is the current sequence/trial
     fixduration     = set.fixdur;       % fixation duration 
-    response        = set.response;     % response time (5 sec or self-paced)
-    
+   
     % UNPACK STIMULI 
     price           = set.price;
 
-    
-    % UNPACK RESPONSE KEYS
-    code1       = set.code1;
-    code2       = set.code2;
-    code3       = set.code3;
-    code4       = set.code4;
-    code5       = set.code5;
-    code6       = set.code6;
-    code7       = set.code7;
-    code8       = set.code8;
-    code9       = set.code9;
-    
     trials      = [];   % store trial info
-    
+ 
     % START THE BLOCK WITH A FIXATION CROSS
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
     fliptime    = Screen('Flip', window); % flip fixation window
@@ -93,100 +101,74 @@ if phase == 1
         
         % get current trial details 
         thisitem        = sequence(iTrial); % index of the current item 
-        thisdata        = data{thisitem};
-        thisdescription = description{thisitem};
         thisprice       = price{thisitem};
-        thismodel       = model{thisitem};
         
         pricestr        = 'Price: ';
+       
+        % ADD THE SLIDER STUFF HERE
+        % initialise the slider
+        SetMouse(round(x), round(windrect(4)*scalepos), window, 1)
+        textBounds = [Screen('TextBounds', window, sprintf(anchors{1})); Screen('TextBounds', window, sprintf(anchors{3}))];
+        t0                         = GetSecs;
+        rateresp                   = 0;
         
-        % DISPLAY THE CURRENT ITEM/CONTRACT  
-        background_window = Screen('OpenOffscreenWindow', window, windrect);
-        Screen('TextSize', background_window, textsize);
-        Screen('FillRect', background_window, grey ,windrect);
-        DrawFormattedText(background_window, 'Using keys 1 to 9, rate the smartphone contract', 'center', ycenter-300, white);
-        DrawFormattedText(background_window, [pricestr, thisprice], 'center', ycenter, white); 
-        
-        Screen('CopyWindow',background_window, window, windrect, windrect);
-        object_onset        = Screen('Flip', window, object_offset - slack); 
-        
-        rt                  = NaN;
-        answer              = NaN;
-        resp_input          = 0;
-        
-        while resp_input == 0 && (GetSecs - object_onset) < response - 2*slack
+        while rateresp == 0
             
-            [~, secs, keycode] = KbCheck; % check for input
-            
-            if keycode(1,code1) % if subject chose the green urn 
-                resp_input  = code1;
-                rt          = secs - object_onset;
-                answer      = 1; % green urn
-                respmade    = secs;
-                
-            elseif keycode(1,code2) % if subject chose the green urn 
-                resp_input  = code2;
-                rt          = secs - object_onset;
-                answer      = 2; % green urn
-                respmade    = secs;
-                
-            elseif keycode(1,code3) % if subject chose to draw again
-                resp_input  = code3;
-                rt          = secs - object_onset;
-                answer      = 3; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code4)
-                resp_input  = code4;
-                rt          = secs - object_onset;
-                answer      = 4; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code5)
-                resp_input  = code5;
-                rt          = secs - object_onset;
-                answer      = 5; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code6)
-                resp_input  = code6;
-                rt          = secs - object_onset;
-                answer      = 6; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code7)
-                resp_input  = code7;
-                rt          = secs - object_onset;
-                answer      = 7; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code8)
-                resp_input  = code8;
-                rt          = secs - object_onset;
-                answer      = 8; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code9)
-                resp_input  = code9;
-                rt          = secs - object_onset;
-                answer      = 9; % draw-again 
-                respmade    = secs;
-                
-            else
-                resp_input = 0; 
-                rt          = nan; 
-                answer      = nan; % answered A
-                respmade    = GetSecs;
+            [x,~,buttons,~,~,~] = GetMouse(window, 1);
+               
+            % Stop at upper and lower bound
+            if x > windrect(3)*scalelength
+               x = windrect(3)*scalelength;
+            elseif x < windrect(3)*(1-scalelength)
+               x = windrect(3)*(1-scalelength);
             end
-        end % end of response while loop
-        
-        % object offset 
-        object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
-        
-        Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-        fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+            
+             % DISPLAY THE CURRENT CONTARCT PRICE 
+            Screen('TextSize', window, textsize);
+            Screen('FillRect', window, grey ,windrect);
+            DrawFormattedText(window, 'Using the slider below, rate the smartphone contract on a scale of 0-100', 'center', ycenter-300, white);
+            DrawFormattedText(window, [pricestr, thisprice], 'center', ycenter, white); 
 
-        fprintf('prompt was on for %3.4f\n', fixation_onset - object_onset);        % time interval from the the flip of the contract until fixation
+            
+            % Left, middle and right anchors
+            DrawFormattedText(window, anchors{1}, leftclick(1, 1) - textBounds(1, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Left point
+            DrawFormattedText(window, anchors{2}, 'center',  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Middle point
+            DrawFormattedText(window, anchors{3}, rightclick(1, 1) - textBounds(2, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Right point
+            
+            % Drawing the scale
+            Screen('DrawLine', window, scalecolour, midclick(1), midclick(2), midclick(3), midclick(4), width);         % Mid tick
+            Screen('DrawLine', window, scalecolour, leftclick(1), leftclick(2), leftclick(3), leftclick(4), width);     % Left tick
+            Screen('DrawLine', window, scalecolour, rightclick(1), rightclick(2), rightclick(3), rightclick(4), width); % Right tick
+            Screen('DrawLine', window, scalecolour, horzline(1), horzline(2), horzline(3), horzline(4), width);     % Horizontal line
+
+            % The slider
+            Screen('DrawLine', window, slidercolour, x, windrect(4)*scalepos - line, x, windrect(4)*scalepos  + line, width);
+
+            position = round((x)-min(scalerange));                       % Calculates the deviation from 0. 
+            position = (position/(max(scalerange)-min(scalerange)))*100; % Converts the value to percentage
+
+            DrawFormattedText(window, num2str(round(position)), 'center', windrect(4)*(scalepos - 0.05),white); 
+            object_onset        = Screen('Flip', window, object_offset - slack); % flip the screen
+            
+            % calculate response time
+            secs = GetSecs;
+            if buttons(mousebutton) == 1
+                rateresp = 1;
+            end
+            
+            rate_rt = (secs - t0);
+            
+            % Abort if answer takes too long
+            if secs - t0 > maxtime 
+                break
+            end
+        end % end of mouse use while loop
+ 
+        % PUT FIXATION BACK ON
+        Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+        fixation_onset      = Screen('Flip', window);    % fixation on, prepare for next trial     
+
+        fprintf('prompt was on for %3.4f\n', fixation_onset - object_onset);     % time interval from the flip of the contract until fixation
 
         object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
         
@@ -198,13 +180,20 @@ if phase == 1
         trials(iTrial).trialstart   = trialstart;
         trials(iTrial).trialstart   = trialstart;
         trials(iTrial).thisitem     = thisitem;
-        trials(iTrial).response     = answer;
-        trials(iTrial).rt           = rt;
+        trials(iTrial).response     = position;
+        trials(iTrial).rt           = rate_rt;
         
         if abort; fclose('all');break; end 
         
     end % end of trial loop
     
+    logs.trials              = trials; % save the sequence
+
+    sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
+    save(sublogs,'logs');
+    
+    WaitSecs(1); % wait two sec before flipping to the next block/
+
 else % if phase == 2
     
     % Create response prompt window

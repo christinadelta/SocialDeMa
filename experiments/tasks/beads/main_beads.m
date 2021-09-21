@@ -81,7 +81,7 @@ try
     % text settings
     scrn.textfont       = 'Verdana';
     scrn.textsize       = 20;
-    scrn.smalltext      = 15;
+    scrn.smalltext      = 20;
     scrn.fixationsize   = 30;
     scrn.textbold       = 1; 
     
@@ -101,6 +101,7 @@ try
     
     [xcenter, ycenter]      = RectCenter(windrect);                         % get the centre coordinate of the window in pixels
     [xpixels, ypixels]      = Screen('WindowSize', window);                 % size of the on-screen window in pixels
+    globalrect              = Screen('Rect', screenNumber);                 % this is used for the slider
 
     
     % pc actual screen settings
@@ -121,18 +122,21 @@ try
     scrn.ycenter            = ycenter;
     scrn.xpixels            = xpixels;
     scrn.ypixels            = ypixels;
+    scrn.globalrect         = globalrect;
+    scrn.screenNumber       = screenNumber;
     
     %% ---------------------------------------
     % RUN A FEW IMPORTANT UTIL FUNCTIONS
     
-    set                 = TaskSettings(taskNb, sess);                           % Define the first task-specific parameters
+    set                 = TaskSettings(taskNb, sess);                       % Define the first task-specific parameters
 
-    set                 = DefineKeys(taskNb, set);                              % Define set of the task
+    set                 = DefineKeys(taskNb, set);                          % Define set of the task
     
-    scrn                = screenSettings(scrn, taskNb);                         % Define screen setup
+    scrn                = screenSettings(scrn, taskNb);                     % Define screen setup
     
-    [trials, set]       = CreateTrialList(set);                                 % create trials, sequences, split in runs, etc..
+    [trials, set]       = CreateTrialList(set);                             % create trials, sequences, split in runs, etc..
     
+    set                 = MakeSlider(scrn, set);                            % initialise variables for the slider
     
     %% ---------------------------------------
     % CREATE AND RUN INSTRUCTIONS
@@ -357,17 +361,18 @@ try
             [set,logs]     = RunBeads(set, scrn, logs);
             
             % UNPACK SET AND ADD THE TRIAL INFO TO THE "BLOCK"-LOG FILE 
-            blocktrials(thistrial).session     = set.trials.session;
-            blocktrials(thistrial).block       = set.trials.block;
-            blocktrials(thistrial).trialnumber = set.trials.trialnumber;
-            blocktrials(thistrial).trialonset  = set.trials.trialonset;
-            blocktrials(thistrial).urntype     = set.trials.urntype;
-            blocktrials(thistrial).sequence    = set.trials.sequence;
-            blocktrials(thistrial).loss        = set.trials.loss;
-            blocktrials(thistrial).draws       = set.trials.draws;
-            blocktrials(thistrial).response    = set.trials.response;
-            blocktrials(thistrial).accuracy    = set.trials.accuracy;
-            blocktrials(thistrial).balance     = set.trials.balance;
+            blocktrials(thistrial).session     = set.blocktrials.session;
+            blocktrials(thistrial).block       = set.blocktrials.block;
+            blocktrials(thistrial).trialnumber = set.blocktrials.trialnumber;
+            blocktrials(thistrial).trialonset  = set.blocktrials.trialonset;
+            blocktrials(thistrial).urntype     = set.blocktrials.urntype;
+            blocktrials(thistrial).sequence    = set.blocktrials.sequence;
+            blocktrials(thistrial).draws       = set.blocktrials.draws;
+            blocktrials(thistrial).response    = set.blocktrials.response;
+            blocktrials(thistrial).accuracy    = set.blocktrials.accuracy;
+            blocktrials(thistrial).balance     = set.blocktrials.balance;
+            blocktrials(thistrial).thisrate    = set.blocktrials.thisrate;
+            blocktrials(thistrial).ratert      = set.blocktrials.ratert;
             blocktrials(thistrial).condition   = cond;
                
         end % end of trial/sequence for loop        

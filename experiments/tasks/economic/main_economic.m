@@ -110,7 +110,7 @@ try
     
     [xcenter, ycenter]      = RectCenter(windrect);                         % get the centre coordinate of the window in pixels
     [xpixels, ypixels]      = Screen('WindowSize', window);                 % size of the on-screen window in pixels
-
+    globalrect              = Screen('Rect', screenNumber);                 % this is used for the slider
     
     % pc actual screen settings
     scrn.actscreen          = Screen('Resolution', screenNumber);
@@ -130,6 +130,8 @@ try
     scrn.ycenter            = ycenter;
     scrn.xpixels            = xpixels;
     scrn.ypixels            = ypixels;
+    scrn.globalrect         = globalrect;
+    scrn.screenNumber       = screenNumber;
     
     %% ---------------------------------------
     % RUN A FEW IMPORTANT UTIL FUNCTIONS
@@ -144,6 +146,9 @@ try
     
     [trials, set]       = CreateTrialList(set);                             % create trials, sequences, split in runs, etc..
     
+    if phase == 1
+        set             = MakeSlider(scrn, set);                        % initialise variables for the slider
+    end
    
     %% ---------------------------------------
     % CREATE AND RUN INSTRUCTIONS

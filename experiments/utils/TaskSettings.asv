@@ -65,7 +65,10 @@ if taskNb == 1 % if this is the beads task
         set.trigger14   = 14;   % feedback screen (you win!)
         set.trigger15   = 15;   % feedback screen (you lose!)
         set.trigger16   = 16;   % feedback screen (you lose - out of draws)
-        set.trigger19   = 17;   % feedback (didn't respond)
+        
+        set.trigger17   = 17;   % correct response 
+        set.trigger18   = 18;   % incorrect response
+        
         
         % 3. main script triggers 
         set.trigger100  = 100;  % condition trigger -- condition (easy)
