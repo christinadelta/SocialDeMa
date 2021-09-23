@@ -20,9 +20,6 @@ if taskNb == 1 % if this is the  beads task
     set.code1       = KbName('1!'); % 1! = Blue
     set.code2       = KbName('2@'); % 2@ = Green
     set.code3       = KbName('3#'); % 3# = Draw again
-    set.code4       = KbName('LeftArrow'); % not confident
-    set.code5       = KbName('DownArrow'); % moderately confident
-    set.code6       = KbName('RightArrow'); % very confident 
 
     set.code7       = KbName('a'); % answer a
     set.code8       = KbName('b'); % answer b
@@ -57,7 +54,7 @@ elseif taskNb == 2 % if this is the the economic best-choice task
     end % end of phase statement
     
 elseif taskNb == 3 % if this is the facial attractiveness task
-     %% TASK 3 KEYS
+    %% TASK 3 KEYS
      
     % Unpack variables
     phase               = set.phase;

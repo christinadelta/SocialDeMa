@@ -24,9 +24,7 @@ ycenter         = scrn.ycenter;
 ifi             = scrn.ifi;          % frame duration
 slack           = scrn.slack;        % slack is ifi/2 (important for timing)
 white           = scrn.white;
-black           = scrn.black;
 grey            = scrn.grey;
-globalrect      = scrn.globalrect;
 fixsize         = scrn.fixationsize;
 textfont        = scrn.textfont;
 textsize        = scrn.textsize;
@@ -71,25 +69,6 @@ greenkey        = set.code2;       % keycode for green option
 drawkey         = set.code3;       % keycode for draw-again option
 esckey          = set.code21;      % keycode for aborting the experiment 
 
-anchors         = set.anchors;
-scalelength     = set.scalelength;
-maxtime         = set.maxtime;
-mousebutton     = set.mousebutton;
-leftclick       = set.leftclick;
-rightclick      = set.rightclick;
-midclick        = set.midclick;
-horzline        = set.horzline;
-width           = set.width;
-scalepos        = set.scalepos;
-startpos        = set.startpos;
-line            = set.line;
-scalerange      = set.scalerange;
-scalecolour     = white;
-slidercolour    = black;
-
-% calculate coordinates of scale line and text bounds
-x               = globalrect(3)/2;
-
 % ADD A FEW MORE VARIABLES
 blocktrials     = []; % store trial info
 draws           = []; % store info specifically about the sequence/draws [1-10]
@@ -111,11 +90,6 @@ if EEG == 1
     trigger6    = set.trigger6;
     trigger7    = set.trigger7;
     trigger8    = set.trigger8;
-    trigger9    = set.trigger9;
-    trigger10   = set.trigger10;
-    trigger11   = set.trigger11;
-    trigger12   = set.trigger12;
-    trigger13   = set.trigger13;
     trigger14   = set.trigger14;
     trigger15   = set.trigger15;
     trigger16   = set.trigger16;
@@ -181,28 +155,6 @@ Screen('TextSize', feedback_window4, textsize);
 Screen('FillRect', feedback_window4, grey ,windrect);
 DrawFormattedText(feedback_window4, 'Oh No! :(', 'center', ycenter-50, red);
 DrawFormattedText(feedback_window4, 'You did not respond', 'center', ycenter, red);
-
-% ADD TEXTBOUNDS -- WILL BE USED TO CREATE THE SLIDER 
-textbounds = [Screen('TextBounds', window, sprintf(anchors{1})); Screen('TextBounds', window, sprintf(anchors{3}))];
-         
-% CONFIDENCE RATING WINDOW
-confidence_window = Screen('OpenOffscreenWindow',window);
-Screen('TextSize', confidence_window, textsize);
-Screen('FillRect', confidence_window, grey ,windrect);
-DrawFormattedText(confidence_window, 'On a scale of 0 to 100, how confident are you for your choice?', 'center', ycenter-150, white);
-DrawFormattedText(confidence_window, '0 = Not Confiddent', 'center', ycenter-50, white);
-DrawFormattedText(confidence_window, '100 = Very Confident', 'center', ycenter, white);
-
-% Left, middle and right anchors
-DrawFormattedText(confidence_window, anchors{1}, leftclick(1, 1) - textbounds(1, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Left point
-DrawFormattedText(confidence_window, anchors{2}, 'center',  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Middle point
-DrawFormattedText(confidence_window, anchors{3}, rightclick(1, 1) - textbounds(2, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Right point
-
-% Drawing the scale
-Screen('DrawLine', confidence_window, scalecolour, midclick(1), midclick(2), midclick(3), midclick(4), width);         % Mid tick
-Screen('DrawLine', confidence_window, scalecolour, leftclick(1), leftclick(2), leftclick(3), leftclick(4), width);     % Left tick
-Screen('DrawLine', confidence_window, scalecolour, rightclick(1), rightclick(2), rightclick(3), rightclick(4), width); % Right tick
-Screen('DrawLine', confidence_window, scalecolour, horzline(1), horzline(2), horzline(3), horzline(4), width);     % Horizontal line
 
 %%
 % START THE TRIAL WITH A FIXATION CROSS
@@ -419,7 +371,6 @@ for thisdraw = 1:drawlen
    
    Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
    fixation_onset   = Screen('Flip', window, prompt_offset - slack);                % fixation on, prepare for next draw or for feedback      
-  
    object_offset    = fixation_onset + isi + randperm(jitter*1000,1)/1000 - ifi;     % add jitter here?
    
    if answer ~= 3
@@ -445,137 +396,20 @@ for thisdraw = 1:drawlen
            
        else
            
+           set.object_offset = object_offset; % 
+           
            % THIS IS THE PART WHERE WE DRAW THE SLIDER AND SHOW THE
            % CONFIDENCE SCREEN
-           
-           % First define the starting point of the slider
-           % calculate coordinates of scale line and text bounds
-           if strcmp(startpos, 'left')
-               x = globalrect(3)*(1-scalelength);
-           elseif strcmp(startpos, 'center')
-               x = globalrect(3)/2;
-           elseif strcmp(startpos, 'right')
-               x = globalrect(3)*scalelength;
-           end
-           
-           % NOW DARW THE SCALE WITHOUT THE SLIDER AND ALLOW THE SUBJECT TO
-           % CLICK ONCE TO INIT THE SLIDER
-           
-           % initialise the mouse
-           SetMouse(round(x), round(windrect(4)*scalepos), window, 1)
-           
-           t0                         = GetSecs;
-           initresp                   = 0;
-           responseTrigNotSent        = 1;
-           
-           while initresp == 0 && (GetSecs - fixation_onset) < maxtime
-               
-               [x,~,buttons,~,~,~] = GetMouse(window, 1);
-               
-               % Stop at upper and lower bound
-               if x > windrect(3)*scalelength
-                   x = windrect(3)*scalelength;
-               elseif x < windrect(3)*(1-scalelength)
-                   x = windrect(3)*(1-scalelength);
-               end
-               
-               % draw the question and slider
-               Screen('CopyWindow', confidence_window, window, windrect, windrect)
-               rating_onset = Screen('Flip', window, object_offset - slack);    % rating window is on
-               
-                % wait for second response 
-                secs = GetSecs;
-                if buttons(mousebutton) == 1
-                    initresp = 1;
-                end
+           set = MakeSlider(scrn, set); % first draw the scale and allow subject to click the mouse
+           WaitSecs(0.1)                % delay to prevent fast mouse clicks mix 
 
-                % Abort if answer takes too long
-                if secs - t0 > maxtime 
-                    break
-                end
-           end % end of first mouse while loop
-           
-           KbReleaseWait; %Keyboard
-           WaitSecs(0.1) % % delay to prevent fast mouse clicks mix 
-           
-           % NOW that the saubject has clicked the mouse once or enough
-           % time has passed, aske them to give their rate by dragging the
-           % mouse 
-           t1               = GetSecs;
-           secondresp       = 0;
-           
-           while secondresp == 0 && (GetSecs - rating_onset) < maxtime
+           set = RunSlider(scrn, set);  % once subject click the first time, display slider
+           WaitSecs(0.1)
                
-               [x,~,buttons,~,~,~] = GetMouse(window, 1);
-               
-               % Stop at upper and lower bound
-               if x > windrect(3)*scalelength
-                   x = windrect(3)*scalelength;
-               elseif x < windrect(3)*(1-scalelength)
-                   x = windrect(3)*(1-scalelength);
-               end
-               
-               % draw the question and slider
-               Screen('TextSize', window, textsize);
-               Screen('FillRect', window, grey ,windrect);
-               DrawFormattedText(window, 'On a scale of 0 to 100, how confident are you for your choice?', 'center', ycenter-150, white);
-               DrawFormattedText(window, '0 = Not Confiddent', 'center', ycenter-50, white);
-               DrawFormattedText(window, '100 = Very Confident', 'center', ycenter, white);
-
-               % Left, middle and right anchors
-               DrawFormattedText(window, anchors{1}, leftclick(1, 1) - textbounds(1, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Left point
-               DrawFormattedText(window, anchors{2}, 'center',  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Middle point
-               DrawFormattedText(window, anchors{3}, rightclick(1, 1) - textbounds(2, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Right point
-
-                % Drawing the scale
-               Screen('DrawLine', window, scalecolour, midclick(1), midclick(2), midclick(3), midclick(4), width);         % Mid tick
-               Screen('DrawLine', window, scalecolour, leftclick(1), leftclick(2), leftclick(3), leftclick(4), width);     % Left tick
-               Screen('DrawLine', window, scalecolour, rightclick(1), rightclick(2), rightclick(3), rightclick(4), width); % Right tick
-               Screen('DrawLine', window, scalecolour, horzline(1), horzline(2), horzline(3), horzline(4), width);     % Horizontal line
-
-               % The slider
-               Screen('DrawLine', window, slidercolour, x, windrect(4)*scalepos - line, x, windrect(4)*scalepos  + line, width);
-
-               position = round((x)-min(scalerange));                       % Calculates the deviation from 0. 
-               position = (position/(max(scalerange)-min(scalerange)))*100; % Converts the value to percentage
-
-               DrawFormattedText(window, num2str(round(position)), 'center', windrect(4)*(scalepos - 0.05), white); 
-               rating_onset = Screen('Flip', window);    % rating window is on
-               
-               % send confidence screen trigger
-               if EEG == 1 
-                   sp.sendTrigger(trigger9)
-               end
-               
-               secs = GetSecs;
-               if buttons(mousebutton) == 1
-                   secondresp = 1;
-               end
-               rate_rt = (secs - t1);
-
-               % sent rate (response) trigger
-               if EEG == 1 && responseTrigNotSent==1
-                   
-                   if round(position) <= 25 
-                       sp.sendTrigger(trigger10);
-                       
-                   elseif round(position) > 25 && round(position) <= 50 
-                       sp.sendTrigger(trigger11);
-                       
-                   elseif round(position) > 50 && round(position) <= 75
-                       sp.sendTrigger(trigger12);
-                       
-                   else 
-                       sp.sendTrigger(trigger13);
-                   end 
-                   responseTrigNotSent=0;
-               end
-               
-           end % end of second mouse while loop
-           
-           object_offset   = secs + isi - ifi;
-          
-           KbReleaseWait; %Keyboard
+           % UNPACK SETTINGS
+           object_offset    = set.object_offset;
+           rate_rt          = set.rate_rt;
+           position         = set.position;
            
            % ADD A FIXATION BEFORE FEEDBACK
            Screen('CopyWindow', fixationdisplay, window, windrect, windrect)
@@ -697,6 +531,7 @@ for thisdraw = 1:drawlen
    draws(thisdraw).block        = thisblock;
    draws(thisdraw).trialnumber  = thistrial;
    draws(thisdraw).trialonset   = trialstart;
+   draws(thisdraw).beadonset    = bead_onset;
    draws(thisdraw).thisdraw     = thisdraw;
    draws(thisdraw).rt           = rt;
    
@@ -707,7 +542,6 @@ end % end of draw for loop
 % Do we send a trigger at this point? something like:
 if EEG == 1 
     sp.sendTrigger(trigger103)
-
 end
 
 % UPDATE BALANCE 
@@ -716,11 +550,9 @@ balance = balance - (penalty * draw_count);
 
 % 2. Now add winnings or subtract losses
 if accuracy == 1
-    balance = balance + win;
-  
+    balance = balance + win; 
 elseif accuracy == 0 
-    balance = balance - win;
-    
+    balance = balance - win;    
 end
 
 % update the current balance
@@ -729,8 +561,7 @@ set.balance         = balance;
 % update the position/rate for this trial (if the subject didn't give a
 % rate then this should be nan
 if answer == 1 || answer == 2
-    thisrate        = position;
-    
+    thisrate        = position;    
 else 
     position        = nan;
     thisrate        = position;
@@ -760,9 +591,5 @@ set.blocktrials         = blocktrials;
 
 sub_drawslog             = fullfile(resfolder,sprintf(logs.drawslog,sub,taskname,thisblock,thistrial,thisession));
 save(sub_drawslog,'logs');
-
-
-% end of run/sequence 
-
 
 end

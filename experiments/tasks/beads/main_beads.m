@@ -136,8 +136,6 @@ try
     
     [trials, set]       = CreateTrialList(set);                             % create trials, sequences, split in runs, etc..
     
-    set                 = MakeSlider(scrn, set);                            % initialise variables for the slider
-    
     %% ---------------------------------------
     % CREATE AND RUN INSTRUCTIONS
     

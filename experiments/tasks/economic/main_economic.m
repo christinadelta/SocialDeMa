@@ -145,10 +145,6 @@ try
     scrn                = screenSettings(scrn, taskNb);                     % Define screen setup
     
     [trials, set]       = CreateTrialList(set);                             % create trials, sequences, split in runs, etc..
-    
-    if phase == 1
-        set             = MakeSlider(scrn, set);                        % initialise variables for the slider
-    end
    
     %% ---------------------------------------
     % CREATE AND RUN INSTRUCTIONS

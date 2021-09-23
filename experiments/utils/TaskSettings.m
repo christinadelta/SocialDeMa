@@ -82,7 +82,7 @@ elseif taskNb == 2
     if phase == 1
         
         % EXPERIMENTAL SETTINGS
-        set.fixdur          = .7;   % in sec
+        set.fix_dur         = .7;   % in sec
         
         % TASK/PHASE SETTINGS
         set.blocks          = 120; 
@@ -93,8 +93,8 @@ elseif taskNb == 2
     else % if phase is 2
         
         % EXPERIMENTAL SETTINGS
-        set.fixdur          = .5;   % in sec
-        set.stimdur         = 1.5;  % in sec
+        set.fix_dur         = .5;   % in sec
+        set.stimdur         = 1;  % in sec
         set.response        = 2.5;  % indicative of max response time 
         set.feedback        = 3;    % this will be just the presentation of the accepted contract
         set.reward          = [1 0.5 0.25]; % rewards best on the 3 ranks
@@ -128,7 +128,7 @@ elseif taskNb == 3
     if phase == 1
         
         % EXPERIMENTAL SETTINGS
-        set.fixdur          = .7;   % in sec
+        set.fix_dur         = .7;   % in sec
         set.response        = 10;   % indicative of max response time 
         
         % STIMULUS SETTINGS
@@ -144,7 +144,7 @@ elseif taskNb == 3
     else % if phase is 2
         
         % EXPERIMENTAL SETTINGS
-        set.fixdur          = .5;   % in sec
+        set.fix_dur         = .5;   % in sec
         set.stimdur         = 1.5;    % in sec
         set.response        = 2.5;  % indicative of max response time 
         set.feedback        = 3;    % this will be just the presentation of the accepted contract
