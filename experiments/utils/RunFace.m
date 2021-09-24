@@ -49,9 +49,8 @@ Screen('TextSize',fixationdisplay, fixsize);
 DrawFormattedText(fixationdisplay, fixation, 'center', ycenter, white);
 
 % Compute destination rectangle location
-destrect        = [xcenter-objectx/2, ycenter-objecty/2, xcenter+objectx/2, ycenter+objecty/2];
-%destrect        = [xcenter-objectx/4, ycenter-objecty/4, xcenter+objectx/4, ycenter+objecty/4];
-
+destrect        = [xcenter-objectx/4, ycenter-objecty/4, xcenter+objectx/4, ycenter+objecty/4];
+set.destrect    = destrect;
 
 %% ----- Run the best-choice economic task ------ %%
 
@@ -61,22 +60,8 @@ HideCursor;
 if phase == 1
      
     % UNPACK PHASE ONE PARAMETERS 
-    sequence        = set.sequence;     % this is the current sequence/trial
-    fixduration     = set.fixdur;       % fixation duration 
-    response        = set.response;     % response time (5 sec or self-paced)
-    
-     % UNPACK RESPONSE KEYS
-    code1       = set.code1;
-    code2       = set.code2;
-    code3       = set.code3;
-    code4       = set.code4;
-    code5       = set.code5;
-    code6       = set.code6;
-    code7       = set.code7;
-    code8       = set.code8;
-    code9       = set.code9;
-    
-    trials      = [];   % store trial info
+    sequence        = set.sequence; % this is the current sequence/trial 
+    trials          = [];           % store trial info
     
     % START THE BLOCK WITH A FIXATION CROSS
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
@@ -97,96 +82,30 @@ if phase == 1
         end
         
         % get current trial details 
-        thisitem        = sequence(iTrial); % index of the current item 
+        thisitem            = sequence(iTrial); % index of the current item 
         
-        % DISPLAY THE CURRENT FACE
-        background_window = Screen('OpenOffscreenWindow', window, windrect);
-        Screen('TextSize', background_window, textsize);
-        Screen('FillRect', background_window, grey ,windrect);
-        DrawFormattedText(background_window, 'Using keys 1 to 9, rate the face below', 'center', ycenter-300, white);
-        Screen('DrawTexture', background_window, textures{thisitem}, [], destrect); % display thisitem
-        Screen('CopyWindow',background_window, window, windrect, windrect);
-        object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
+        set.thisitem        = thisitem;
+        set.object_offset   = object_offset;
         
-        rt                  = NaN;
-        answer              = NaN;
-        resp_input          = 0;
+        % NOW DARW THE CONTRACT AND SCALE WITHOUT THE SLIDER AND ALLOW THE SUBJECT TO
+        % CLICK ONCE TO INIT THE SLIDER
+        set = MakeSlider(scrn, set); % first draw the scale and allow subject to click the mouse
+        WaitSecs(0.1)                % delay to prevent fast mouse clicks mix 
         
-        while resp_input == 0 && (GetSecs - object_onset) < response - 2*slack
-            
-            [~, secs, keycode] = KbCheck; % check for input
-            
-            if keycode(1,code1) % if subject chose the green urn 
-                resp_input  = code1;
-                rt          = secs - object_onset;
-                answer      = 1; % green urn
-                respmade    = secs;
-                
-            elseif keycode(1,code2) % if subject chose the green urn 
-                resp_input  = code2;
-                rt          = secs - object_onset;
-                answer      = 2; % green urn
-                respmade    = secs;
-                
-            elseif keycode(1,code3) % if subject chose to draw again
-                resp_input  = code3;
-                rt          = secs - object_onset;
-                answer      = 3; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code4)
-                resp_input  = code4;
-                rt          = secs - object_onset;
-                answer      = 4; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code5)
-                resp_input  = code5;
-                rt          = secs - object_onset;
-                answer      = 5; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code6)
-                resp_input  = code6;
-                rt          = secs - object_onset;
-                answer      = 6; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code7)
-                resp_input  = code7;
-                rt          = secs - object_onset;
-                answer      = 7; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code8)
-                resp_input  = code8;
-                rt          = secs - object_onset;
-                answer      = 8; % draw-again 
-                respmade    = secs;
-                
-            elseif keycode(1,code9)
-                resp_input  = code9;
-                rt          = secs - object_onset;
-                answer      = 9; % draw-again 
-                respmade    = secs;
-                
-            else
-                resp_input = 0; 
-                rt          = nan; 
-                answer      = nan; % answered A
-                respmade    = GetSecs;
-            end
-        end % end of response while loop
+        stimonset           = set.object_onset;
+
+        set = RunSlider(scrn, set);  % once subject click the first time, display slider
+        WaitSecs(0.1)
+
+        % UNPACK SETTINGS
+        object_offset       = set.object_offset;
+        rate_rt             = set.rate_rt;
+        position            = set.position;
         
-        % object offset 
-        object_offset       = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
-        
+        % BRING FIXATION BACK ON
         Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
         fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
-
-        fprintf('prompt was on for %3.4f\n', fixation_onset - object_onset);    % time interval from the the flip of the contract until fixation
-
-        object_offset       = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
+        object_offset       = fixation_onset + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
         
         % SAVE TRIAL INFO
         trials(iTrial).sub          = sub;
@@ -194,10 +113,10 @@ if phase == 1
         trials(iTrial).session      = thisession;
         trials(iTrial).block        = thisblock;
         trials(iTrial).trialstart   = trialstart;
-        trials(iTrial).trialstart   = trialstart;
+        trials(iTrial).stimonset    = stimonset;
         trials(iTrial).thisitem     = thisitem;
-        trials(iTrial).response     = answer;
-        trials(iTrial).rt           = rt;
+        trials(iTrial).response     = position;
+        trials(iTrial).rt           = rate_rt;
         
         if abort; fclose('all');break; end 
         
@@ -243,11 +162,15 @@ else % if this is phase 2
       % UNPACK SETTINGS STRUCT for phase 2
     thistrial       = set.thisTrial;    % current sequence/trial number
     sequence        = set.sequence;     % this is the current sequence/trial
-    fixduration     = set.fixdur;       % fixation duration 
+    fixduration     = set.fix_dur;      % fixation duration 
     response        = set.response;     % response time (5 sec or self-paced)
     feedbacktime    = set.feedback;     % feedback duration
     smalltex        = set.smalltex;     % small textures 
     stimduration    = set.stimdur;      % stimulus duration
+    items           = set.items(:,1);
+    averaged        = set.items(:,2);
+    balance         = set.balance;
+    rewards         = set.rewards; 
     
      % UNPACK RESPONSE KEYS
     code1           = set.code1;
@@ -257,6 +180,18 @@ else % if this is phase 2
     trials          = [];   % store trial info
     previous        = nan;   % store previous samples
     blocktrials     = [];   % here we store the info of the current sequence
+    
+    % find the averaged prices for the current sequence and define the 3
+    % ranks
+    for i = 1:samples
+        
+        rate_item = sequence(i,1);
+        sequence(i,2) = averaged(rate_item);
+        
+    end
+    
+    % get the three best ranks 
+    maxrates = maxk(sequence(:,2),3); 
     
     % START THE TRIAL WITH A FIXATION CROSS
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
@@ -285,10 +220,13 @@ else % if this is phase 2
             trigger1 = 0 + s; % contract triggers 1:10
         end
         
-        thisitem        = sequence(s); % index of the current item
+        thisitem        = sequence(s,1); % index of the current item
+        thisrate        = sequence(s,2); % index of thisitem averaged rate
         
-        Xchange         = xcenter-600; % this will help define x positions of the small images
+        Xchange         = xcenter-400; % this will help define x positions of the small images
         Ychange         = ycenter+350; % this is the y position of the small images
+        xs              = Xchange;
+        ys              = Ychange;
         
         if s == 1
             % DISPLAY THE CURRENT FACE - Backround window (the number of
@@ -322,9 +260,9 @@ else % if this is phase 2
             Screen('TextSize', background_window, textsize);
             Screen('FillRect', background_window, grey ,windrect);
             DrawFormattedText(background_window,sprintf('Face %d/10',s), 'center', ycenter-300, white);
-            DrawFormattedText(background_window, 'Rejected faces', xcenter - 600, ycenter+250, white);
+            DrawFormattedText(background_window, 'Rejected dates', xcenter - 400, ycenter+250, white);
 
-             % DISPLAY THE CURRENT FACE - the actual face
+            % DISPLAY THE CURRENT FACE - the actual face
             Screen('DrawTexture', background_window, textures{thisitem}, [], destrect);     % display thisitem
             Screen('DrawTextures', background_window, [smalltex{previous}], [], smallrects);     % display small items
             Screen('CopyWindow',background_window, window, windrect, windrect);
@@ -338,7 +276,27 @@ else % if this is phase 2
         
         object_offset   = object_onset + stimduration - ifi; % add jitter here?
         
+        % BRING FIXATION BACK ON
         Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+   
+        % if this is not the first draw, show previous draw at the bottom of
+        % the screen (during fixation also
+        if s > 1
+            
+            % image size and position on screen (for the small images)
+            smallrects  = nan(4,previous_len); 
+            
+            for l = 1:previous_len
+                smallrects(:,l) = [xs-objectx/6, ys-objecty/6, xs+objectx/6, ys+objecty/6];
+                
+                xs = xs+100;
+            end
+           
+            Screen('TextSize', window, textsize);
+            DrawFormattedText(window, 'Rejected dates:', xcenter - 400, ycenter+250, white);
+            Screen('DrawTextures', window, [smalltex{previous}], [], smallrects);     % display small items   
+        end
+        
         fixation_onset  = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial
         fixation_offset = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
         
@@ -399,6 +357,21 @@ else % if this is phase 2
         % object offset 
         object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
        
+        % what is the rank of the accepted face?
+        if thisrate == maxrates(1)
+            thisreward  = rewards(1);
+            thisrank    = 1;
+        elseif thisrate == maxrates(2)
+            thisreward  = rewards(2);
+            thisrank    = 2;
+        elseif thisrate == maxrates(3)
+            thisreward  = rewards(3);
+            thisrank    = 3;
+        else
+            thisreward  = 0;
+            thisrank    = 0;
+        end
+       
         % IF SUBJECT ACCEPTED A FACE/DATE SHOW FFEDBACK AND BREAK SEQUENCE
         % IF SUBJECT CHOSE TO SAMPLE AGAIN, SHOW FIXATION AND MOVE TO THE
         % NEXT FACE
@@ -409,12 +382,22 @@ else % if this is phase 2
             fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
 
             object_offset       = fixation_onset + fixduration - ifi;  % add jitter here?
+            
+            if thisrank == 0
 
-            % DISPLAY CHOSEN CONTRACT
-            feedback_window = Screen('OpenOffscreenWindow', window, windrect);
-            Screen('TextSize', feedback_window, textsize);
-            Screen('FillRect', feedback_window, grey ,windrect);
-            DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+                % DISPLAY CHOSEN CONTRACT
+                feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+                Screen('TextSize', feedback_window, textsize);
+                Screen('FillRect', feedback_window, grey ,windrect);
+                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+            else
+                % DISPLAY CHOSEN CONTRACT
+                feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+                Screen('TextSize', feedback_window, textsize);
+                Screen('FillRect', feedback_window, grey ,windrect);
+                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+                DrawFormattedText(feedback_window, sprintf('Your reward is %3.4f\n credits', thisreward), 'center', ycenter-250, white);
+            end
             
             % DISPLAY THE CURRENT FACE
             Screen('DrawTexture', feedback_window, textures{thisitem}, [], destrect);     % display the chosen item
@@ -456,14 +439,29 @@ else % if this is phase 2
                 Screen('CopyWindow',feedback_sampling, window, windrect, windrect);
                 object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
             
-                % DISPLAY OFFSET 
+                % DISPLAY REQUESTED OBJECT OFFSET 
                 object_offset       = object_onset + feedbacktime - ifi;
                 
-                % DISPLAY CHOSEN CONTRACT
-                feedback_window = Screen('OpenOffscreenWindow', window, windrect);
-                Screen('TextSize', feedback_window, textsize);
-                Screen('FillRect', feedback_window, grey ,windrect);
-                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+                % BRING FIXATION BACK ON
+                Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+                fixation_onset      = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
+
+                object_offset       = fixation_onset + fixduration - ifi; % add jitter here?
+                
+                if thisrank == 0 
+                    % DISPLAY CHOSEN FACE/DATE
+                    feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+                    Screen('TextSize', feedback_window, textsize);
+                    Screen('FillRect', feedback_window, grey ,windrect);
+                    DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+                else
+                    % DISPLAY CHOSEN CONTRACT
+                    feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+                    Screen('TextSize', feedback_window, textsize);
+                    Screen('FillRect', feedback_window, grey ,windrect);
+                    DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+                    DrawFormattedText(feedback_window, sprintf('Your reward is %3.4f\n credits', thisreward), 'center', ycenter-250, white);
+                end
 
                 % DISPLAY THE CURRENT FACE
                 Screen('DrawTexture', feedback_window, textures{thisitem}, [], destrect);     % display the chosen item
@@ -509,24 +507,31 @@ else % if this is phase 2
         sp.sendTrigger(trigger101)
     end
     
-    chosenitem               = thisitem;
+    balance                     = balance + thisreward;
+    set.balance                 = balance;
+    chosenitem                  = thisitem;
 
     % save the current trial info
-    blocktrials.session      = thisession;
-    blocktrials.block        = thisblock;
-    blocktrials.trialnumber  = thistrial;
-    blocktrials.trialonset   = trialstart;
-    blocktrials.sequence     = sequence';
-    blocktrials.numsamples   = s;
-    blocktrials.chosenitem   = chosenitem;
+    blocktrials.session         = thisession;
+    blocktrials.block           = thisblock;
+    blocktrials.trialnumber     = thistrial;
+    blocktrials.trialonset      = trialstart;
+    blocktrials.sequence        = sequence(:,2)';
+    blocktrials.numsamples      = s;
+    blocktrials.chosenitem      = chosenitem;
+    blocktrials.thisrate        = thisrate;
+    blocktrials.rank            = thisrank;
+    blocktrials.thisreward      = thisreward;
+    blocktrials.balance         = balance;
+    
 
-    set.blocktrials          = blocktrials; % (save the info of this trial) this will go to the main script
+    set.blocktrials             = blocktrials; % (save the info of this trial) this will go to the main script
     
     WaitSecs(1); % wait two sec before flipping to the next block/
 
-    logs.trials              = trials; % save the samples 
+    logs.trials                 = trials; % save the samples 
 
-    sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
+    sublogs                     = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
     save(sublogs,'logs');
 
 end % end of phase statement 

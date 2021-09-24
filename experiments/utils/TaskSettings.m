@@ -85,7 +85,7 @@ elseif taskNb == 2
         set.fix_dur         = .7;   % in sec
         
         % TASK/PHASE SETTINGS
-        set.blocks          = 120; 
+        set.blocks          = 30; 
         set.itemReps        = 2; 
         set.totaltrials     = 480*set.itemReps;
         set.blocktrials     = set.totaltrials/set.blocks;
@@ -129,16 +129,15 @@ elseif taskNb == 3
         
         % EXPERIMENTAL SETTINGS
         set.fix_dur         = .7;   % in sec
-        set.response        = 10;   % indicative of max response time 
         
         % STIMULUS SETTINGS
         set.stimsize        = 250;  % resize images or not?
-        set.stimsize_deg    = 4;    % degrees of visual angle
+        set.stimsize_deg    = 5;    % degrees of visual angle
         
         % TASK/PHASE SETTINGS
-        set.blocks          = 120; 
+        set.blocks          = 30; 
         set.itemReps        = 2; 
-        set.totaltrials     = 480*set.itemReps;
+        set.totaltrials     = 300*set.itemReps;
         set.blocktrials     = set.totaltrials/set.blocks;
         
     else % if phase is 2
@@ -148,7 +147,8 @@ elseif taskNb == 3
         set.stimdur         = 1.5;    % in sec
         set.response        = 2.5;  % indicative of max response time 
         set.feedback        = 3;    % this will be just the presentation of the accepted contract
-        
+        set.rewards         = [1 0.5 0.25]; % rewards best on the 3 ranks
+        set.balance         = 0;
         
         % STIMULUS SETTINGS
         set.stimsize        = 200;  % resize images or not?

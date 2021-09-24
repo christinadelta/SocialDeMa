@@ -6,19 +6,17 @@ function [set] = MakeSlider(scrn, set)
 % UNPACK SCREEN RELATED STUFF
 window          = scrn.window;      % main window
 windrect        = scrn.windrect;
-screenNumber    = scrn.screenNumber;
 globalrect      = scrn.globalrect;
 textsize        = scrn.textsize;
 grey            = scrn.grey;
 white           = scrn.white;
-xcenter         = scrn.xcenter;
 ycenter         = scrn.ycenter;
 ifi             = scrn.ifi;          % frame duration
 slack           = scrn.slack;
-fixsize         = scrn.fixationsize;
 
 object_offset   = set.object_offset;
 taskNb          = set.taskNb;
+EEG             = set.EEG;
 
 % define variables 
 anchors         = {'0', '50', '100'};
@@ -35,6 +33,17 @@ scalecolour     = white;
 if taskNb == 2
     thisprice   = set.thisprice;
     pricestr    = set.pricestr;
+    
+elseif taskNb == 3
+    textures    = set.textures;     % this will be used to draw the textures on screen
+    thisitem    = set.thisitem;
+    destrect    = set.destrect;
+end
+
+% UNPACK EEG TRIGGERS
+if EEG == 1 
+    sp          = set.sp;
+    trigger9    = set.trigger9; 
 end
 
 % First define the starting point of the slider
@@ -75,10 +84,18 @@ elseif taskNb == 2
     rating_window = Screen('OpenOffscreenWindow',window);
     Screen('TextSize', rating_window, textsize);
     Screen('FillRect', rating_window, grey ,windrect);
-    DrawFormattedText(rating_window, 'On a scale of 0 to 100, Please rate the contract price below', 'center', ycenter-200, white);
+    DrawFormattedText(rating_window, 'On a scale of 0 to 100, rate how likely it would be for you to get that contract in real life.', 'center', ycenter-200, white);
     DrawFormattedText(rating_window, '0 = I would never accept this contract', 'center', ycenter-150, white);
     DrawFormattedText(rating_window, '100 = I would definately accept this contract ', 'center', ycenter-100, white);
-
+elseif taskNb == 3
+    
+    rating_window = Screen('OpenOffscreenWindow',window);
+    Screen('TextSize', rating_window, textsize);
+    Screen('FillRect', rating_window, grey ,windrect);
+    DrawFormattedText(rating_window, 'On a scale of 0 to 100, rate how likely it would be for you date that person in real life.', 'center', ycenter-250, white);
+    DrawFormattedText(rating_window, '0 = I would never date that person', 'center', ycenter-200, white);
+    DrawFormattedText(rating_window, '100 = I would definately date that person', 'center', ycenter-150, white);
+   
 end
 
 % Left, middle and right anchors
@@ -113,10 +130,19 @@ while initresp == 0
     
     if taskNb == 2
         DrawFormattedText(window, [pricestr, thisprice], 'center', ycenter, white); 
+        
+    elseif taskNb == 3
+        Screen('DrawTexture', rating_window, textures{thisitem}, [], destrect); % display thisitem
+        
     end
     
     object_onset = Screen('Flip', window, object_offset - slack);    % rating window is on
-               
+    
+    % send confidence screen trigger
+    if EEG == 1 
+        sp.sendTrigger(trigger9)
+    end
+          
     % wait for second response 
     secs = GetSecs;
     if buttons(mousebutton) == 1

@@ -113,7 +113,7 @@ try
     
     [xcenter, ycenter]      = RectCenter(windrect);                         % get the centre coordinate of the window in pixels
     [xpixels, ypixels]      = Screen('WindowSize', window);                 % size of the on-screen window in pixels
-
+    globalrect              = Screen('Rect', screenNumber);   
     
     % pc actual screen settings
     scrn.actscreen          = Screen('Resolution', screenNumber);
@@ -133,6 +133,8 @@ try
     scrn.ycenter            = ycenter;
     scrn.xpixels            = xpixels;
     scrn.ypixels            = ypixels;
+    scrn.globalrect         = globalrect;
+    scrn.screenNumber       = screenNumber;
     
     %% ---------------------------------------
     % RUN A FEW IMPORTANT UTIL FUNCTIONS
@@ -145,10 +147,14 @@ try
     set                     = loaditems(set, wd);                           % read the excel file with the items (contracts)
    
     scrn.stimdeg            = set.stimsize_deg;
-    scrn                    = screenSettings(scrn, taskNb);                         % Define screen setup
+    scrn                    = screenSettings(scrn, taskNb);                 % Define screen setup
        
     [trials, set]           = CreateTrialList(set);                         % create trials, sequences, split in runs, etc..
     
+    if phase == 2
+        averaged                = GetAverage(taskName, wd, sub);            % get averaged ratimgs for each face
+        set.items(:,2)          = averaged';                                % store the averaged ratings in the items list
+    end
     %% ---------------------------------------
     % MAKE IMAGE TEXTURES FOR BOTH SIZES (NORMAL AND SMALL)
     % UNPACK STIMULI 
@@ -349,16 +355,19 @@ try
             
             for trial = 1:trialsPerBlock
                 
-                set.iBlock = iBlock;
-                set.thisTrial = trial;
-                set.sequence    = block_seq{trial}; 
+                set.iBlock      = iBlock;
+                set.thisTrial   = trial;
+                set.sequence    = block_seq{trial};
+                
+                currentbalance  = set.balance;
                 
                 % display trial/sequence information window 
                 Screen('OpenOffscreenWindow', window, windrect);
                 Screen('TextSize', window, scrn.textsize);
                 Screen('FillRect', window, scrn.grey ,windrect);
                 DrawFormattedText(window, sprintf('Starting sequence %d of block %d',trial, iBlock), 'center', scrn.ycenter-50, scrn.white);
-                DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter, scrn.white);
+                DrawFormattedText(window, sprintf('Your current credit balance is %3.4f\n',currentbalance), 'center', scrn.ycenter, scrn.white);
+                DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
                 Screen('Flip', window); 
                 
                  % WAIT FOR THEM TO PRESS SPACE
@@ -384,14 +393,18 @@ try
                 [set,logs]      = RunFace(set, scrn, logs); % run trials
                 
                 % UNPACK SET AND ADD THE TRIAL INFO TO THE "BLOCK"-LOG FILE 
-                blocktrials(trial).session     = set.blocktrials.session;
-                blocktrials(trial).block       = set.blocktrials.block;
-                blocktrials(trial).trialnumber = set.blocktrials.trialnumber;
-                blocktrials(trial).trialonset  = set.blocktrials.trialonset;
-                blocktrials(trial).sequence    = set.blocktrials.sequence;
-                blocktrials(trial).numsamples  = set.blocktrials.numsamples;
-                blocktrials(trial).chosenitem  = set.blocktrials.chosenitem;
-
+                blocktrials(trial).session      = set.blocktrials.session;
+                blocktrials(trial).block        = set.blocktrials.block;
+                blocktrials(trial).trialnumber  = set.blocktrials.trialnumber;
+                blocktrials(trial).trialonset   = set.blocktrials.trialonset;
+                blocktrials(trial).sequence     = set.blocktrials.sequence;
+                blocktrials(trial).numsamples   = set.blocktrials.numsamples;
+                blocktrials(trial).chosenitem   = set.blocktrials.chosenitem;
+                blocktrials(trial).thisrate     = set.blocktrials.thisrate;
+                blocktrials(trial).rank         = set.blocktrials.rank;
+                blocktrials(trial).thisreward   = set.blocktrials.thisreward;
+                blocktrials(trial).balance      = set.blocktrials.balance;
+                
             end % End of trials loop
             
             % save trial info

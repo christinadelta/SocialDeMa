@@ -165,7 +165,7 @@ elseif taskNb == 3
         totaltrials     = set.totaltrials;  % number of trials
         blocktrials     = set.blocktrials;  % number of trials per block
         phaseitems      = set.phaseitems;   % number of items in the 2nd phase (62% of phase 1 items)
-        items           = set.items;        % total faces
+        items           = set.items(:,1);        % total faces
         
         % choose a 62% subset from the total contracts/items (that should
         % be 300)

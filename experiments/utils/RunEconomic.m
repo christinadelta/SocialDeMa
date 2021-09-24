@@ -109,8 +109,7 @@ if phase == 1
         % PUT FIXATION BACK ON
         Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
         fixation_onset  = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial     
-        
-        object_offset   = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
+        object_offset   = fixation_onset + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
         
         % SAVE TRIAL INFO
         trials(iTrial).sub          = sub;

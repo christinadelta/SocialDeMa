@@ -48,6 +48,11 @@ slidercolour    = black;
 if taskNb == 2
     thisprice   = set.thisprice;
     pricestr    = set.pricestr;
+    
+elseif taskNb == 3
+    textures    = set.textures;     % this will be used to draw the textures on screen
+    thisitem    = set.thisitem;
+    destrect    = set.destrect;
 end
 
 % First define the starting point of the slider
@@ -170,11 +175,6 @@ while respmade == 0
         DrawFormattedText(window, num2str(round(position)), 'center', windrect(4)*(scalepos - 0.05), white);
         object_onset = Screen('Flip', window, object_offset - slack);    % rating window is on
 
-        % send confidence screen trigger
-        if EEG == 1 
-            sp.sendTrigger(trigger9)
-        end
-
         % wait for second response 
         secs = GetSecs;
         if buttons(mousebutton) == 1
@@ -239,6 +239,44 @@ while respmade == 0
         end
 
         rate_rt = (secs - t0);
+        
+    elseif taskNb == 3
+        Screen('TextSize', window, textsize);
+        Screen('FillRect', window, grey ,windrect);
+        DrawFormattedText(window, 'On a scale of 0 to 100, rate how likely it would be for you date that person in real life.', 'center', ycenter-250, white);
+        DrawFormattedText(window, '0 = I would never date that person', 'center', ycenter-200, white);
+        DrawFormattedText(window, '100 = I would definately date that person', 'center', ycenter-150, white);
+        
+        % Left, middle and right anchors
+        DrawFormattedText(window, anchors{1}, leftclick(1, 1) - textbounds(1, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Left point
+        DrawFormattedText(window, anchors{2}, 'center',  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Middle point
+        DrawFormattedText(window, anchors{3}, rightclick(1, 1) - textbounds(2, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Right point
+
+        % Drawing the scale
+        Screen('DrawLine', window, scalecolour, midclick(1), midclick(2), midclick(3), midclick(4), width);         % Mid tick
+        Screen('DrawLine', window, scalecolour, leftclick(1), leftclick(2), leftclick(3), leftclick(4), width);     % Left tick
+        Screen('DrawLine', window, scalecolour, rightclick(1), rightclick(2), rightclick(3), rightclick(4), width); % Right tick
+        Screen('DrawLine', window, scalecolour, horzline(1), horzline(2), horzline(3), horzline(4), width);     % Horizontal line
+        
+        % Draw the slider
+        Screen('DrawLine', window, slidercolour, x, windrect(4)*scalepos - line, x, windrect(4)*scalepos  + line, width);
+        
+        position = round((x)-min(scalerange));                       % Calculates the deviation from 0. 
+        position = (position/(max(scalerange)-min(scalerange)))*100; % Converts the value to percentage
+        
+        DrawFormattedText(window, num2str(round(position)), 'center', windrect(4)*(scalepos - 0.05), white);
+        
+        Screen('DrawTexture', window, textures{thisitem}, [], destrect); % display thisitem
+        object_onset = Screen('Flip', window, object_offset - slack);    % rating window is on
+        
+        % wait for second response 
+        secs = GetSecs;
+        if buttons(mousebutton) == 1
+            respmade = 1;
+        end
+
+        rate_rt = (secs - t0);
+        
     end
 end
 
