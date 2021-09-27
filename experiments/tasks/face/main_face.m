@@ -221,11 +221,12 @@ try
         Screen('FillRect', instructions, scrn.grey ,windrect);
         DrawFormattedText(instructions, 'This is the first phase of the experiment. You will be presented with images of faces', 'center', scrn.ycenter-200, scrn.white);
         DrawFormattedText(instructions, 'one-by-one at the centre of the screen. Your task is to carefully view each face and rate', 'center', scrn.ycenter-150, scrn.white);
-        DrawFormattedText(instructions, '"how likely it would be for you to date that person in real life" on a scale of 1 to 9, where 1 means', 'center', scrn.ycenter-100, scrn.white);
-        DrawFormattedText(instructions, '"I would never date that person" and 9 means "I would definitely date that person".','center', scrn.ycenter-50, scrn.white);
-        DrawFormattedText(instructions, 'For you responses, press the keyboard keys 1 to 9 which correspond to your rating for each face.', 'center', scrn.ycenter, scrn.white);
-        DrawFormattedText(instructions, 'Please rate the images of faces exactly as you would you in a real life scenario.', 'center', scrn.ycenter+50, scrn.white); 
-        DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to continue', 'center', scrn.ycenter+100, scrn.white);
+        DrawFormattedText(instructions, '"how likely it would be for you to date that person in real life" on a scale of 0 to 100, where 0 means', 'center', scrn.ycenter-100, scrn.white);
+        DrawFormattedText(instructions, '"I would never date that person" and 100 means "I would definitely date that person". You will be asked','center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(instructions, 'to give your rating using a slider scale. When the scale appears you will first need to (left) click', 'center', scrn.ycenter, scrn.white);
+        DrawFormattedText(instructions, 'the mouse one time. This will reveal a black vertical line (the slider). Scroll the slider by dragging', 'center', scrn.ycenter+50, scrn.white);
+        DrawFormattedText(instructions, 'the mouse (from left to right) and stop and click on the desired rating/position.', 'center', scrn.ycenter+100, scrn.white);
+        DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to continue', 'center', scrn.ycenter+150, scrn.white);
         
     else % if this is the second phase of the experiment 
         
@@ -366,7 +367,7 @@ try
                 Screen('TextSize', window, scrn.textsize);
                 Screen('FillRect', window, scrn.grey ,windrect);
                 DrawFormattedText(window, sprintf('Starting sequence %d of block %d',trial, iBlock), 'center', scrn.ycenter-50, scrn.white);
-                DrawFormattedText(window, sprintf('Your current credit balance is %3.4f\n',currentbalance), 'center', scrn.ycenter, scrn.white);
+                DrawFormattedText(window, sprintf('Your current credit balance is %3.3f credits',currentbalance), 'center', scrn.ycenter, scrn.white);
                 DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
                 Screen('Flip', window); 
                 
@@ -409,7 +410,7 @@ try
             
             % save trial info
             logs.blocktrials    = blocktrials;
-            sub_log             = fullfile(logs.resultsfolder,sprintf(logs.blocktrialog,sub,taskName,iBlock,sess));
+            sub_log             = fullfile(logs.resultsfolder,sprintf(logs.blocktrialog,sub,taskName,iBlock,sess,phase));
             save(sub_log,'logs');
             
         end % end of phase statement
@@ -454,14 +455,34 @@ try
         
     end % end of Blocks loop 
     
-    % THIS IS IT...
-    % show thank you window
-    Screen('OpenOffscreenWindow', window, windrect);
-    Screen('TextSize', window, scrn.textsize);
-    Screen('FillRect', window, scrn.grey ,windrect);
-    DrawFormattedText(window, 'This is the end of the experiment. Thank you for your time', 'center', scrn.ycenter, scrn.white);
-    Screen('Flip',window);
-    WaitSecs(3);
+    if phase == 1
+        
+        % THIS IS IT...
+        % show thank you window
+        Screen('OpenOffscreenWindow', window, windrect);
+        Screen('TextSize', window, scrn.textsize);
+        Screen('FillRect', window, scrn.grey ,windrect);
+        DrawFormattedText(window, 'This is the end of the experiment. Thank you for your time!', 'center', scrn.ycenter, scrn.white);
+        Screen('Flip',window);
+        WaitSecs(3);
+        
+    else
+        currentbalance      = set.balance;                  % this is your balance in credits  
+        conversion          = set.conversion;               % conversion rate
+        totalreward         = currentbalance * conversion;  % this is your converted winnings
+        set.totalreward     = totalreward;
+
+        % THIS IS IT...
+        % show thank you window
+        Screen('OpenOffscreenWindow', window, windrect);
+        Screen('TextSize', window, scrn.textsize);
+        Screen('FillRect', window, scrn.grey ,windrect);
+        DrawFormattedText(window, 'This is the end of the experiment.', 'center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(window, sprintf('Your calculated total reward is: £%3.3f\n. ', totalreward), 'center', scrn.ycenter, scrn.white);
+        DrawFormattedText(window, 'Thank you for your time!', 'center', scrn.ycenter+50, scrn.white);
+        Screen('Flip',window);
+        WaitSecs(3);
+    end
     
     % clean up at the end of the experiment
     Screen('CloseAll');

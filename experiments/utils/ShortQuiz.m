@@ -11,13 +11,16 @@ function [set] = ShortQuiz(set, scrn, keys)
 
 % BEADS QUIZ QUESTIONS:
 % 1. What are the possible majority colours of the urns?
-% 2. What is the keycode for choosing the BLUE urn?
-% 3. What is the keycode for choosing the GREEN urn?
-% 4. What is the keycode for choosing to draw again?
-% 5. Up to how many times can you draw before making a decision?
-% 6. What is the confidence rating for keycode "Left Arrow"?
-% 7. What is the confidence rating for keycode "Down Arrow"?
-% 8. What is the confidence rating for keycode "Righ Arrow"?
+% 2. On a given trial/sequence, from how many urns can you draw? 
+% 3. If the colour split in a given urn is 60:40, what does that mean
+% exactly? 
+% 4. What is the key-press for choosing the BLUE urn?
+% 5. What is the key-press for choosing the GREEN urn?
+% 6. What is the key-press for choosing to draw again?
+% 7. Up to how many times can you draw before making a decision?
+% 8. What is the range of the confidence ratings?
+% 9. With how many mouse clicks can you complete a confidence rating?
+
 
 % POSSIBLE QUESTIONS
 % 9. From how many urns can you draw?
@@ -26,7 +29,7 @@ function [set] = ShortQuiz(set, scrn, keys)
 % The questions will displayed be randomised 
 
 % FOR SIMPLICITY:
-% For odd number questions (1,3,5,7), the correct response number has index 2
+% For odd number questions (1,3,5,7,9), the correct response number has index 2
 % For even number questions (2,4,6,8),the correct response number has
 % index 4
 
@@ -84,7 +87,7 @@ DrawFormattedText(fixation_red, fixation, 'center', ycenter, red);
 % Screen('TextFont',background_window, textfont);
 % Screen('FillRect', background_window, grey ,windrect);
 
-qs          = 8; % How many questions? 
+qs          = 9; % How many questions? 
 answ        = 4; % how many potential answers per question?
 questions   = 1:qs; % [1:8] list with questions indecies
 answers     = 1:answ; % [1:4] list with answer indecies
@@ -96,20 +99,22 @@ rand_qs     = questions(randperm(qs)); % randomise the questions
 strings = [];
 
 % Field 1: Questions  
-strings.questions = {'what are the possible majority colours of the urns?','what is the keycode for choosing the blue urn?',...
-    'what is the keycode for choosing the green urn?', 'what is the keycode for choosing to darw again?',...
-    'up to how many times can you draw before making a decision?', 'what is the confidence rating for keycode "Left Arrow"?',...
-    'what is the confidence rating for keycode "Down Arrow"?', 'what is the confidence rating for keycode "Right Arrow"?'};
+strings.questions = {'what are the possible majority colours of the urns?', 'On a given trial/sequence, from how many urns can you draw balls?',...
+    'If the colour split within a given urn is 60:40, what does that mean exactly?', 'What is the key for choosing the blue urn?',...
+    'What is the key for choosing the green urn?', 'What is the key for choosing to darw again?',...
+    'Up to how many times can you draw before making a decision?', 'What is the range of the confidence ratings?',...
+    'With how many mouse clicks can you complete a confidence rating?'};
 
 % Field 2: Answers 
 strings.answers = {'red-green', 'blue-green', 'green-yellow', 'red-blue',
-    '2', '5', '3', '1',
+    '2', '4', '3', '1',
+    'this is an "easy condition" trial', 'this is a "hard condition" trial', 'nothing, there is no 60:40 colour split in the task', 'The majority of balls are of blue colour',
+    '2', '5', '3', '1', 
     '1', '2', '6', '3',
     '2', '6', '4', '3',
     '6', '9', '5', '10',
-    'very confident', 'slightly confident', 'confident', 'not confident',
-    'not confident', 'moderately confident', 'confident', 'very confident',
-    'confident', 'not confident', 'moderately confident', 'very confident'};
+    '1-10', '0-10', '1-100', '0-100',
+    '1', '2', '0', '3'};
 
 % Field 3: Alphabetical order 
 strings.order = {'A) ', 'B) ', 'C) ', 'D) '};

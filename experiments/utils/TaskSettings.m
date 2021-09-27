@@ -16,6 +16,7 @@ set.EEG         = 0;        % set to 1 when running in the eeglab
 set.welcomedur  = 2.5;      % welcome screen duration = 2.5 sec
 set.jitter      = .4;       % 0.4 sec
 set.isi         = .4;       % in seconds
+set.conversion  = .4;       % will be used to convert credit to £
 
  % create a list of settings and parameters for the rts task 
 if taskNb == 1 % if this is the beads task
@@ -85,10 +86,10 @@ elseif taskNb == 2
         set.fix_dur         = .7;   % in sec
         
         % TASK/PHASE SETTINGS
-        set.blocks          = 30; 
+        set.blocks          = 20; 
         set.itemReps        = 2; 
-        set.totaltrials     = 480*set.itemReps;
-        set.blocktrials     = set.totaltrials/set.blocks;
+        set.totaltrials     = 400*set.itemReps;
+        set.blocktrials     = set.totaltrials/set.blocks; % 38 trials per block
         
     else % if phase is 2
         
@@ -101,11 +102,11 @@ elseif taskNb == 2
         set.balance         = 0;
         
         % TASK/PHASE SETTINGS
-        set.blocks          = 3; 
+        set.blocks          = 2; 
         set.samples         = 10; 
-        set.totaltrials     = 30;
+        set.totaltrials     = 40;
         set.blocktrials     = set.totaltrials/set.blocks;
-        set.phaseitems      = set.samples*set.totaltrials; % that's ~62% of the total phase 1 contracts
+        set.phaseitems      = set.samples*set.totaltrials; % 
         
         % DEFINE EEG TRIGGERS 
         if set.EEG == 1
@@ -135,16 +136,16 @@ elseif taskNb == 3
         set.stimsize_deg    = 5;    % degrees of visual angle
         
         % TASK/PHASE SETTINGS
-        set.blocks          = 30; 
+        set.blocks          = 20; 
         set.itemReps        = 2; 
-        set.totaltrials     = 300*set.itemReps;
+        set.totaltrials     = 400*set.itemReps;
         set.blocktrials     = set.totaltrials/set.blocks;
         
     else % if phase is 2
         
         % EXPERIMENTAL SETTINGS
         set.fix_dur         = .5;   % in sec
-        set.stimdur         = 1.5;    % in sec
+        set.stimdur         = 1;    % in sec
         set.response        = 2.5;  % indicative of max response time 
         set.feedback        = 3;    % this will be just the presentation of the accepted contract
         set.rewards         = [1 0.5 0.25]; % rewards best on the 3 ranks
@@ -155,9 +156,9 @@ elseif taskNb == 3
         set.stimsize_deg    = 4;    % degrees of visual angle
         
         % TASK/PHASE SETTINGS
-        set.blocks          = 3; 
+        set.blocks          = 2; 
         set.samples         = 10; 
-        set.totaltrials     = 30;
+        set.totaltrials     = 40;
         set.blocktrials     = set.totaltrials/set.blocks;
         set.phaseitems      = set.samples*set.totaltrials; % that's ~62% of the total phase 1 faces
         

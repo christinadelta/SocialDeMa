@@ -32,8 +32,7 @@ scalecolour     = white;
 
 if taskNb == 2
     thisprice   = set.thisprice;
-    pricestr    = set.pricestr;
-    
+
 elseif taskNb == 3
     textures    = set.textures;     % this will be used to draw the textures on screen
     thisitem    = set.thisitem;
@@ -84,9 +83,10 @@ elseif taskNb == 2
     rating_window = Screen('OpenOffscreenWindow',window);
     Screen('TextSize', rating_window, textsize);
     Screen('FillRect', rating_window, grey ,windrect);
-    DrawFormattedText(rating_window, 'On a scale of 0 to 100, rate how likely it would be for you to get that contract in real life.', 'center', ycenter-200, white);
+    DrawFormattedText(rating_window, 'On a scale of 0 to 100, rate how likely it would be for you to get that contract in real life?', 'center', ycenter-200, white);
     DrawFormattedText(rating_window, '0 = I would never accept this contract', 'center', ycenter-150, white);
     DrawFormattedText(rating_window, '100 = I would definately accept this contract ', 'center', ycenter-100, white);
+
 elseif taskNb == 3
     
     rating_window = Screen('OpenOffscreenWindow',window);
@@ -129,7 +129,7 @@ while initresp == 0
     Screen('CopyWindow', rating_window, window, windrect, windrect)
     
     if taskNb == 2
-        DrawFormattedText(window, [pricestr, thisprice], 'center', ycenter, white); 
+        DrawFormattedText(window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 
         
     elseif taskNb == 3
         Screen('DrawTexture', rating_window, textures{thisitem}, [], destrect); % display thisitem

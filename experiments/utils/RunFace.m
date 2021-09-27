@@ -234,7 +234,7 @@ else % if this is phase 2
             background_window = Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', background_window, textsize);
             Screen('FillRect', background_window, grey ,windrect);
-            DrawFormattedText(background_window,sprintf('Face %d/10',s), 'center', ycenter-300, white);
+            DrawFormattedText(background_window,sprintf('Face %d/10',s), 'center', ycenter-250, white);
 
              % DISPLAY THE CURRENT FACE - the actual face
             Screen('DrawTexture', background_window, textures{thisitem}, [], destrect);     % display thisitem
@@ -259,7 +259,7 @@ else % if this is phase 2
             background_window = Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', background_window, textsize);
             Screen('FillRect', background_window, grey ,windrect);
-            DrawFormattedText(background_window,sprintf('Face %d/10',s), 'center', ycenter-300, white);
+            DrawFormattedText(background_window,sprintf('Face %d/10',s), 'center', ycenter-250, white);
             DrawFormattedText(background_window, 'Rejected dates', xcenter - 400, ycenter+250, white);
 
             % DISPLAY THE CURRENT FACE - the actual face
@@ -389,14 +389,14 @@ else % if this is phase 2
                 feedback_window = Screen('OpenOffscreenWindow', window, windrect);
                 Screen('TextSize', feedback_window, textsize);
                 Screen('FillRect', feedback_window, grey ,windrect);
-                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
             else
                 % DISPLAY CHOSEN CONTRACT
                 feedback_window = Screen('OpenOffscreenWindow', window, windrect);
                 Screen('TextSize', feedback_window, textsize);
                 Screen('FillRect', feedback_window, grey ,windrect);
-                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
-                DrawFormattedText(feedback_window, sprintf('Your reward is %3.4f\n credits', thisreward), 'center', ycenter-250, white);
+                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
+                DrawFormattedText(feedback_window, sprintf('Your reward is %3.3f credits', thisreward), 'center', ycenter-250, white);
             end
             
             % DISPLAY THE CURRENT FACE
@@ -453,14 +453,14 @@ else % if this is phase 2
                     feedback_window = Screen('OpenOffscreenWindow', window, windrect);
                     Screen('TextSize', feedback_window, textsize);
                     Screen('FillRect', feedback_window, grey ,windrect);
-                    DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
+                    DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
                 else
                     % DISPLAY CHOSEN CONTRACT
                     feedback_window = Screen('OpenOffscreenWindow', window, windrect);
                     Screen('TextSize', feedback_window, textsize);
                     Screen('FillRect', feedback_window, grey ,windrect);
-                    DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-300, white);
-                    DrawFormattedText(feedback_window, sprintf('Your reward is %3.4f\n credits', thisreward), 'center', ycenter-250, white);
+                    DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
+                    DrawFormattedText(feedback_window, sprintf('Your reward is %3.3f credits', thisreward), 'center', ycenter-250, white);
                 end
 
                 % DISPLAY THE CURRENT FACE

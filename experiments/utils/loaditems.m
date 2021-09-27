@@ -24,20 +24,22 @@ if taskNb == 2
     columns                 = 5; 
     
     % read the excel file
-    [vars, txt ,~]          = xlsread(fullfile(exceldir, 'BestChoice_Economic_ItemList.xlsx'));
+    [vars, txt ,~]          = xlsread(fullfile(exceldir, 'economic_best_choice.xls'));
     
     % remove the headers
     txt(headers,:)          = [];
+    vars(headers,:)         = [];
     
-    set.items               = vars;
+    set.items               = vars(:,1);
+    set.price               = vars(:,4);
 
-    % keep the relevant information
-    for i = 1:length(vars)
-        set.data{i}        = txt{i,3};
-        set.description{i} = txt{i,2};
-        set.price{i}       = txt{i,4};
-        set.model{i}       = txt{i,5};
-    end
+%     % keep the relevant information
+%     for i = 1:length(vars)
+%         set.data{i}        = txt{i,3};
+%         set.description{i} = txt{i,2};
+%         set.price{i}       = vars(i,4);
+%         set.model{i}       = txt{i,5};
+%     end
     
 elseif taskNb == 3
     

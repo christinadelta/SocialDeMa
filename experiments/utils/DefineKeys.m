@@ -32,25 +32,12 @@ elseif taskNb == 2 % if this is the the economic best-choice task
     % Unpack variables
     phase               = set.phase;
     
-    if phase == 1
-        
-        KbName('UnifyKeyNames');
-        set.code1       = KbName('1!'); % I would never choose that contract
-        set.code2       = KbName('2@'); % 2@ = Green
-        set.code3       = KbName('3#'); % 3# = Draw again
-        set.code4       = KbName('4$'); % not confident
-        set.code5       = KbName('5%'); % moderately confident
-        set.code6       = KbName('6^'); % very confident 
-        set.code7       = KbName('7&'); % very confident 
-        set.code8       = KbName('8*'); % answer a
-        set.code9       = KbName('9('); % I would definitely choose that contract
-        
-    else % if this is phase 2
+    if phase == 2
         
         KbName('UnifyKeyNames');
         set.code1      = KbName('1!'); % choose option
         set.code2      = KbName('2@'); % continue sampling
-        
+
     end % end of phase statement
     
 elseif taskNb == 3 % if this is the facial attractiveness task
@@ -59,20 +46,7 @@ elseif taskNb == 3 % if this is the facial attractiveness task
     % Unpack variables
     phase               = set.phase;
     
-    if phase == 1
-        
-        KbName('UnifyKeyNames');
-        set.code1       = KbName('1!'); % I would never choose that contract
-        set.code2       = KbName('2@'); % 2@ = Green
-        set.code3       = KbName('3#'); % 3# = Draw again
-        set.code4       = KbName('4$'); % not confident
-        set.code5       = KbName('5%'); % moderately confident
-        set.code6       = KbName('6^'); % very confident 
-        set.code7       = KbName('7&'); % very confident 
-        set.code8       = KbName('8*'); % answer a
-        set.code9       = KbName('9('); % I would definitely choose that contract 
-        
-    else % if phase is 2
+    if phase == 2
         
         KbName('UnifyKeyNames');
         set.code1       = KbName('1!'); % I would never choose that contract

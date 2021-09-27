@@ -96,16 +96,14 @@ elseif taskNb == 2 % if this is the economic task
         % UNPACK SETTINGS
         blocks          = set.blocks;       % number of blocks
         samples         = set.samples;      % number of samples per trial
-        totaltrials     = set.totaltrials;       % number of trials
+        totaltrials     = set.totaltrials;  % number of trials
         blocktrials     = set.blocktrials;  % number of trials per block
-        phaseitems      = set.phaseitems;   % number of items/contracts in the 2nd phase (65% of phase 1 items)
         items           = set.items;        % total contracts
         
         % choose a 65% subset from the total contracts/items (that should
         % be 300)
         arraysize       = numel(items);
-        idx             = randperm(arraysize);
-        templist        = items(idx(1:phaseitems));
+        templist        = randperm(arraysize);
         
         % split the list in 30 sequences of 10 samples 
         temp            = 0; 
@@ -164,16 +162,13 @@ elseif taskNb == 3
         samples         = set.samples;      % number of samples per trial
         totaltrials     = set.totaltrials;  % number of trials
         blocktrials     = set.blocktrials;  % number of trials per block
-        phaseitems      = set.phaseitems;   % number of items in the 2nd phase (62% of phase 1 items)
         items           = set.items(:,1);        % total faces
         
-        % choose a 62% subset from the total contracts/items (that should
-        % be 300)
+        % make a temporal list and store the items
         arraysize       = numel(items);
-        idx             = randperm(arraysize);
-        templist        = items(idx(1:phaseitems));
+        templist        = randperm(arraysize);
         
-        % split the list in 30 sequences of 10 samples 
+        % split the list in 40 sequences of 10 samples 
         temp            = 0; 
         for s = 1:totaltrials 
             

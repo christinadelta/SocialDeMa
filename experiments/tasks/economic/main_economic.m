@@ -172,12 +172,13 @@ try
         instructions = Screen('OpenOffscreenWindow', window, windrect);
         Screen('TextSize', instructions, scrn.textsize);
         Screen('FillRect', instructions, scrn.grey ,windrect);
-        DrawFormattedText(instructions, 'This is the first phase of the experiment. You will be presented with smartphone contracts', 'center', scrn.ycenter-200, scrn.white);
-        DrawFormattedText(instructions, 'one-by-one at the centre of the screen. Your task is to carefully view each contract and rate', 'center', scrn.ycenter-150, scrn.white);
-        DrawFormattedText(instructions, '"how likely it would be to choose this contract in real life" on a scale of 1 to 9, where 1 means "I would not never choose this contract"', 'center', scrn.ycenter-100, scrn.white);
-        DrawFormattedText(instructions, 'and 9 means "I would definitely choose this contract".','center', scrn.ycenter-50, scrn.white);
-        DrawFormattedText(instructions, 'For you responses, press the keyboard keys 1 to 9 which correspond to your rating for each contract.', 'center', scrn.ycenter, scrn.white);
-        DrawFormattedText(instructions, 'Please rate the smartphone contracts exactly as you would you in a real life scenario.', 'center', scrn.ycenter+50, scrn.white); 
+        DrawFormattedText(instructions, 'This is the first phase of the experiment. You will be presented with smartphone contracts', 'center', scrn.ycenter-250, scrn.white);
+        DrawFormattedText(instructions, 'one-by-one at the centre of the screen. Your task is to carefully view each contract and rate', 'center', scrn.ycenter-200, scrn.white);
+        DrawFormattedText(instructions, '"how likely it would be to choose this contract in real life" on a scale of 0 to 100, where 0 means "I would not never', 'center', scrn.ycenter-150, scrn.white);
+        DrawFormattedText(instructions, 'choose this contract" and 100 means "I would definitely choose this contract". You will be asked to give your rating','center', scrn.ycenter-100, scrn.white);
+        DrawFormattedText(instructions, 'using a slider scale. When the scale appears you will first need to (left) click the mouse one time.', 'center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(instructions, 'This will reveal a black vertical line (the slider). Scroll the slider by dragging', 'center', scrn.ycenter, scrn.white);
+        DrawFormattedText(instructions, 'the mouse (from left to right) and stop and click on the desired rating/position.', 'center', scrn.ycenter+50, scrn.white);
         DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to continue', 'center', scrn.ycenter+100, scrn.white);
         
     else % if this is the second phase of the experiment 
@@ -187,14 +188,14 @@ try
         Screen('TextSize', instructions, scrn.textsize);
         Screen('FillRect', instructions, scrn.grey ,windrect);
         DrawFormattedText(instructions, 'This is the second phase of the experiment which is split into sequences.', 'center', scrn.ycenter-250, scrn.white);
-        DrawFormattedText(instructions, 'On each sequence, you will be presented with 10 smartphone contracts from the the previous phase, one-by-one.', 'center', scrn.ycenter-200, scrn.white);
+        DrawFormattedText(instructions, 'On each sequence, you will be presented with up to 10 smartphone contracts from the the previous phase, one-by-one.', 'center', scrn.ycenter-200, scrn.white);
         DrawFormattedText(instructions, 'Every time you are presented with a contract, you may either "choose to accept it" or you may "reject it" and', 'center', scrn.ycenter-150, scrn.white);
-        DrawFormattedText(instructions, 'view the next contract. Please note that on each sequence you should try to choose the contarct with the lowest price.','center', scrn.ycenter-100, scrn.white);
+        DrawFormattedText(instructions, 'view the next contract. Please note that on each sequence you should try to choose the contarct with the best price.','center', scrn.ycenter-100, scrn.white);
         DrawFormattedText(instructions, 'If you reject a contract, you may not go back and choose it. If, by the end of a sequence you have not chosen', 'center', scrn.ycenter-50, scrn.white);
         DrawFormattedText(instructions, 'a contract, by default, the last contract will be saved as your chosen contract.', 'center', scrn.ycenter, scrn.white); 
-        DrawFormattedText(instructions, 'Note that each contract that you reject will be displayed at the bottom of the screen', 'center', scrn.ycenter+50, scrn.white);
-        DrawFormattedText(instructions, 'so that you have an idea of the contracts you rejected, and the number of contracts left in the sequence.', 'center', scrn.ycenter+100, scrn.white);
-        DrawFormattedText(instructions, 'Press keyboard key "1" to reject a contract and view then next one or press key "2" to accept a contract.', 'center', scrn.ycenter+150, scrn.white);
+        DrawFormattedText(instructions, 'Each contract you reject will be displayed at the bottom of the screen so that you have an idea', 'center', scrn.ycenter+50, scrn.white);
+        DrawFormattedText(instructions, 'of the contracts you rejected, and the number of contracts left in the sequence.', 'center', scrn.ycenter+100, scrn.white);
+        DrawFormattedText(instructions, 'Press the keyboard key "1" to accept a contract or press the key "2" to reject a contract and view then next one.', 'center', scrn.ycenter+150, scrn.white);
         DrawFormattedText(instructions, 'If you have understood the instructions, press SPACE to continue', 'center', scrn.ycenter+200, scrn.white);
         
     end % end of phase statement 
@@ -318,7 +319,7 @@ try
                 Screen('TextSize', window, scrn.textsize);
                 Screen('FillRect', window, scrn.grey ,windrect);
                 DrawFormattedText(window, sprintf('Starting sequence %d of block %d',trial, iBlock), 'center', scrn.ycenter-50, scrn.white);
-                DrawFormattedText(window, sprintf('Your current balance is £%3.4f\n',currentbalance), 'center', scrn.ycenter, scrn.white);
+                DrawFormattedText(window, sprintf('Your current balance is %3.3f credits',currentbalance), 'center', scrn.ycenter, scrn.white);
                 DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
                 Screen('Flip', window); 
                 
@@ -357,7 +358,7 @@ try
             
             % save trial info
             logs.blocktrials    = blocktrials;
-            sub_log             = fullfile(logs.resultsfolder,sprintf(logs.blocktrialog,sub,taskName,iBlock,sess));
+            sub_log             = fullfile(logs.resultsfolder,sprintf(logs.blocktrialog,sub,taskName,iBlock,sess,phase));
             save(sub_log,'logs');
 
         end % end of phase if statement
@@ -401,14 +402,34 @@ try
         end
     end % end of blocks loop
     
-    % THIS IS IT...
-    % show thank you window
-    Screen('OpenOffscreenWindow', window, windrect);
-    Screen('TextSize', window, scrn.textsize);
-    Screen('FillRect', window, scrn.grey ,windrect);
-    DrawFormattedText(window, 'This is the end of the experiment. Thank you for your time', 'center', scrn.ycenter, scrn.white);
-    Screen('Flip',window);
-    WaitSecs(3);
+    if phase == 1
+        
+        % THIS IS IT...
+        % show thank you window
+        Screen('OpenOffscreenWindow', window, windrect);
+        Screen('TextSize', window, scrn.textsize);
+        Screen('FillRect', window, scrn.grey ,windrect);
+        DrawFormattedText(window, 'This is the end of the experiment. Thank you for your time!', 'center', scrn.ycenter, scrn.white);
+        Screen('Flip',window);
+        WaitSecs(3);
+        
+    else
+        currentbalance      = set.balance;                  % this is your balance in credits  
+        conversion          = set.conversion;               % conversion rate
+        totalreward         = currentbalance * conversion;  % this is your converted winnings
+        set.totalreward     = totalreward;
+
+        % THIS IS IT...
+        % show thank you window
+        Screen('OpenOffscreenWindow', window, windrect);
+        Screen('TextSize', window, scrn.textsize);
+        Screen('FillRect', window, scrn.grey ,windrect);
+        DrawFormattedText(window, 'This is the end of the experiment.', 'center', scrn.ycenter-50, scrn.white);
+        DrawFormattedText(window, sprintf('Your calculated total reward is: £%3.3f\n. ', totalreward), 'center', scrn.ycenter, scrn.white);
+        DrawFormattedText(window, 'Thank you for your time!', 'center', scrn.ycenter+50, scrn.white);
+        Screen('Flip',window);
+        WaitSecs(3);
+    end
     
     % clean up at the end of the experiment
     Screen('CloseAll');

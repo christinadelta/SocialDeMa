@@ -161,15 +161,15 @@ try
     instructions = Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', instructions, scrn.textsize);
     Screen('FillRect', instructions, scrn.grey ,windrect);
-    DrawFormattedText(instructions, 'There are two urns:', 'center', scrn.ycenter-300, scrn.white);
-    DrawFormattedText(instructions, 'The Blue Urn has more blue balls than green balls. The Green Urn has more green balls than blue balls.', 'center', scrn.ycenter-250, scrn.white);
-    DrawFormattedText(instructions, 'On each trial, you will draw a sequence of balls from one of these two urns. Your job is to decide whether', 'center', scrn.ycenter-200, scrn.white);
-    DrawFormattedText(instructions, 'the balls are drawn from the blue urn or the green urn. After each ball is drawn, you may choose to: ','center', scrn.ycenter-150, scrn.white);
-    DrawFormattedText(instructions, 'Guess The Blue Urn by pressing the keycode 1', 'center', scrn.ycenter-100, scrn.white);
-    DrawFormattedText(instructions, 'Guess The Green Urn by pressing the keycode 2', 'center', scrn.ycenter-50, scrn.white); 
-    DrawFormattedText(instructions, 'Draw another ball by pressing the keycode 3', 'center', scrn.ycenter, scrn.white);
-    DrawFormattedText(instructions, 'You may make a decision after any draw but you may not draw more than 9 balls', 'center', scrn.ycenter+50, scrn.white);
-    DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to change page', 'center', scrn.ycenter+100, scrn.white); 
+    DrawFormattedText(instructions, 'There are two urns:', 'center', scrn.ycenter-250, scrn.white);
+    DrawFormattedText(instructions, 'The Blue Urn has more blue balls than green balls. The Green Urn has more green balls than blue balls.', 'center', scrn.ycenter-200, scrn.white);
+    DrawFormattedText(instructions, 'On each trial, you will draw a sequence of balls from one of these two urns. Your job is to decide whether', 'center', scrn.ycenter-150, scrn.white);
+    DrawFormattedText(instructions, 'the balls are drawn from the blue urn or the green urn. After each ball is drawn, you may choose to: ','center', scrn.ycenter-100, scrn.white);
+    DrawFormattedText(instructions, 'Guess The Blue Urn by pressing the keycode 1', 'center', scrn.ycenter-50, scrn.white);
+    DrawFormattedText(instructions, 'Guess The Green Urn by pressing the keycode 2', 'center', scrn.ycenter, scrn.white); 
+    DrawFormattedText(instructions, 'Draw another ball by pressing the keycode 3', 'center', scrn.ycenter+50, scrn.white);
+    DrawFormattedText(instructions, 'You may make a decision after any draw but you may not draw more than 9 balls', 'center', scrn.ycenter+100, scrn.white);
+    DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to change page', 'center', scrn.ycenter+150, scrn.white); 
     
     % copy the instructions window  and flip.
     Screen('CopyWindow',instructions,window,windrect, windrect);
@@ -193,12 +193,14 @@ try
     instructions2 = Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', instructions2, scrn.textsize);
     Screen('FillRect', instructions2, scrn.grey ,windrect);
-    DrawFormattedText(instructions2, 'After an urn is chosen, you will be asked to rate how confident you are about', 'center', scrn.ycenter-150, scrn.white);
-    DrawFormattedText(instructions2, 'the choice that you made on a scale of 1 to 3. Press:', 'center', scrn.ycenter-100, scrn.white);
-    DrawFormattedText(instructions2, '"Left Arrow" key, if you are not confident about your choice.', 'center', scrn.ycenter-50, scrn.white);
-    DrawFormattedText(instructions2, '"Down Arrow" key, if you are moderately confident about your choice.','center', scrn.ycenter, scrn.white);
-    DrawFormattedText(instructions2, '"Right Arrow" key, if you are very confident about your choice.', 'center', scrn.ycenter+50, scrn.white);
-    DrawFormattedText(instructions2, 'If you have understood the instructions, press SPACE to take a short quiz before starting the experiment.', 'center', scrn.ycenter+100, scrn.white)
+    DrawFormattedText(instructions2, 'After an urn is chosen, you will be asked to rate how confident you are about', 'center', scrn.ycenter-200, scrn.white);
+    DrawFormattedText(instructions2, 'the choice that you made on a scale of 0 to 100.', 'center', scrn.ycenter-150, scrn.white);
+    DrawFormattedText(instructions2, 'You will be asked to give your rating using a slider scale. When the scale appears, ', 'center', scrn.ycenter-100, scrn.white);
+    DrawFormattedText(instructions2, 'you will first need to (left) click the mouse one time. This will reveal','center', scrn.ycenter-50, scrn.white);
+    DrawFormattedText(instructions2, 'a black vertical line (the slider). Scroll the slider using the mouse (from left to right) and stop', 'center', scrn.ycenter, scrn.white);
+    DrawFormattedText(instructions2, 'and click on the desired rating/position. Before starting the actual experiment,', 'center', scrn.ycenter+50, scrn.white)
+    DrawFormattedText(instructions2, 'you will first complete a short and simple quiz, to test your understanding of the task instructions.', 'center', scrn.ycenter+100, scrn.white)
+    DrawFormattedText(instructions2, 'If you have understood the instructions, press SPACE to start the short quiz.', 'center', scrn.ycenter+150, scrn.white)
     
     % copy the instructions2 window  and flip.
     Screen('CopyWindow',instructions2,window,windrect, windrect);
@@ -221,12 +223,12 @@ try
     %% ---------------------------------------
     % RUN THE INSTRUCTIONS QUIZ 
     
-%     % Start instructions
-%     DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
-%     Screen('Flip', window);
-%     WaitSecs(1);
-%     
-%     set = ShortQuiz(set, scrn, set); % RUN the instructions quiz 
+    % Start instructions
+    DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
+    Screen('Flip', window);
+    WaitSecs(1);
+    
+    set = ShortQuiz(set, scrn, set); % RUN the instructions quiz 
     
 
     %% ---------------------------------------
@@ -322,8 +324,8 @@ try
             Screen('TextSize', window, scrn.textsize);
             Screen('FillRect', window, scrn.grey ,windrect);
             DrawFormattedText(window, sprintf('Starting sequence %d of block %d',thistrial, iBlock), 'center', scrn.ycenter-100, scrn.white);
-            DrawFormattedText(window, sprintf('Your current balance is: £%3.4f\n',currentbalance), 'center', scrn.ycenter-50, scrn.white);
-            DrawFormattedText(window, sprintf('The urns have a %02d:%02d color split. You will lose £%d if you are wrong',high_p, low_p, loss), 'center', scrn.ycenter, scrn.white);
+            DrawFormattedText(window, sprintf('Your current balance is: %3.3f credits',currentbalance), 'center', scrn.ycenter-50, scrn.white);
+            DrawFormattedText(window, sprintf('The urns have a %02d:%02d color split. You will lose %d credits if you are wrong',high_p, low_p, loss), 'center', scrn.ycenter, scrn.white);
             DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
             Screen('Flip', window); 
             
@@ -419,14 +421,21 @@ try
         end
         
     end % end of block for loop
-        
+    
+    currentbalance      = set.balance;                  % this is your balance in credits  
+    conversion          = set.conversion;               % conversion rate
+    totals              = currentbalance * conversion;  % this is your converted winnings
+    totalreward         = totals * 0.05;                % actual winnings 
+    set.totalreward     = totalreward;
         
     % THIS IS IT...
     % show thank you window
     Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', window, scrn.textsize);
     Screen('FillRect', window, scrn.grey ,windrect);
-    DrawFormattedText(window, 'This is the end of the experiment. Thank you for your time', 'center', scrn.ycenter, scrn.white);
+    DrawFormattedText(window, 'This is the end of the experiment.', 'center', scrn.ycenter-50, scrn.white);
+    DrawFormattedText(window, sprintf('Your calculated total reward is: £%3.3f\n. ', totalreward), 'center', scrn.ycenter, scrn.white);
+    DrawFormattedText(window, 'Thank you for your time!', 'center', scrn.ycenter+50, scrn.white);
     Screen('Flip',window);
     WaitSecs(3);
     

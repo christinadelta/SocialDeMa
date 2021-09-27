@@ -8,7 +8,6 @@ function [set, logs] = RunEconomic(set, scrn, logs)
 %% ---- Prepare the "global" information needed for all the tasks ---- %%
 
 % UNPACK GLOBAL PARAMS FROM THE SETTINGS AND SCREEN STRUCTS
-taskNb          = set.taskNb;       % number of task (needed to run the correct task)
 blocktrials     = set.blocktrials;  % total number of trials
 thisblock       = set.iBlock;    % this is the current block number 
 phase           = set.phase;        % 
@@ -26,10 +25,8 @@ xcenter         = scrn.xcenter;
 ycenter         = scrn.ycenter;
 ifi             = scrn.ifi;          % frame duration
 slack           = scrn.slack;        % slack is ifi/2 (important for timing)
-globalrect      = scrn.globalrect;
 white           = scrn.white;
 grey            = scrn.grey;
-black           = scrn.black;
 fixsize         = scrn.fixationsize;
 textfont        = scrn.textfont;
 textsize        = scrn.textsize;
@@ -82,23 +79,20 @@ if phase == 1
         
         % get current trial details 
         thisitem            = sequence(iTrial); % index of the current item 
-        thisprice           = price{thisitem};
-        
-        pricestr            = 'Price: ';
+        thisprice           = price(thisitem);
         
         % Update settings struct
         set.thisprice       = thisprice;
-        set.pricestr        = pricestr;
         set.object_offset   = object_offset;
  
         % NOW DARW THE CONTRACT AND SCALE WITHOUT THE SLIDER AND ALLOW THE SUBJECT TO
         % CLICK ONCE TO INIT THE SLIDER
-        set = MakeSlider(scrn, set); % first draw the scale and allow subject to click the mouse
+        set                 = MakeSlider(scrn, set); % first draw the scale and allow subject to click the mouse
         WaitSecs(0.1)                % delay to prevent fast mouse clicks mix 
         
         stimonset           = set.object_onset;
 
-        set = RunSlider(scrn, set);  % once subject click the first time, display slider
+        set                 = RunSlider(scrn, set);  % once subject click the first time, display slider
         WaitSecs(0.1)
 
         % UNPACK SETTINGS
@@ -174,8 +168,7 @@ else % if phase == 2
     
     % UNPACK STIMULI 
     prices          = set.price;
-    pricestr        = 'Price: ';
-    
+
      % UNPACK RESPONSE KEYS
     code1           = set.code1; % accept price 
     code2           = set.code2; % sample again
@@ -187,10 +180,9 @@ else % if phase == 2
     sequenceprices  = nan(1,samples);
     
     % convert sequence prices to num and save them to get the ranks
-    for price = 1:samples
-        temp                    = sequence(price);
-        spl                     = split(prices{temp},"£");
-        sequenceprices(price)   = str2double(spl{2});
+    for p = 1:samples
+        temp                    = sequence(p);
+        sequenceprices(p)       = prices(temp);
     end
     
     % GET RANKS (three lowest prices)
@@ -224,7 +216,7 @@ else % if phase == 2
         end
         
         thisitem        = sequence(s); % index of the current item
-        thisprice       = prices{thisitem};
+        thisprice       = prices(thisitem);
         xcenters        = xcenter - 400; % start adding the previous prices at xcenter - 600
         xs              = xcenters;
         
@@ -235,8 +227,8 @@ else % if phase == 2
             background_window = Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', background_window, textsize);
             Screen('FillRect', background_window, grey ,windrect);
-            DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-300, white);
-            DrawFormattedText(background_window, [pricestr, thisprice], 'center', ycenter, white); 
+            DrawFormattedText(background_window,sprintf('Contract %d/10',s), 'center', ycenter-200, white);
+            DrawFormattedText(background_window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 
 
             Screen('CopyWindow',background_window, window, windrect, windrect);
             object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
@@ -248,14 +240,14 @@ else % if phase == 2
             % background_window = Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', window, textsize);
             Screen('FillRect', window, grey ,windrect);
-            DrawFormattedText(window, sprintf('Contract %d/10',s), 'center', ycenter-300, white);
-            DrawFormattedText(window, [pricestr, thisprice], 'center', ycenter, white); 
+            DrawFormattedText(window, sprintf('Contract %d/10',s), 'center', ycenter-200, white);
+            DrawFormattedText(window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 
             DrawFormattedText(window, 'Rejected contracts:', xcenter - 400, ycenter+300, white); 
             
             for l = 1:previous_len
                 % show the previous prices at the bottom of the screen
                 Screen('TextSize', window, textsize);
-                DrawFormattedText(window, previous{l}, xcenters, ycenter+350, white); 
+                DrawFormattedText(window, sprintf('£%3.2f', previous{l}), xcenters, ycenter+350, white); 
                 
                 % update xcenters, so that previous prices are not
                 % displayed on top of each other
@@ -284,8 +276,7 @@ else % if phase == 2
                 % show the previous prices at the bottom of the screen
                 Screen('TextSize', window, textsize);
                 DrawFormattedText(window, 'Rejected contracts:', xcenter - 400, ycenter+300, white); 
-                DrawFormattedText(window, previous{l}, xs, ycenter+350, white); 
-                
+                DrawFormattedText(window, sprintf('£%3.2f', previous{l}), xs, ycenter+350, white); 
                 % update xcenters, so that previous prices are not
                 % displayed on top of each other
                 xs = xs + 100;
@@ -351,27 +342,25 @@ else % if phase == 2
         
         % object offset 
         object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
+       
+         % what is the reward and rank of the accepted?
+        numprice        = thisprice;
         
-        % What is the rank of the accepted price?
-        numprice        = str2double(split(thisprice,"£"));
-        numprice        = numprice(2);
-        
-        % what is the reward and rank?
         if numprice == minprices(1)
             thisreward  = rewards(1);
-            thisrank = 1;
+            thisrank    = 1;
             
         elseif numprice == minprices(2)
             thisreward  = rewards(2);
-            thisrank = 2;
+            thisrank    = 2;
             
         elseif numprice == minprices(3)
             thisreward  = rewards(3);
-            thisrank = 3;
+            thisrank    = 3;
             
         else
             thisreward  = 0; 
-            thisrank = 0;
+            thisrank    = 0;
         end
         
         % IF SUBJECT ACCEPTED A CONTRACT SHOW FFEDBACK AND BREAK SEQUENCE
@@ -392,17 +381,17 @@ else % if phase == 2
                 feedback_window = Screen('OpenOffscreenWindow', window, windrect);
                 Screen('TextSize', feedback_window, textsize);
                 Screen('FillRect', feedback_window, grey ,windrect);
-                DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-300, white);
-                DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter, white); 
+                DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-200, white);
+                DrawFormattedText(feedback_window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 
             
             else
                 % DISPLAY CHOSEN CONTRACT
                 feedback_window = Screen('OpenOffscreenWindow', window, windrect);
                 Screen('TextSize', feedback_window, textsize);
                 Screen('FillRect', feedback_window, grey ,windrect);
-                DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-300, white);
-                DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter-50, white); 
-                DrawFormattedText(feedback_window, sprintf('Your reward is: £%3.4f\n',thisreward), 'center', scrn.ycenter, scrn.white);
+                DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-200, white);
+                DrawFormattedText(feedback_window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter-50, white); 
+                DrawFormattedText(feedback_window, sprintf('Your reward is %3.3f credits',thisreward), 'center', scrn.ycenter, scrn.white);
             end
             
             Screen('CopyWindow',feedback_window, window, windrect, windrect);
@@ -461,17 +450,17 @@ else % if phase == 2
                     feedback_window = Screen('OpenOffscreenWindow', window, windrect);
                     Screen('TextSize', feedback_window, textsize);
                     Screen('FillRect', feedback_window, grey ,windrect);
-                    DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-300, white);
-                    DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter, white); 
+                    DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-200, white);
+                    DrawFormattedText(feedback_window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 
 
                 else
                     % DISPLAY CHOSEN CONTRACT
                     feedback_window = Screen('OpenOffscreenWindow', window, windrect);
                     Screen('TextSize', feedback_window, textsize);
                     Screen('FillRect', feedback_window, grey ,windrect);
-                    DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-300, white);
-                    DrawFormattedText(feedback_window, [pricestr, thisprice], 'center', ycenter-50, white); 
-                    DrawFormattedText(feedback_window, sprintf('Your reward is £%3.4f\n',thisreward), 'center', scrn.ycenter, scrn.white);
+                    DrawFormattedText(feedback_window, 'Congratulations! This is the price  of your new smartphone contract.', 'center', ycenter-200, white);
+                    DrawFormattedText(feedback_window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter-50, white); 
+                    DrawFormattedText(feedback_window, sprintf('Your reward is %3.3f credits',thisreward), 'center', scrn.ycenter, scrn.white);
                 end
 
                 Screen('CopyWindow',feedback_window, window, windrect, windrect);

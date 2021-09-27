@@ -153,8 +153,7 @@ DrawFormattedText(feedback_window3, 'You you are not allowed to draw again', 'ce
 feedback_window4 = Screen('OpenOffscreenWindow',window);
 Screen('TextSize', feedback_window4, textsize);
 Screen('FillRect', feedback_window4, grey ,windrect);
-DrawFormattedText(feedback_window4, 'Oh No! :(', 'center', ycenter-50, red);
-DrawFormattedText(feedback_window4, 'You did not respond', 'center', ycenter, red);
+DrawFormattedText(feedback_window4, 'You did not respond', 'center', ycenter, white);
 
 %%
 % START THE TRIAL WITH A FIXATION CROSS

@@ -47,7 +47,6 @@ slidercolour    = black;
 
 if taskNb == 2
     thisprice   = set.thisprice;
-    pricestr    = set.pricestr;
     
 elseif taskNb == 3
     textures    = set.textures;     % this will be used to draw the textures on screen
@@ -205,7 +204,7 @@ while respmade == 0
         
         Screen('TextSize', window, textsize);
         Screen('FillRect', window, grey ,windrect);
-        DrawFormattedText(window, 'On a scale of 0 to 100, Please rate the contract price below', 'center', ycenter-200, white);
+        DrawFormattedText(window, 'On a scale of 0 to 100, rate how likely it would be for you to get that contract in real life?', 'center', ycenter-200, white);
         DrawFormattedText(window, '0 = I would never accept this contract', 'center', ycenter-150, white);
         DrawFormattedText(window, '100 = I would definately accept this contract ', 'center', ycenter-100, white);
 
@@ -228,7 +227,7 @@ while respmade == 0
         position = (position/(max(scalerange)-min(scalerange)))*100; % Converts the value to percentage
         
         DrawFormattedText(window, num2str(round(position)), 'center', windrect(4)*(scalepos - 0.05), white);
-        DrawFormattedText(window, [pricestr, thisprice], 'center', ycenter, white); 
+        DrawFormattedText(window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 
         
         object_onset = Screen('Flip', window, object_offset - slack);    % rating window is on
         
