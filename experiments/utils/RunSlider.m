@@ -17,6 +17,8 @@ fixsize         = scrn.fixationsize;
 object_offset   = set.object_offset;
 fix_dur         = set.fix_dur;      % fixation duration
 fixation        = set.fixation;
+isi             = set.isi;
+jitter          = set.jitter;
 EEG             = set.EEG;
 taskNb          = set.taskNb;
 
@@ -86,45 +88,6 @@ horzline    = [windrect(3)*scalelength windrect(4)*scalepos windrect(3)*(1-scale
 scalerange          = round(windrect(3)*(1-scalelength)):round(windrect(3)*scalelength); % Calculates the range of the scale (0-100)
 scalerangeshifted   = round((scalerange)-mean(scalerange)); % Shift the range of scale so it is symmetrical around zero
 
-% % CREATE WINDOWS FOR FLIPPING
-% if taskNb == 1
-%     rating_window = Screen('OpenOffscreenWindow',window);
-%     Screen('TextSize', rating_window, textsize);
-%     Screen('FillRect', rating_window, grey ,windrect);
-%     DrawFormattedText(rating_window, 'On a scale of 0 to 100, how confident are you for your choice?', 'center', ycenter-150, white);
-%     DrawFormattedText(rating_window, '0 = Not Confiddent', 'center', ycenter-50, white);
-%     DrawFormattedText(rating_window, '100 = Very Confident', 'center', ycenter, white);
-% 
-% elseif taskNb == 2
-%     
-%     rating_window = Screen('OpenOffscreenWindow',window);
-%     Screen('TextSize', rating_window, textsize);
-%     Screen('FillRect', rating_window, grey ,windrect);
-%     DrawFormattedText(rating_window, 'On a scale of 0 to 100, Please rate the contract price below', 'center', ycenter-200, white);
-%     DrawFormattedText(rating_window, '0 = I would never accept this contract', 'center', ycenter-150, white);
-%     DrawFormattedText(rating_window, '100 = I would definately accept this contract ', 'center', ycenter-100, white);
-% 
-% end
-% 
-% % Left, middle and right anchors
-% DrawFormattedText(rating_window, anchors{1}, leftclick(1, 1) - textbounds(1, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Left point
-% DrawFormattedText(rating_window, anchors{2}, 'center',  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Middle point
-% DrawFormattedText(rating_window, anchors{3}, rightclick(1, 1) - textbounds(2, 3)/2,  windrect(4)*scalepos+40, [],[],[],[],[],[],[]); % Right point
-% 
-% % Drawing the scale
-% Screen('DrawLine', rating_window, scalecolour, midclick(1), midclick(2), midclick(3), midclick(4), width);         % Mid tick
-% Screen('DrawLine', rating_window, scalecolour, leftclick(1), leftclick(2), leftclick(3), leftclick(4), width);     % Left tick
-% Screen('DrawLine', rating_window, scalecolour, rightclick(1), rightclick(2), rightclick(3), rightclick(4), width); % Right tick
-% Screen('DrawLine', rating_window, scalecolour, horzline(1), horzline(2), horzline(3), horzline(4), width);     % Horizontal line
-% 
-% % Draw the slider
-% Screen('DrawLine', rating_window, slidercolour, x, windrect(4)*scalepos - line, x, windrect(4)*scalepos  + line, width);
-% 
-% position = round((x)-min(scalerange));                       % Calculates the deviation from 0. 
-% position = (position/(max(scalerange)-min(scalerange)))*100; % Converts the value to percentage
-% 
-% DrawFormattedText(rating_window, num2str(round(position)), 'center', windrect(4)*(scalepos - 0.05), white); 
-
 % initialise the mouse
 SetMouse(round(x), round(windrect(4)*scalepos), window, 1)
 
@@ -149,9 +112,10 @@ while respmade == 0
     if taskNb == 1
         
         Screen('TextSize', window, textsize);
+        Screen('TextStyle', window, 0)
         Screen('FillRect', window, grey ,windrect);
         DrawFormattedText(window, 'On a scale of 0 to 100, how confident are you for your choice?', 'center', ycenter-150, white);
-        DrawFormattedText(window, '0 = Not Confiddent', 'center', ycenter-50, white);
+        DrawFormattedText(window, '0 = Not Confident', 'center', ycenter-50, white);
         DrawFormattedText(window, '100 = Very Confident', 'center', ycenter, white);
         
         % Left, middle and right anchors
@@ -203,6 +167,7 @@ while respmade == 0
     elseif taskNb == 2
         
         Screen('TextSize', window, textsize);
+        Screen('TextStyle', window, 0)
         Screen('FillRect', window, grey ,windrect);
         DrawFormattedText(window, 'On a scale of 0 to 100, rate how likely it would be for you to get that contract in real life?', 'center', ycenter-200, white);
         DrawFormattedText(window, '0 = I would never accept this contract', 'center', ycenter-150, white);
@@ -241,6 +206,7 @@ while respmade == 0
         
     elseif taskNb == 3
         Screen('TextSize', window, textsize);
+        Screen('TextStyle', window, 0)
         Screen('FillRect', window, grey ,windrect);
         DrawFormattedText(window, 'On a scale of 0 to 100, rate how likely it would be for you date that person in real life.', 'center', ycenter-250, white);
         DrawFormattedText(window, '0 = I would never date that person', 'center', ycenter-200, white);
@@ -288,8 +254,7 @@ object_offset       = object_onset + 0.2 - ifi;
 Screen('CopyWindow', fixationdisplay, window, windrect, windrect)
 object_onset        = Screen('Flip', window, object_offset - slack); % flip fixation window
 
-object_offset       = object_onset + fix_dur - ifi;
-
+object_offset    = object_onset + fix_dur + isi + randperm(jitter*1000,1)/1000 - ifi; 
 set.object_offset   = object_offset;
 set.rate_rt         = rate_rt;
 set.position        = position;

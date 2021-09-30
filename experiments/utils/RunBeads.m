@@ -28,12 +28,18 @@ grey            = scrn.grey;
 fixsize         = scrn.fixationsize;
 textfont        = scrn.textfont;
 textsize        = scrn.textsize;
+textbold        = scrn.textbold;
 smalltext       = scrn.smalltext;
+baserect        = scrn.baserect;
+centeredrect    = scrn.centeredrect;
+penwidth        = scrn.penwidth;
 
 thisession      = logs.sess;
 sub             = logs.sub;
 taskname        = logs.task;
 resfolder       = logs.resultsfolder;
+
+xcntr           = xcenter - 30; % works better than 'center'
 
 % create fixation cross offscreen and paste later (faster)
 fixationdisplay = Screen('OpenOffscreenWindow',window);
@@ -51,6 +57,7 @@ HideCursor;
 green           = scrn.green;
 blue            = scrn.blue;
 red             = scrn.red;
+orange          = scrn.orange;
 
 sequence        = set.sequence;     % this is the current sequence/trial 
 thisurn         = set.urn;          % this is the current urn, contains the high prob colour beads 1=blue, 0=green
@@ -101,34 +108,16 @@ if EEG == 1
 end
     
 % SET ALL RELEVANT WINDOWS (BEAD WINDOWS, RESPONSE WINDOW, CONFIDENCE RATING & FEEDBACK WINDOWS)
+% BASE RECTANGLES -- white rect
+whiterect_window = Screen('OpenOffscreenWindow',window);
+Screen('TextSize', whiterect_window, textsize);
+Screen('FillRect', whiterect_window, grey ,windrect);
+Screen('FrameRect', whiterect_window, white, centeredrect, penwidth)
 
-% BLUE WINDOW
-blue_window = Screen('OpenOffscreenWindow',window);
-Screen('TextSize', blue_window, textsize);
-Screen('FillRect', blue_window, grey ,windrect);
-DrawFormattedText(blue_window, 'BLUE', 'center', ycenter, blue);
-
-% GREEN WINDOW
-green_window = Screen('OpenOffscreenWindow',window);
-Screen('TextSize', green_window, textsize);
-Screen('FillRect', green_window, grey ,windrect);
-DrawFormattedText(green_window, 'GREEN', 'center', ycenter, green);
-
-% RESPONSE WINDOW (with options blue, green and draw-again)
-response_window1 = Screen('OpenOffscreenWindow',window);
-Screen('TextSize', response_window1, textsize);
-Screen('FillRect', response_window1, grey ,windrect);
-DrawFormattedText(response_window1, 'BLUE?', 'center', ycenter-50, blue);
-DrawFormattedText(response_window1, 'GREEN?', 'center', ycenter, green);
-DrawFormattedText(response_window1, 'DRAW?', 'center', ycenter+50, white);
-
-% RESPONSE WINDOW (with options blue, green)
-response_window2 = Screen('OpenOffscreenWindow',window);
-Screen('TextSize', response_window2, textsize);
-Screen('FillRect', response_window2, grey ,windrect);
-DrawFormattedText(response_window2, 'That was your last draw:', 'center', ycenter-50, white);
-DrawFormattedText(response_window2, 'BLUE?', 'center', ycenter, blue);
-DrawFormattedText(response_window2, 'GREEN?', 'center', ycenter+50, green);
+% BASE RECTANGLES -- orange rect
+orangerect_window = Screen('OpenOffscreenWindow',window);
+Screen('FillRect', orangerect_window, grey ,windrect);
+Screen('FrameRect', orangerect_window, orange, centeredrect, penwidth);
 
 % FEEDBACK WINDOW (you win!)
 feedback_window1 = Screen('OpenOffscreenWindow',window);
@@ -146,14 +135,8 @@ DrawFormattedText(feedback_window2, 'Oh No! :(', 'center', ycenter, red);
 feedback_window3 = Screen('OpenOffscreenWindow',window);
 Screen('TextSize', feedback_window3, textsize);
 Screen('FillRect', feedback_window3, grey ,windrect);
-DrawFormattedText(feedback_window3, 'Oh No! :(', 'center', ycenter-50, red);
+DrawFormattedText(feedback_window3, 'Oh No! :(', xcntr, ycenter-50, red);
 DrawFormattedText(feedback_window3, 'You you are not allowed to draw again', 'center', ycenter, red);
-
-% FEEDBACK WINDOW (didn't respond!)
-feedback_window4 = Screen('OpenOffscreenWindow',window);
-Screen('TextSize', feedback_window4, textsize);
-Screen('FillRect', feedback_window4, grey ,windrect);
-DrawFormattedText(feedback_window4, 'You did not respond', 'center', ycenter, white);
 
 %%
 % START THE TRIAL WITH A FIXATION CROSS
@@ -179,76 +162,83 @@ for thisdraw = 1:drawlen
         break;
     end
     
-    xcenters        = xcenter - 250; % start adding the darws prices at xcenter - 600
+    xcenters        = xcntr - 60; % start adding the darws prices at xcenter - 30
     xs              = xcenters;
     
-    % STATEMENT 1. Is it a high or a low probability draw?
+    % 1. SHOW RECT WITH THE LIST OF BEADS(S)
+    Screen('CopyWindow', whiterect_window,window, windrect, windrect)
+    Screen('TextSize', window, textsize);
+    Screen('TextStyle', window, textbold)
+
+    % COND 1: Is it a high or a low probability draw?
     if sequence(thisdraw) == 1  % high prob draw
-        
-        % STATEMENT 2. Is it a blue or a green bead?
+
+        % COND 2: Is it a blue or a green bead?
         if thisurn == 1         % blue urn and blue bead
+
             % show blue window
-            Screen('CopyWindow', blue_window, window, windrect, windrect)
+            DrawFormattedText(window, 'BLUE', 'center', ycenter, blue);
             if EEG == 1
                 stimtrigger         = trigger1; % assign trigger 1 as stimulus triger
             end
+
             previous_colour     = blue;
-            previous_bead       = 'blue';
-            
+            previous_bead       = 'BLUE';
+
         else % green urn and green beed
+
             % show green window
-            Screen('CopyWindow', green_window, window, windrect, windrect)
+            DrawFormattedText(window, 'GREEN', 'center', ycenter, green);
             if EEG == 1
                 stimtrigger         = trigger3;
             end
+
             previous_colour     = green;
-            previous_bead       = 'green';
-         
-        end
-            
+            previous_bead       = 'GREEN';
+
+        end % end of cond 2 loop
+
     elseif sequence(thisdraw) == 2 % low prob draw
-        
+
         if thisurn == 1 % blue urn and green bead
-            % show green window
-            Screen('CopyWindow', green_window, window, windrect, windrect)
+
+            DrawFormattedText(window, 'GREEN', 'center', ycenter, green);
             if EEG == 1
                 stimtrigger         = trigger2;
             end
             previous_colour     = green;
-            previous_bead       = 'green';
-            
-        else % green urn and blue bead
-            % show blue window
-            Screen('CopyWindow', blue_window, window, windrect, windrect)
+            previous_bead       = 'GREEN';
+
+        else % % green urn and blue bead
+
+            DrawFormattedText(window, 'BLUE', 'center', ycenter, blue);
             if EEG == 1
                 stimtrigger         = trigger4;
             end
+
             previous_colour     = blue;
-            previous_bead       = 'blue';
-            
-        end 
-    end % end of statment 1 if 
+            previous_bead       = 'BLUE';
+
+        end % % end of cond 2 loop
+    end % end of cond 1 loop
     
-    % if this is not the first draw, show previous draw at the bottom of
-    % the screen
     if thisdraw > 1
         
         previous_len        = length(previous); % how many previous prices?
         
         for i = 1:previous_len
             
-            % show the previous prices at the bottom of the screen
+            % show the previous prices on the left of the current bead
             Screen('TextSize', window, smalltext);
-            DrawFormattedText(window, 'Previous Draws', xcenter - 250, ycenter+250, white); 
-            DrawFormattedText(window, previous{i}, xcenters, ycenter+350, colours{i}); 
+            Screen('TextStyle', window, 0)
+            DrawFormattedText(window, previous{i}, xcenters, ycenter, colours{i}); 
 
             % update xcenters, so that previous prices are not
             % displayed on top of each other
-            xcenters = xcenters + 80;
+            xcenters = xcenters - 60;
             
-        end
+        end  
     end
-    
     bead_onset     = Screen('Flip', window, object_offset - slack); 
     bead_offset    = bead_onset + bead_dur - ifi;                          % bead on for 0.5 ms
     
@@ -257,42 +247,35 @@ for thisdraw = 1:drawlen
         sp.sendTrigger(stimtrigger) % blue urn -- high prob blue bead trigger
     end
     
-    % 2. BRING FIXATION BACK ON
-    Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-  
-    % if this is not the first draw, show previous draw at the bottom of
-    % the screen (during fixation also
-    if thisdraw > 1
+    % 3. SHOW GO SIGNAL
+    % 1. SHOW RECT WITH THE LIST OF BEADS(S)
+    Screen('CopyWindow', orangerect_window,window, windrect, windrect)
+    Screen('TextSize', window, smalltext);
+    Screen('TextStyle', window, 0) % NOT BOLD
+    DrawFormattedText(window, previous_bead, 'center', ycenter, previous_colour);
+    if thisdraw == drawlen
+        Screen('TextSize', window, textsize);
+        DrawFormattedText(window, 'This was your last draw.', 'center', ycenter-200, white);
+    end  
+    
+    if thisdraw > 1 
         
-        previous_len        = length(previous); % how many previous prices?
+        previous_len = length(previous);
         
         for i = 1:previous_len
             
-            % show the previous prices at the bottom of the screen
+            % show the previous prices on the left of the current bead
             Screen('TextSize', window, smalltext);
-            DrawFormattedText(window, 'Previous Draws', xcenter - 250, ycenter+250, white); 
-            DrawFormattedText(window, previous{i}, xs, ycenter+350, colours{i}); 
+            Screen('TextStyle', window, 0)
+            DrawFormattedText(window, previous{i}, xs, ycenter, colours{i}); 
 
             % update xcenters, so that previous prices are not
             % displayed on top of each other
-            xs = xs + 80;
-            
+            xs = xs - 60;
         end
     end
-    
-    fixation_onset      = Screen('Flip', window, bead_offset - slack);        % fixation on, prepare for response prompt  
-    object_offset       = fixation_onset + fix_dur - ifi;     % add jitter here?
-    
-    % 3. SHOW RESPONSE PROMPT 
-    if thisdraw < drawlen % show response window 1
-        Screen('CopyWindow', response_window1, window, windrect, windrect)
         
-    else % show response window 2
-        Screen('CopyWindow', response_window2, window, windrect, windrect)
-      
-    end % end of resp prompt if statement
-    
-    prompt_onset    = Screen('Flip', window, object_offset - slack); 
+    prompt_onset    = Screen('Flip', window, bead_offset - slack); 
     
     % send response prompt trigger
     if EEG == 1 
@@ -367,32 +350,39 @@ for thisdraw = 1:drawlen
    % check if response was correct or incorrect, give appropreate feedback, break 
    % C) if draw_count == 10 and subject chose to draw again collect it as
    % wrong answer 
-   
    Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
    fixation_onset   = Screen('Flip', window, prompt_offset - slack);                % fixation on, prepare for next draw or for feedback      
-   object_offset    = fixation_onset + isi + randperm(jitter*1000,1)/1000 - ifi;     % add jitter here?
+   object_offset    = fixation_onset + fix_dur + isi + randperm(jitter*1000,1)/1000 - ifi;     % add jitter here?
    
    if answer ~= 3
        
        if any(isnan(answer)) % if subject doesn't respond, just move to the next draw
            
-           % show feedback screen 4 and move to next trial
-           Screen('CopyWindow', feedback_window4, window, windrect, windrect)
-           feedback_onset = Screen('Flip', window, object_offset - slack);    % rating window is on
-           
-           if EEG == 1
-               sp.sendTrigger(trigger17);
-           end
-           
-           % feedback is on
-           object_offset = feedback_onset + dfeedback - ifi;
-           
-            % BRING FIXATION BACK ON
-           Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-           object_onset     = Screen('Flip', window, object_offset - slack); 
+           % if this is the last darw and subject didn't respond, update
+           % accuracy and show "you lose" screen
+           if thisdraw == drawlen
+               accuracy = 0;
+               
+               Screen('CopyWindow', feedback_window2,window, windrect, windrect) % show "you lose" feedback window
+               feedback_onset = Screen('Flip', window, object_offset - slack);   % feedback window on 
 
-           object_offset    = object_onset + isi + randperm(jitter*1000,1)/1000 - ifi;% add jitter here?
-           
+               object_offset = feedback_onset + dfeedback - ifi;
+
+               % send you lose trigger
+               if EEG == 1
+                   sp.sendTrigger(trigger15);
+               end
+               
+               % BRING FIXATION BACK ON
+               Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
+               object_onset     = Screen('Flip', window, object_offset - slack); 
+
+               object_offset    = object_onset + isi - ifi;% no jitter
+               
+           else
+               draw_count  = draw_count + 1; % if the subject didn't respond and this is not the last darw, judt update draw count and show next draw
+           end
+    
        else
            
            set.object_offset = object_offset; % 
@@ -409,13 +399,6 @@ for thisdraw = 1:drawlen
            object_offset    = set.object_offset;
            rate_rt          = set.rate_rt;
            position         = set.position;
-           
-           % ADD A FIXATION BEFORE FEEDBACK
-           Screen('CopyWindow', fixationdisplay, window, windrect, windrect)
-           object_onset     = Screen('Flip', window, object_offset - slack); 
-
-           object_offset    = object_onset + fix_dur - ifi;
-           
 
            if answer == 1 % if subject chose blue urn
                if thisurn == 1                                                      % if thisurn is in fact a blue urn
@@ -487,7 +470,7 @@ for thisdraw = 1:drawlen
        
    elseif answer == 3
        
-       if draw_count == drawlen % if this is the last (10th) draw ans subject requested another draw
+       if thisdraw == drawlen % if this is the last (10th) draw ans subject requested another draw
            
            accuracy     = 0;
            % DISPLAY THE 3RD FEEDBACK SCREEN
@@ -509,14 +492,6 @@ for thisdraw = 1:drawlen
            
            object_offset    = object_onset +  isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
            break
-           
-       else % if this is not the last draw and subject wants to draw again
-           
-           Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-           object_onset     = Screen('Flip', window, object_offset - slack); 
-           
-           object_offset    = object_onset +  isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
-           
        end
    end
    

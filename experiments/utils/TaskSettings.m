@@ -15,23 +15,21 @@ set.fixation    = '+';      % fixation cross
 set.EEG         = 0;        % set to 1 when running in the eeglab
 set.welcomedur  = 2.5;      % welcome screen duration = 2.5 sec
 set.jitter      = .4;       % 0.4 sec
-set.isi         = .4;       % in seconds
-set.conversion  = .4;       % will be used to convert credit to £
+set.isi         = .5;       % in seconds
+set.conversion  = .3;       % will be used to convert credit to £
 
  % create a list of settings and parameters for the rts task 
 if taskNb == 1 % if this is the beads task
    
-    % BASIC IMPORTANT SETTINGS
-    set.blocks      = 4;    % number of blocks 
-
     % EXPERIMENTAL SETTINGS
     set.infoscreen  = 2.5;  % this screen appears at the beginning of every sequence and informs the participant abou sequence number and probabilities of draws 
-    set.bead_dur    = 0.5;  % bead duration in seconds
+    set.bead_dur    = 1;  % bead duration in seconds
     set.response    = 2.5;  % self-paced or up to 2.5 sec 
     set.fix_dur     = 0.5;  % duration of the fixation cross
     set.feed_dur    = 1;    % duration of the feedback window self-paced or up to 3 sec
 
     % TASK PARAMETERS 
+    set.blocks      = 4;    % number of blocks 
     set.trials      = 52;                       % total trials
     set.blocktrials = set.trials/set.blocks;    % number of trials per block
     set.draws       = 10;                       % draws per sequence/trial

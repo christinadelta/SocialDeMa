@@ -52,7 +52,7 @@ logs.sess               = sess;
 logs.date               = datestr(now, 'ddmmyy');
 logs.time               = datestr(now, 'hhmm');
 
-logs.trialog            = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_logs.mat';
+logs.trialog            = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_phase_%02d_logs.mat';
 logs.txtlog             = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_events.tsv';
 
 if phase == 2
@@ -65,6 +65,17 @@ logs.resultsfolder      = fullfile(wd, 'results',taskName, sprintf('sub-%02d', s
 if ~exist(logs.resultsfolder, 'dir')
     mkdir(logs.resultsfolder)
 end
+
+% % results for trial are weirdly saved, so maybe save them in a different folder 
+% if phase == 2
+%     logs.trialresults = fullfile(logs.resultsfolder, 'trial_results');
+%     
+%     if ~exist(logs.trialresults, 'dir')
+%         mkdir(logs.trialresults)
+%     end
+% end
+
+    
 
 % Add PTB to your path and start the experiment 
 ptbdir          = '/Applications/Psychtoolbox';                             % change to your ptb directory
@@ -346,13 +357,17 @@ try
                 [set,logs]      = RunEconomic(set, scrn, logs); % run trials
                 
                 % UNPACK SET AND ADD THE TRIAL INFO TO THE "BLOCK"-LOG FILE 
-                blocktrials(trial).session     = set.blocktrials.session;
-                blocktrials(trial).block       = set.blocktrials.block;
-                blocktrials(trial).trialnumber = set.blocktrials.trialnumber;
-                blocktrials(trial).trialonset  = set.blocktrials.trialonset;
-                blocktrials(trial).sequence    = set.blocktrials.sequence;
-                blocktrials(trial).numsamples  = set.blocktrials.numsamples;
-                blocktrials(trial).chosenitem  = set.blocktrials.chosenitem;
+                blocktrials(trial).session      = set.blocktrials.session;
+                blocktrials(trial).block        = set.blocktrials.block;
+                blocktrials(trial).trialnumber  = set.blocktrials.trialnumber;
+                blocktrials(trial).trialonset   = set.blocktrials.trialonset;
+                blocktrials(trial).sequence     = set.blocktrials.sequence;
+                blocktrials(trial).numsamples   = set.blocktrials.numsamples;
+                blocktrials(trial).chosenitem   = set.blocktrials.chosenitem;
+                blocktrials(trial).chosenprice  = set.blocktrials.chosenprice;
+                blocktrials(trial).rank         = set.blocktrials.rank;
+                blocktrials(trial).reward       = set.blocktrials.reward;
+                blocktrials(trial).balance      = set.blocktrials.balance;
 
             end % End of trials loop
             
@@ -425,7 +440,7 @@ try
         Screen('TextSize', window, scrn.textsize);
         Screen('FillRect', window, scrn.grey ,windrect);
         DrawFormattedText(window, 'This is the end of the experiment.', 'center', scrn.ycenter-50, scrn.white);
-        DrawFormattedText(window, sprintf('Your calculated total reward is: £%3.3f\n. ', totalreward), 'center', scrn.ycenter, scrn.white);
+        DrawFormattedText(window, sprintf('Your calculated total reward is: £%3.3f ', totalreward), 'center', scrn.ycenter, scrn.white);
         DrawFormattedText(window, 'Thank you for your time!', 'center', scrn.ycenter+50, scrn.white);
         Screen('Flip',window);
         WaitSecs(3);

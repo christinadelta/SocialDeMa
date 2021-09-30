@@ -174,7 +174,7 @@ else % if phase == 2
     code2           = set.code2; % sample again
 
     samples         = set.samples; % total number of samples
-    trials          = [];     % store trial info
+    trial_samples   = [];     % store trial info
     previous        = [];     % store the previous prices here to show at the bottom of the screen
     blocktrials     = [];     % here we store the info of the current sequence
     sequenceprices  = nan(1,samples);
@@ -480,20 +480,25 @@ else % if phase == 2
         
         % store the current price to show at the bottom of the screen
         % (during the next samples)
-        previous{s}            = thisprice;
+        previous{s}                   = thisprice;
         
         % save the sequence-sampling info 
-        trials(s).session      = thisession;
-        trials(s).block        = thisblock;
-        trials(s).trialnumber  = thistrial;
-        trials(s).trialonset   = trialstart;
-        trials(s).thisitem     = thisitem;
-        trials(s).thisprice    = thisprice;
-        trials(s).rt           = rt;
+        trial_samples(s).session      = thisession;
+        trial_samples(s).block        = thisblock;
+        trial_samples(s).trialnumber  = thistrial;
+        trial_samples(s).trialonset   = trialstart;
+        trial_samples(s).thisitem     = thisitem;
+        trial_samples(s).thisprice    = thisprice;
+        trial_samples(s).rt           = rt;
         
         if abort; fclose('all');break; end 
         
     end % end of sampling for loop  
+    
+    logs.trialsamples        = trial_samples; % save the samples 
+
+    sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thistrial,thisession,phase));
+    save(sublogs,'logs');
     
     if EEG == 1 
         sp.sendTrigger(trigger101)
@@ -521,10 +526,6 @@ else % if phase == 2
     
     WaitSecs(1); % wait two sec before flipping to the next block/
 
-    logs.trials              = trials; % save the samples 
-
-    sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
-    save(sublogs,'logs');
     
 end % end of phase statement
 

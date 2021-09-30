@@ -8,8 +8,8 @@ function [scrn] = screenSettings(scrn, taskNb)
 
 % change these parameters as appropreate 
 % screen resolution 
-scrn.actscreenRes   = scrn.actscreen; % get screen's actual resolution
-scrn.screenRes      = [1280 800]; % this also the windrect in px
+scrn.actscreenRes   = scrn.actscreen;   % get screen's actual resolution
+scrn.screenRes      = [1280 800];       % this also the windrect in px
 scrn.hz             = 60; 
 scrn.distview       = 700;
 scrn.width          = scrn.actwidth;

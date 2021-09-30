@@ -75,7 +75,7 @@ if taskNb == 1
     Screen('TextSize', rating_window, textsize);
     Screen('FillRect', rating_window, grey ,windrect);
     DrawFormattedText(rating_window, 'On a scale of 0 to 100, how confident are you for your choice?', 'center', ycenter-150, white);
-    DrawFormattedText(rating_window, '0 = Not Confiddent', 'center', ycenter-50, white);
+    DrawFormattedText(rating_window, '0 = Not Confident', 'center', ycenter-50, white);
     DrawFormattedText(rating_window, '100 = Very Confident', 'center', ycenter, white);
 
 elseif taskNb == 2

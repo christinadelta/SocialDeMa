@@ -71,19 +71,20 @@ try
     % PREP EXPERIMENT(open screen, etc..) 
     
     % define colours
-    scrn.black      = [0 0 0];
-    scrn.white      = [255 255 255];
-    scrn.grey       = [128 128 128];
-    scrn.green      = [0 140 54];
-    scrn.blue       = [30 70 155];
-    scrn.red        = [225 25 0];
+    scrn.black              = [0 0 0];
+    scrn.white              = [255 255 255];
+    scrn.grey               = [128 128 128];
+    scrn.green              = [0 140 54];
+    scrn.blue               = [30 70 155];
+    scrn.red                = [225 25 0];
+    scrn.orange             = [243 146 0];
 
     % text settings
-    scrn.textfont       = 'Verdana';
-    scrn.textsize       = 20;
-    scrn.smalltext      = 20;
-    scrn.fixationsize   = 30;
-    scrn.textbold       = 1; 
+    scrn.textfont           = 'Verdana';
+    scrn.textsize           = 20;
+    scrn.smalltext          = 12;
+    scrn.fixationsize       = 30;
+    scrn.textbold           = 1; 
     
     % Screen('Preference', 'SkipSyncTests', 0) % set a Psychtoolbox global preference.
     Screen('Preference', 'SkipSyncTests', 1) % for testing I have set this to 1. When running the actuall task uncomment the above
@@ -105,7 +106,7 @@ try
 
     
     % pc actual screen settings
-    scrn.actscreen          = Screen('Resolution', screenNumber);
+    actscreen               = Screen('Resolution', screenNumber);
     [actwidth, actheight]   = Screen('DisplaySize', screenNumber);
     scrn.acthz              = Screen('FrameRate', window, screenNumber);    % maximum speed at which you can flip the screen buffers, we normally use the flip interval (ifi), but better store it 
     
@@ -113,6 +114,15 @@ try
     
     scrn.slack              = Screen('GetFlipInterval', window)/2;          % Returns an estimate of the monitor flip interval for the specified onscreen window (this is frame duration /2)
     
+    % create rectangle for trials
+    screenresolution        = [actscreen.width actscreen.height];
+    baserect                = [0 0 ceil(.5*screenresolution(1)) ceil(0.5*screenresolution(2))];
+    %baserect                = [0 0 800 800];
+    centeredrect            = CenterRectOnPointd(baserect, xcenter, ycenter);
+    penwidth                = 4; % line width
+    
+    % UPDATE SCREEN STRUCT
+    scrn.actscreen          = actscreen;
     scrn.frame_rate         = 1/scrn.ifi;
     scrn.actwidth           = actwidth;
     scrn.actheight          = actheight;
@@ -124,6 +134,10 @@ try
     scrn.ypixels            = ypixels;
     scrn.globalrect         = globalrect;
     scrn.screenNumber       = screenNumber;
+    scrn.screenresolution   = screenresolution;
+    scrn.baserect           = baserect;
+    scrn.centeredrect       = centeredrect;
+    scrn.penwidth           = penwidth;
     
     %% ---------------------------------------
     % RUN A FEW IMPORTANT UTIL FUNCTIONS
@@ -178,12 +192,12 @@ try
     % WAIT FOR THEM TO PRESS SPACE
     responsemade = 1;
     while responsemade
-        [~, secs, keycode]= KbCheck;
+        [~, secs, keycode]  = KbCheck;
         WaitSecs(0.001) % delay to prevent CPU logging
 
         % spacebar is pressed 
         if keycode(1, spacekey)
-            responsemade = 0;
+            responsemade    = 0;
         end
     end
     
@@ -223,13 +237,13 @@ try
     %% ---------------------------------------
     % RUN THE INSTRUCTIONS QUIZ 
     
-    % Start instructions
-    DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
-    Screen('Flip', window);
-    WaitSecs(1);
-    
-    set = ShortQuiz(set, scrn, set); % RUN the instructions quiz 
-    
+%     % Start instructions
+%     DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
+%     Screen('Flip', window);
+%     WaitSecs(1);
+%     
+%     set = ShortQuiz(set, scrn, set); % RUN the instructions quiz 
+%     
 
     %% ---------------------------------------
     % ADD THE TRIGGER INFORMATION (IF EEG = 1) 
@@ -304,7 +318,7 @@ try
             loss            = set.loss;
             % count the proportions of bead colours in the current sequence
             % list to dettermine the difficulty condition
-            condition       = sum(set.sequence(:,1)==2);
+            condition       = sum(set.sequence(1,:)==2);
             
             if condition == 2 % if 2 appears 2 times in the sequence
                 
@@ -322,6 +336,7 @@ try
             % display trial/sequence information window 
             Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', window, scrn.textsize);
+            Screen('TextStyle', window, 0)
             Screen('FillRect', window, scrn.grey ,windrect);
             DrawFormattedText(window, sprintf('Starting sequence %d of block %d',thistrial, iBlock), 'center', scrn.ycenter-100, scrn.white);
             DrawFormattedText(window, sprintf('Your current balance is: %3.3f credits',currentbalance), 'center', scrn.ycenter-50, scrn.white);
@@ -392,6 +407,7 @@ try
         % allow subject to take a short break (if they want to)
         Screen('OpenOffscreenWindow', window, windrect);
         Screen('TextSize', window, scrn.textsize);
+        Screen('TextStyle', window, 0)
         Screen('FillRect', window, scrn.grey ,windrect);
         DrawFormattedText(window, 'Time for a break! When ready to continue, press SPACE', 'center', scrn.ycenter-50, scrn.white);
         DrawFormattedText(window, 'Or press ESC to quit.', 'center', scrn.ycenter, scrn.white);
@@ -425,16 +441,17 @@ try
     currentbalance      = set.balance;                  % this is your balance in credits  
     conversion          = set.conversion;               % conversion rate
     totals              = currentbalance * conversion;  % this is your converted winnings
-    totalreward         = totals * 0.05;                % actual winnings 
+    totalreward         = totals * 0.03;                % actual winnings 
     set.totalreward     = totalreward;
         
     % THIS IS IT...
     % show thank you window
     Screen('OpenOffscreenWindow', window, windrect);
     Screen('TextSize', window, scrn.textsize);
+    Screen('TextStyle', window, 0)
     Screen('FillRect', window, scrn.grey ,windrect);
     DrawFormattedText(window, 'This is the end of the experiment.', 'center', scrn.ycenter-50, scrn.white);
-    DrawFormattedText(window, sprintf('Your calculated total reward is: £%3.3f\n. ', totalreward), 'center', scrn.ycenter, scrn.white);
+    DrawFormattedText(window, sprintf('Your calculated total reward is: £%3.3f', totalreward), 'center', scrn.ycenter, scrn.white);
     DrawFormattedText(window, 'Thank you for your time!', 'center', scrn.ycenter+50, scrn.white);
     Screen('Flip',window);
     WaitSecs(3);
