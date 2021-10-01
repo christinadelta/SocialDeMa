@@ -1,7 +1,10 @@
 %% ---------------------------------------
+
+%%%%%%%%%%%%%% BEADS TASK V3 %%%%%%%%%%%%%
+
 % DESCRIPTION:
 
-% First version of the Beads task implemented with the PsychToolbox
+% Third version of the Beads task implemented with the PsychToolbox
 % Depependencies:
 % 1. Matlab 2021a 
 % 2. Psychtoolbox 3
@@ -10,7 +13,7 @@
 % http://peterscarfe.com/ptbtutorials.html
 
 %%% TODO: %%%
-% add logs txt file 
+% add logs txt file? 
 % now we save only in .mat files 
 
 % CLEAN UP

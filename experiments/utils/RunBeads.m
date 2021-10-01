@@ -507,6 +507,7 @@ for thisdraw = 1:drawlen
    draws(thisdraw).trialonset   = trialstart;
    draws(thisdraw).beadonset    = bead_onset;
    draws(thisdraw).thisdraw     = thisdraw;
+   draws(thisdraw).thisbead     = sequence(thisdraw);
    draws(thisdraw).rt           = rt;
    
    if abort; fclose('all');break; end 
