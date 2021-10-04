@@ -14,8 +14,8 @@ function [averaged] = GetAverage(taskName, wd, sub)
 previous_phase  = 1;
 resultsfolder   = fullfile(wd, 'results',taskName, sprintf('sub-%02d', sub));
 session         = 1;
-trials          = 20;
-blocks          = 30;
+trials          = 40;
+blocks          = 20;
 
 %% LOAD THE BLOCK MAT FILES 
 
@@ -24,6 +24,7 @@ for block = 1:blocks
     % load the subfile
     subFile = fullfile(resultsfolder, sprintf('subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_logs.mat',sub, taskName, block, session, previous_phase));
     load(subFile)
+    
     
     for trial = 1:trials
         

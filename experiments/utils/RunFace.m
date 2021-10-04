@@ -131,22 +131,27 @@ if phase == 1
     
 else % if this is phase 2 
     
-    % Create response prompt window
-    % RESPONSE WINDOW (with options choose price, sample-again)
-    response_window = Screen('OpenOffscreenWindow',window);
-    Screen('TextSize', response_window, textsize);
-    Screen('FillRect', response_window, grey ,windrect);
-    DrawFormattedText(response_window, 'Choose current date?', 'center', ycenter-50, white);
-    DrawFormattedText(response_window, 'Sample again?', 'center', ycenter, white);
+    % UNPACK SCREEN STRUCT for phase 2
+    textbold        = scrn.textbold;
+    smalltext       = scrn.smalltext;
+    baserect        = scrn.baserect;
+    centeredrect    = scrn.centeredrect;
+    penwidth        = scrn.penwidth;
+    orange          = scrn.orange;
+    
+    % CREATE RECTANGLES
+    % BASE RECTANGLES -- white rect
+    whiterect_window = Screen('OpenOffscreenWindow',window);
+    Screen('TextSize', whiterect_window, textsize);
+    Screen('FillRect', whiterect_window, grey ,windrect);
+    Screen('FrameRect', whiterect_window, white, centeredrect, penwidth)
 
-    % RESPONSE WINDOW 2
-    response_window2 = Screen('OpenOffscreenWindow',window);
-    Screen('TextSize', response_window2, textsize);
-    Screen('FillRect', response_window2, grey ,windrect);
-    DrawFormattedText(response_window2, 'You cannot sample again.', 'center', ycenter, white);
-
-
-     if EEG == 1 
+    % BASE RECTANGLES -- orange rect
+    orangerect_window = Screen('OpenOffscreenWindow',window);
+    Screen('FillRect', orangerect_window, grey ,windrect);
+    Screen('FrameRect', orangerect_window, orange, centeredrect, penwidth);
+    
+    if EEG == 1
         
         % UNPACK TRIGGERS
         sp          = set.sp;
@@ -156,12 +161,11 @@ else % if this is phase 2
         
         trigger100  = set.trigger100; % start of sequence
         trigger101  = set.trigger101; % end of sequence
-
-     end
+    end
     
-      % UNPACK SETTINGS STRUCT for phase 2
+    % UNPACK SETTINGS STRUCT for phase 2
     thistrial       = set.thisTrial;    % current sequence/trial number
-    sequence        = set.sequence;     % this is the current sequence/trial
+    sequence        = set.sequence';     % this is the current sequence/trial
     fixduration     = set.fix_dur;      % fixation duration 
     response        = set.response;     % response time (5 sec or self-paced)
     feedbacktime    = set.feedback;     % feedback duration
@@ -180,6 +184,7 @@ else % if this is phase 2
     trials          = [];   % store trial info
     previous        = nan;   % store previous samples
     blocktrials     = [];   % here we store the info of the current sequence
+    xcntr           = xcenter - 60; % works better than 'center'
     
     % find the averaged prices for the current sequence and define the 3
     % ranks
@@ -223,22 +228,24 @@ else % if this is phase 2
         thisitem        = sequence(s,1); % index of the current item
         thisrate        = sequence(s,2); % index of thisitem averaged rate
         
-        Xchange         = xcenter-400; % this will help define x positions of the small images
-        Ychange         = ycenter+350; % this is the y position of the small images
+        Xchange         = xcntr-60; % this will help define x positions of the small images
+        Ychange         = ycenter; % this is the y position of the small images
         xs              = Xchange;
         ys              = Ychange;
+        
+        % DISPLAY CONTRACT 
+        % FIRST DRAW THE RECT
+        Screen('CopyWindow', whiterect_window,window, windrect, windrect)
+        Screen('TextSize', window, textsize);
+        Screen('TextStyle', window, 0)
         
         if s == 1
             % DISPLAY THE CURRENT FACE - Backround window (the number of
             % sample)
-            background_window = Screen('OpenOffscreenWindow', window, windrect);
-            Screen('TextSize', background_window, textsize);
-            Screen('FillRect', background_window, grey ,windrect);
-            DrawFormattedText(background_window,sprintf('Face %d/10',s), 'center', ycenter-250, white);
+            DrawFormattedText(window,sprintf('Face %d/10',s), 'center', ycenter-200, white);
 
-             % DISPLAY THE CURRENT FACE - the actual face
-            Screen('DrawTexture', background_window, textures{thisitem}, [], destrect);     % display thisitem
-            Screen('CopyWindow',background_window, window, windrect, windrect);
+            % DISPLAY THE CURRENT FACE - the actual face
+            Screen('DrawTexture',window, textures{thisitem}, [], destrect);     % display thisitem
             object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
             
         else % if it is not the first sample
@@ -249,68 +256,55 @@ else % if this is phase 2
             smallrects  = nan(4,previous_len); 
             
             for l = 1:previous_len
-                smallrects(:,l) = [Xchange-objectx/6, Ychange-objecty/6, Xchange+objectx/6, Ychange+objecty/6];
+                smallrects(:,l) = [Xchange-objectx/9, Ychange-objecty/9, Xchange+objectx/9, Ychange+objecty/9];
                 
-                Xchange = Xchange+100;
+                Xchange = Xchange - 60;
             end
             
             % DISPLAY THE CURRENT FACE - Backround window (the number of
             % sample)
-            background_window = Screen('OpenOffscreenWindow', window, windrect);
-            Screen('TextSize', background_window, textsize);
-            Screen('FillRect', background_window, grey ,windrect);
-            DrawFormattedText(background_window,sprintf('Face %d/10',s), 'center', ycenter-250, white);
-            DrawFormattedText(background_window, 'Rejected dates', xcenter - 400, ycenter+250, white);
-
+            DrawFormattedText(window,sprintf('Face %d/10',s), 'center', ycenter-200, white);
+           
             % DISPLAY THE CURRENT FACE - the actual face
-            Screen('DrawTexture', background_window, textures{thisitem}, [], destrect);     % display thisitem
-            Screen('DrawTextures', background_window, [smalltex{previous}], [], smallrects);     % display small items
-            Screen('CopyWindow',background_window, window, windrect, windrect);
+            Screen('DrawTexture', window, textures{thisitem}, [], destrect);     % display thisitem
+            Screen('DrawTextures', window, [smalltex{previous}], [], smallrects);     % display small items
             object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
         end
     
         % send sequence start trigger
         if EEG == 1
-            sp.sendTrigger(trigger1) % blue urn -- high prob blue bead trigger
+            sp.sendTrigger(trigger1) % send the stimulus trigger
         end
         
         object_offset   = object_onset + stimduration - ifi; % add jitter here?
         
-        % BRING FIXATION BACK ON
-        Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
-   
-        % if this is not the first draw, show previous draw at the bottom of
-        % the screen (during fixation also
+        % 2. SHOW GO SIGNAL
+        % SHOW RECT WITH THE LIST OF BEADS(S)
+        Screen('CopyWindow', orangerect_window,window, windrect, windrect)
+        Screen('TextSize', window, textsize);
+        Screen('TextStyle', window, 0) % NOT BOLD
+        
+        DrawFormattedText(window,sprintf('Face %d/10',s), 'center', ycenter-200, white);
+        % DISPLAY THE CURRENT FACE - the actual face
+        Screen('DrawTexture',window, textures{thisitem}, [], destrect);     % display thisitem
+        
         if s > 1
             
             % image size and position on screen (for the small images)
-            smallrects  = nan(4,previous_len); 
+            smallrects  = nan(4,previous_len);
             
             for l = 1:previous_len
-                smallrects(:,l) = [xs-objectx/6, ys-objecty/6, xs+objectx/6, ys+objecty/6];
-                
-                xs = xs+100;
+                smallrects(:,l) = [xs-objectx/9, ys-objecty/9, xs+objectx/9, ys+objecty/9];
+
+                xs = xs-60;
             end
-           
-            Screen('TextSize', window, textsize);
-            DrawFormattedText(window, 'Rejected dates:', xcenter - 400, ycenter+250, white);
+            
+            % draw the previous faces
             Screen('DrawTextures', window, [smalltex{previous}], [], smallrects);     % display small items   
         end
         
-        fixation_onset  = Screen('Flip', window, object_offset - slack);    % fixation on, prepare for next trial
-        fixation_offset = fixation_onset + fixduration + isi + randperm(jitter*1000,1)/1000 - ifi; % add jitter here?
-        
-        % DISPLAY RESPONSE PROMPT
-        if s < samples
-        
-            % DISPLAY RESPONSE PROMPT
-            Screen('CopyWindow', response_window, window, windrect, windrect)
-            
-        else
-            % DISPLAY RESPONSE PROMPT
-            Screen('CopyWindow', response_window2, window, windrect, windrect)
-        end
-        prompt_onset    = Screen('Flip', window, fixation_offset - slack); 
+        % flip screen
+        response_onset    = Screen('Flip', window, object_offset - slack); 
         
         % WAIT FOR RESPONSE 
         rt                  = NaN;
@@ -318,13 +312,13 @@ else % if this is phase 2
         resp_input          = 0;
         responseTrigNotSent = 1;
         
-        while resp_input == 0 && (GetSecs - prompt_onset) < response - 2*slack
+        while resp_input == 0 && (GetSecs - response_onset) < response - 2*slack
             
             [~, secs, keycode] = KbCheck; % check for input
             
             if keycode(1,code1) % 
                 resp_input  = code1;
-                rt          = secs - object_onset;
+                rt          = secs - response_onset;
                 answer      = 1; % subject accepted a face/date
                 respmade    = secs;
                 
@@ -336,7 +330,7 @@ else % if this is phase 2
                 
             elseif keycode(1,code2) %  
                 resp_input  = code2;
-                rt          = secs - object_onset;
+                rt          = secs - response_onset;
                 answer      = 2; % subject sampled again
                 respmade    = secs;
                 

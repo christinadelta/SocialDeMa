@@ -1,7 +1,7 @@
 %% ---------------------------------------
 % DESCRIPTION:
 
-% First version of the Economic Best-Choice task implemented with the PsychToolbox
+% Version 3 of the Economic Best-Choice task implemented with the PsychToolbox
 % Depependencies:
 % 1. Matlab 2021a 
 % 2. Psychtoolbox 3
@@ -77,24 +77,22 @@ try
     % PREP EXPERIMENT(open screen, etc..) 
     
     % define colours
-    scrn.black      = [0 0 0];
-    scrn.white      = [255 255 255];
-    scrn.grey       = [128 128 128];
-    scrn.green      = [0 140 54];
-    scrn.blue       = [30 70 155];
-    scrn.red        = [225 25 0];
+    scrn.black          = [0 0 0];
+    scrn.white          = [255 255 255];
+    scrn.grey           = [128 128 128];
+    scrn.orange         = [243 146 0];
 
     % text settings
     scrn.textfont       = 'Verdana';
     scrn.textsize       = 20;
     scrn.fixationsize   = 30;
-    scrn.textbold       = 1; 
+     
     
     % create text settings for the previous sample (this should be very
     % small to appear at the bottom of the screen
     if phase == 2
-        scrn.ptextsize      = 8;
-        scrn.ptextbold      = 1;
+        scrn.smalltext      = 12;
+        scrn.textbold       = 1;
     end
     
     % Screen('Preference', 'SkipSyncTests', 0) % set a Psychtoolbox global preference.
@@ -116,7 +114,7 @@ try
     globalrect              = Screen('Rect', screenNumber);   
     
     % pc actual screen settings
-    scrn.actscreen          = Screen('Resolution', screenNumber);
+   actscreen                = Screen('Resolution', screenNumber);
     [actwidth, actheight]   = Screen('DisplaySize', screenNumber);
     scrn.acthz              = Screen('FrameRate', window, screenNumber);    % maximum speed at which you can flip the screen buffers, we normally use the flip interval (ifi), but better store it 
     
@@ -124,6 +122,20 @@ try
     
     scrn.slack              = Screen('GetFlipInterval', window)/2;          % Returns an estimate of the monitor flip interval for the specified onscreen window (this is frame duration /2)
     
+    if phase == 2
+        % create rectangle for trials
+        screenresolution        = [actscreen.width actscreen.height];
+        baserect                = [0 0 ceil(.5*screenresolution(1)) ceil(0.5*screenresolution(2))];
+        centeredrect            = CenterRectOnPointd(baserect, xcenter, ycenter);
+        penwidth                = 4; % line width
+        
+        scrn.screenresolution   = screenresolution;
+        scrn.baserect           = baserect;
+        scrn.centeredrect       = centeredrect;
+        scrn.penwidth           = penwidth;
+    end
+    
+    scrn.actscreen          = actscreen;
     scrn.frame_rate         = 1/scrn.ifi;
     scrn.actwidth           = actwidth;
     scrn.actheight          = actheight;
@@ -163,7 +175,6 @@ try
     
     % make a cell to store the image textures
     textures        = cell(1,objects);
-    
     
     for i=1:objects
         

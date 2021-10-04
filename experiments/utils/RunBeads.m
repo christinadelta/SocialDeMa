@@ -100,7 +100,7 @@ if EEG == 1
     trigger14   = set.trigger14;
     trigger15   = set.trigger15;
     trigger16   = set.trigger16;
-    trigger17   = set.trigger17;
+
     
     trigger102  = set.trigger102; % start of sequence
     trigger103  = set.trigger103; % end of sequence
@@ -162,7 +162,7 @@ for thisdraw = 1:drawlen
         break;
     end
     
-    xcenters        = xcntr - 60; % start adding the darws prices at xcenter - 30
+    xcenters        = xcntr - 70; % start adding the darws prices at xcenter - 30
     xs              = xcenters;
     
     % 1. SHOW RECT WITH THE LIST OF BEADS(S)
@@ -247,8 +247,8 @@ for thisdraw = 1:drawlen
         sp.sendTrigger(stimtrigger) % blue urn -- high prob blue bead trigger
     end
     
-    % 3. SHOW GO SIGNAL
-    % 1. SHOW RECT WITH THE LIST OF BEADS(S)
+    % 2. SHOW GO SIGNAL
+    % SHOW RECT WITH THE LIST OF BEADS(S)
     Screen('CopyWindow', orangerect_window,window, windrect, windrect)
     Screen('TextSize', window, smalltext);
     Screen('TextStyle', window, 0) % NOT BOLD
@@ -275,7 +275,7 @@ for thisdraw = 1:drawlen
         end
     end
         
-    prompt_onset    = Screen('Flip', window, bead_offset - slack); 
+    response_onset    = Screen('Flip', window, bead_offset - slack); 
     
     % send response prompt trigger
     if EEG == 1 
@@ -288,7 +288,7 @@ for thisdraw = 1:drawlen
     resp_input          = 0;
     responseTrigNotSent = 1;
     
-    while resp_input == 0 && (GetSecs - prompt_onset) < response 
+    while resp_input == 0 && (GetSecs - response_onset) < response 
         
         [keyisdown, secs, keycode] = KbCheck;
         pressedKeys = find(keycode);
@@ -304,7 +304,7 @@ for thisdraw = 1:drawlen
             
             if keycode(1,bluekey) % if subject chose the blue urn 
                 resp_input  = bluekey;
-                rt          = secs - prompt_onset;
+                rt          = secs - response_onset;
                 answer      = 1; % blue urn 
                 respmade    = secs;
                 
@@ -316,7 +316,7 @@ for thisdraw = 1:drawlen
                 
             elseif keycode(1,greenkey) % if subject chose the green urn 
                 resp_input  = greenkey;
-                rt          = secs - prompt_onset;
+                rt          = secs - response_onset;
                 answer      = 2; % green urn
                 respmade    = secs;
                 
@@ -328,7 +328,7 @@ for thisdraw = 1:drawlen
                 
             elseif keycode(1,drawkey) % if subject chose to draw again
                 resp_input  = drawkey;
-                rt          = secs - prompt_onset;
+                rt          = secs - response_onset;
                 answer      = 3; % draw-again 
                 respmade    = secs;
                 draw_count  = draw_count + 1;

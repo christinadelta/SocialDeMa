@@ -84,8 +84,8 @@ try
 
     % text settings
     scrn.textfont           = 'Verdana';
-    scrn.textsize           = 20;
-    scrn.smalltext          = 12;
+    scrn.textsize           = 22;
+    scrn.smalltext          = 15;
     scrn.fixationsize       = 30;
     scrn.textbold           = 1; 
     
@@ -120,7 +120,6 @@ try
     % create rectangle for trials
     screenresolution        = [actscreen.width actscreen.height];
     baserect                = [0 0 ceil(.5*screenresolution(1)) ceil(0.5*screenresolution(2))];
-    %baserect                = [0 0 800 800];
     centeredrect            = CenterRectOnPointd(baserect, xcenter, ycenter);
     penwidth                = 4; % line width
     

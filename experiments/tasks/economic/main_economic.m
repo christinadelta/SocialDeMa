@@ -1,7 +1,7 @@
 %% ---------------------------------------
 % DESCRIPTION:
 
-% First version of the Economic Best-Choice task implemented with the PsychToolbox
+% Version 3 of the Economic Best-Choice task implemented with the PsychToolbox
 % Depependencies:
 % 1. Matlab 2021a 
 % 2. Psychtoolbox 3
@@ -66,17 +66,6 @@ if ~exist(logs.resultsfolder, 'dir')
     mkdir(logs.resultsfolder)
 end
 
-% % results for trial are weirdly saved, so maybe save them in a different folder 
-% if phase == 2
-%     logs.trialresults = fullfile(logs.resultsfolder, 'trial_results');
-%     
-%     if ~exist(logs.trialresults, 'dir')
-%         mkdir(logs.trialresults)
-%     end
-% end
-
-    
-
 % Add PTB to your path and start the experiment 
 ptbdir          = '/Applications/Psychtoolbox';                             % change to your ptb directory
 addpath(genpath(ptbdir))
@@ -91,18 +80,18 @@ try
     scrn.black      = [0 0 0];
     scrn.white      = [255 255 255];
     scrn.grey       = [128 128 128];
+    scrn.orange     = [243 146 0];
 
     % text settings
     scrn.textfont       = 'Verdana';
     scrn.textsize       = 20;
     scrn.fixationsize   = 30;
-    scrn.textbold       = 1; 
     
     % create text settings for the previous sample (this should be very
     % small to appear at the bottom of the screen
     if phase == 2
-        scrn.smalltext      = 15;
-        scrn.ptextbold      = 1;
+        scrn.smalltext      = 12;
+        scrn.textbold       = 1;
     end
     
     % Screen('Preference', 'SkipSyncTests', 0) % set a Psychtoolbox global preference.
@@ -124,7 +113,7 @@ try
     globalrect              = Screen('Rect', screenNumber);                 % this is used for the slider
     
     % pc actual screen settings
-    scrn.actscreen          = Screen('Resolution', screenNumber);
+    actscreen               = Screen('Resolution', screenNumber);
     [actwidth, actheight]   = Screen('DisplaySize', screenNumber);
     scrn.acthz              = Screen('FrameRate', window, screenNumber);    % maximum speed at which you can flip the screen buffers, we normally use the flip interval (ifi), but better store it 
     
@@ -132,6 +121,20 @@ try
     
     scrn.slack              = Screen('GetFlipInterval', window)/2;          % Returns an estimate of the monitor flip interval for the specified onscreen window (this is frame duration /2)
     
+    if phase == 2
+        % create rectangle for trials
+        screenresolution        = [actscreen.width actscreen.height];
+        baserect                = [0 0 ceil(.5*screenresolution(1)) ceil(0.5*screenresolution(2))];
+        centeredrect            = CenterRectOnPointd(baserect, xcenter, ycenter);
+        penwidth                = 4; % line width
+        
+        scrn.screenresolution   = screenresolution;
+        scrn.baserect           = baserect;
+        scrn.centeredrect       = centeredrect;
+        scrn.penwidth           = penwidth;
+    end
+    
+    scrn.actscreen          = actscreen;
     scrn.frame_rate         = 1/scrn.ifi;
     scrn.actwidth           = actwidth;
     scrn.actheight          = actheight;
@@ -283,6 +286,7 @@ try
             % display trial/sequence information window 
             Screen('OpenOffscreenWindow', window, windrect);
             Screen('TextSize', window, scrn.textsize);
+            Screen('TextStyle', window, 0);
             Screen('FillRect', window, scrn.grey ,windrect);
             DrawFormattedText(window, sprintf('Starting block %d',iBlock), 'center', scrn.ycenter-50, scrn.white);
             DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter, scrn.white);
@@ -328,6 +332,7 @@ try
                 % display trial/sequence information window 
                 Screen('OpenOffscreenWindow', window, windrect);
                 Screen('TextSize', window, scrn.textsize);
+                Screen('TextStyle', window, 0);
                 Screen('FillRect', window, scrn.grey ,windrect);
                 DrawFormattedText(window, sprintf('Starting sequence %d of block %d',trial, iBlock), 'center', scrn.ycenter-50, scrn.white);
                 DrawFormattedText(window, sprintf('Your current balance is %3.3f credits',currentbalance), 'center', scrn.ycenter, scrn.white);
@@ -388,6 +393,7 @@ try
         % allow subject to take a short break (if they want to)
         Screen('OpenOffscreenWindow', window, windrect);
         Screen('TextSize', window, scrn.textsize);
+        Screen('TextStyle', window, 0);
         Screen('FillRect', window, scrn.grey ,windrect);
         DrawFormattedText(window, 'Time for a break! When ready to continue, press SPACE', 'center', scrn.ycenter-50, scrn.white);
         DrawFormattedText(window, 'Or press ESC to quit.', 'center', scrn.ycenter, scrn.white);
@@ -423,6 +429,7 @@ try
         % show thank you window
         Screen('OpenOffscreenWindow', window, windrect);
         Screen('TextSize', window, scrn.textsize);
+        Screen('TextStyle', window, 0);
         Screen('FillRect', window, scrn.grey ,windrect);
         DrawFormattedText(window, 'This is the end of the experiment. Thank you for your time!', 'center', scrn.ycenter, scrn.white);
         Screen('Flip',window);
@@ -438,6 +445,7 @@ try
         % show thank you window
         Screen('OpenOffscreenWindow', window, windrect);
         Screen('TextSize', window, scrn.textsize);
+        Screen('TextStyle', window, 0);
         Screen('FillRect', window, scrn.grey ,windrect);
         DrawFormattedText(window, 'This is the end of the experiment.', 'center', scrn.ycenter-50, scrn.white);
         DrawFormattedText(window, sprintf('Your calculated total reward is: £%3.3f ', totalreward), 'center', scrn.ycenter, scrn.white);
