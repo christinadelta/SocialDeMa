@@ -114,7 +114,7 @@ try
     globalrect              = Screen('Rect', screenNumber);   
     
     % pc actual screen settings
-   actscreen                = Screen('Resolution', screenNumber);
+    actscreen               = Screen('Resolution', screenNumber);
     [actwidth, actheight]   = Screen('DisplaySize', screenNumber);
     scrn.acthz              = Screen('FrameRate', window, screenNumber);    % maximum speed at which you can flip the screen buffers, we normally use the flip interval (ifi), but better store it 
     

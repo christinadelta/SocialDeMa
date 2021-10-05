@@ -285,6 +285,10 @@ else % if this is phase 2
         Screen('TextStyle', window, 0) % NOT BOLD
         
         DrawFormattedText(window,sprintf('Face %d/10',s), 'center', ycenter-200, white);
+        DrawFormattedText(window, '1:', xcntr-180, ycenter+220, orange);
+        DrawFormattedText(window, 'accept date?', xcntr-230, ycenter+250, orange);
+        DrawFormattedText(window, '2:', xcntr+200, ycenter+220, orange);
+        DrawFormattedText(window, 'sample again?', xcntr+140, ycenter+250, orange);
         % DISPLAY THE CURRENT FACE - the actual face
         Screen('DrawTexture',window, textures{thisitem}, [], destrect);     % display thisitem
         
@@ -390,7 +394,7 @@ else % if this is phase 2
                 Screen('TextSize', feedback_window, textsize);
                 Screen('FillRect', feedback_window, grey ,windrect);
                 DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
-                DrawFormattedText(feedback_window, sprintf('Your reward is %3.3f credits', thisreward), 'center', ycenter-250, white);
+                DrawFormattedText(feedback_window, sprintf('Your reward is %3.3f credits', thisreward), 'center', ycenter-200, white);
             end
             
             % DISPLAY THE CURRENT FACE

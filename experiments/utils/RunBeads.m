@@ -253,6 +253,14 @@ for thisdraw = 1:drawlen
     Screen('TextSize', window, smalltext);
     Screen('TextStyle', window, 0) % NOT BOLD
     DrawFormattedText(window, previous_bead, 'center', ycenter, previous_colour);
+    Screen('TextSize', window, textsize);
+    DrawFormattedText(window, '1:', xcntr-180, ycenter+220, orange);
+    DrawFormattedText(window, 'blue?', xcntr-200, ycenter+250, orange);
+    DrawFormattedText(window, '2:', 'center', ycenter+220, orange);
+    DrawFormattedText(window, 'green?', 'center', ycenter+250, orange);
+    DrawFormattedText(window, '3:', xcntr+200, ycenter+220, orange);
+    DrawFormattedText(window, 'draw again?', xcntr+160, ycenter+250, orange);
+    
     if thisdraw == drawlen
         Screen('TextSize', window, textsize);
         DrawFormattedText(window, 'This was your last draw.', 'center', ycenter-200, white);

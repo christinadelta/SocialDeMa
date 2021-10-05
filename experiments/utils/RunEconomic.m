@@ -232,12 +232,12 @@ else % if phase == 2
         % FIRST DRAW THE RECT
         Screen('CopyWindow', whiterect_window,window, windrect, windrect)
         Screen('TextSize', window, textsize);
-        Screen('TextStyle', window, textbold)
         
         if s == 1
             
             % if this is the 1st sample show only the 1st contract
             DrawFormattedText(window,sprintf('Contract %d/10',s), 'center', ycenter-200, white);
+            Screen('TextStyle', window, textbold);
             DrawFormattedText(window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 
 
             object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
@@ -248,6 +248,7 @@ else % if phase == 2
 
             % background_window = Screen('OpenOffscreenWindow', window, windrect);
             DrawFormattedText(window, sprintf('Contract %d/10',s), 'center', ycenter-200, white);
+            Screen('TextStyle', window, textbold);
             DrawFormattedText(window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 
             
             for l = 1:previous_len
@@ -277,6 +278,10 @@ else % if phase == 2
         Screen('TextSize', window, textsize);
         Screen('TextStyle', window, 0) % NOT BOLD
         DrawFormattedText(window,sprintf('Contract %d/10',s), 'center', ycenter-200, white);
+        DrawFormattedText(window, '1:', xcntr-180, ycenter+220, orange);
+        DrawFormattedText(window, 'accept option?', xcntr-230, ycenter+250, orange);
+        DrawFormattedText(window, '2:', xcntr+200, ycenter+220, orange);
+        DrawFormattedText(window, 'sample again?', xcntr+140, ycenter+250, orange);
         Screen('TextSize', window, smalltext);
         Screen('TextStyle', window, 0) % NOT BOLD
         DrawFormattedText(window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 

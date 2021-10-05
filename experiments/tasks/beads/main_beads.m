@@ -117,7 +117,7 @@ try
     
     scrn.slack              = Screen('GetFlipInterval', window)/2;          % Returns an estimate of the monitor flip interval for the specified onscreen window (this is frame duration /2)
     
-    % create rectangle for trials
+    % create rectangle within which the draws will be presented
     screenresolution        = [actscreen.width actscreen.height];
     baserect                = [0 0 ceil(.5*screenresolution(1)) ceil(0.5*screenresolution(2))];
     centeredrect            = CenterRectOnPointd(baserect, xcenter, ycenter);
