@@ -158,6 +158,7 @@ try
     % UNPACK SETTINGS
     iduration           = set.welcomedur;
     EEG                 = set.EEG; % should be EEG = 1 when running at the EEGlab
+    triggerdur          = set.triggerdur;
     spacekey            = set.code20;
     esckey              = set.code21;
     
@@ -179,13 +180,13 @@ try
     Screen('FillRect', instructions, scrn.grey ,windrect);
     DrawFormattedText(instructions, 'There are two urns:', 'center', scrn.ycenter-250, scrn.white);
     DrawFormattedText(instructions, 'The Blue Urn has more blue balls than green balls. The Green Urn has more green balls than blue balls.', 'center', scrn.ycenter-200, scrn.white);
-    DrawFormattedText(instructions, 'On each trial, you will draw a sequence of balls from one of these two urns. Your job is to decide whether', 'center', scrn.ycenter-150, scrn.white);
-    DrawFormattedText(instructions, 'the balls are drawn from the blue urn or the green urn. After each ball is drawn, you may choose to: ','center', scrn.ycenter-100, scrn.white);
-    DrawFormattedText(instructions, 'Guess The Blue Urn by pressing the keycode 1', 'center', scrn.ycenter-50, scrn.white);
-    DrawFormattedText(instructions, 'Guess The Green Urn by pressing the keycode 2', 'center', scrn.ycenter, scrn.white); 
-    DrawFormattedText(instructions, 'Draw another ball by pressing the keycode 3', 'center', scrn.ycenter+50, scrn.white);
+    DrawFormattedText(instructions, 'On each trial, you will draw a sequence of balls from ONE of these two urns. Your job is to decide whether', 'center', scrn.ycenter-150, scrn.white);
+    DrawFormattedText(instructions, 'the balls are drawn from the blue urn or the green urn. After each ball is drawn, you can choose to: ','center', scrn.ycenter-100, scrn.white);
+    DrawFormattedText(instructions, 'Guess The Blue Urn by pressing the keyboard key 1', 'center', scrn.ycenter-50, scrn.white);
+    DrawFormattedText(instructions, 'Guess The Green Urn by pressing the keyboard key 2', 'center', scrn.ycenter, scrn.white); 
+    DrawFormattedText(instructions, 'Draw another ball by pressing the keyboard key 3', 'center', scrn.ycenter+50, scrn.white);
     DrawFormattedText(instructions, 'You may make a decision after any draw but you may not draw more than 9 balls', 'center', scrn.ycenter+100, scrn.white);
-    DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to change page', 'center', scrn.ycenter+150, scrn.white); 
+    DrawFormattedText(instructions, 'If you have understood the instructions so far, press SPACE to change page.', 'center', scrn.ycenter+150, scrn.white); 
     
     % copy the instructions window  and flip.
     Screen('CopyWindow',instructions,window,windrect, windrect);
@@ -253,15 +254,19 @@ try
     if EEG == 1
 
         % INIT COMMUNICATION WITH EXTERNAL DEVICES
-        sp      = BioSemiSerialPort();
-        set.sp  = sp;
+        ioObj           = io64;
+        status          = io64(ioObj);
+        set.ioObject    = ioObj ;
+        set.status      = status;
+        
+        % Add address here
+        address = hex2dec('E010'); % this needs to be changed 
+        
         fprintf(' >>> OPENING USB TRIGGER LINK  <<<')
 
         % UNPACK TRIGGERS FROM THE SETTINGS STRUCTURE
         trigger100 = set.trigger100; % condition trigger -- condition (easy)
         trigger101 = set.trigger101; % condition trigger -- condition (difficult) 
-        trigger102 = set.trigger102; % start of sequence 
-        trigger103 = set.trigger103; % end of sequence
     end
 
     %% ---------------------------------------
@@ -349,11 +354,13 @@ try
             % send a condition trigger
             if EEG == 1
                 if condition == 2
-                    sp.sendTrigger(trigger100)
+                    io64(ioObj, address, trigger100)
                 else
-                    sp.sendTrigger(trigger101)
-                end
-            end
+                    io64(ioObj, address, trigger101)
+                end 
+                WaitSecs(triggerdur);
+                io64(ioObj, address, 0)
+            end    
             
             % WAIT FOR THEM TO PRESS SPACE
             responsemade = 1;
