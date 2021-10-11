@@ -23,7 +23,6 @@ anchors         = {'0', '50', '100'};
 center          = round([windrect(3) windrect(4)]/2);
 line            = 10;
 width           = 3;
-maxtime         = 10;       % maximum time for dragging the slider
 scalelength     = 0.9;      % will change this?
 scalepos        = 0.8;      % scale position (0 =top, 1=bottom, and in between)
 startpos        = 'left';   % where will be the starting point of the slider?
@@ -39,10 +38,14 @@ elseif taskNb == 3
     destrect    = set.destrect;
 end
 
-% UNPACK EEG TRIGGERS
-if EEG == 1 
-    sp          = set.sp;
-    trigger9    = set.trigger9; 
+% UNPACK TRIGGER STUFF
+if EEG == 1
+    ioObj       = set.ioObject;
+    status      = set.status;
+    triggerdur  = set.triggerdur;
+    address     = set.address;
+
+    trigger9    = set.trigger11;
 end
 
 % First define the starting point of the slider
@@ -140,11 +143,12 @@ while initresp == 0
     
     % send confidence screen trigger
     if EEG == 1 
-        sp.sendTrigger(trigger9)
+        io64(ioObj, address, trigger9)
+        WaitSecs(triggerdur);
+        io64(ioObj, address, 0) % return port to zero
     end
-          
+    
     % wait for second response 
-    secs = GetSecs;
     if buttons(mousebutton) == 1
         initresp = 1;
     end

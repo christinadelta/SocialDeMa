@@ -162,7 +162,7 @@ elseif taskNb == 3
         samples         = set.samples;      % number of samples per trial
         totaltrials     = set.totaltrials;  % number of trials
         blocktrials     = set.blocktrials;  % number of trials per block
-        items           = set.items(:,1);        % total faces
+        items           = set.items;        % total faces
         
         % make a temporal list and store the items
         arraysize       = numel(items);

@@ -254,15 +254,15 @@ try
     if EEG == 1
 
         % INIT COMMUNICATION WITH EXTERNAL DEVICES
-        ioObj           = io64;
-        status          = io64(ioObj);
-        set.ioObject    = ioObj ;
-        set.status      = status;
-        
-        % Add address here
-        address = hex2dec('E010'); % this needs to be changed 
+        ioObj           = io64;             % create an instance of the io64 object
+        status          = io64(ioObj);      % initialize the interface to the inpoutx64 system driver
+        address         = hex2dec('E010');  % LPT3 output port address for windows 10 os
         
         fprintf(' >>> OPENING USB TRIGGER LINK  <<<')
+        
+        set.ioObject    = ioObj ;
+        set.status      = status;
+        set.address     = address;
 
         % UNPACK TRIGGERS FROM THE SETTINGS STRUCTURE
         trigger100 = set.trigger100; % condition trigger -- condition (easy)

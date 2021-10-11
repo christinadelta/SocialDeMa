@@ -45,33 +45,29 @@ if taskNb == 1 % if this is the beads task
     if set.EEG == 1
         
         % 1. start with the sequence related triggers
-        set.trigger1    = 1;    % BLUE URN - blue bead (high prob)
-        set.trigger2    = 2;    % BLUE URN - green bead (low prob)
-        set.trigger3    = 3;    % GREEN URN - green bead (high prob)
-        set.trigger4    = 4;    % GREEN URN - blue bead (low prob)
+        set.trigger1    = 1;             % BLUE URN - blue bead (high prob)
+        set.trigger2    = 2;             % BLUE URN - green bead (low prob)
+        set.trigger3    = 3;             % GREEN URN - green bead (high prob)
+        set.trigger4    = 4;             % GREEN URN - blue bead (low prob)
         
-        set.trigger5    = 5;    % response prompt
-        set.trigger6    = 6;    % blue urn (choice)
-        set.trigger7    = 7;    % green urn (choice)
-        set.trigger8    = 8;    % draw again
+        set.trigger5    = 5;             % response prompt
+        set.trigger6    = 6;             % blue urn (choice)
+        set.trigger7    = 7;             % green urn (choice)
+        set.trigger8    = 8;             % draw again
         
         % 2. Confidence rating and feedback relatd triggers
-        set.trigger9    = 9;    % confidence screen
-        set.trigger10   = 10;   % rating 1 (not confident)
-        set.trigger11   = 11;   % rating 2 (a little confident)
-        set.trigger12   = 12;   % rating 3 (confident)
-        set.trigger13   = 13;   % rating 4 (very confident)
-        
-        set.trigger14   = 14;   % feedback screen (you win!)
-        set.trigger15   = 15;   % feedback screen (you lose!)
-        set.trigger16   = 16;   % feedback screen (you lose - out of draws)
-        set.trigger19   = 17;   % feedback (didn't respond)
+        set.trigger9    = 9;             % confidence screen
+        set.ratetrigger = [10 11 12 13]; % confidence ratings 
+        set.trigger14   = 14;            % feedback screen (you win!)
+        set.trigger15   = 15;            % feedback screen (you lose!)
+        set.trigger16   = 16;            % feedback screen (you lose - out of draws)
+        set.trigger19   = 17;            % feedback (didn't respond)
         
         % 3. main script triggers 
-        set.trigger100  = 100;  % condition trigger -- condition (easy)
-        set.trigger101  = 101;  % condition trigger -- condition (difficult) 
-        set.trigger102  = 102;  % sequence start 
-        set.trigger103  = 103;  % sequence end
+        set.trigger100  = 100;           % condition trigger -- condition (easy)
+        set.trigger101  = 101;           % condition trigger -- condition (difficult) 
+        set.trigger102  = 102;           % sequence start 
+        set.trigger103  = 103;           % sequence end
     end % end of if EEG statement
     
 elseif taskNb == 2
@@ -94,7 +90,7 @@ elseif taskNb == 2
         
         % EXPERIMENTAL SETTINGS
         set.fix_dur         = .5;   % in sec
-        set.stimdur         = 1;  % in sec
+        set.stimdur         = 1;    % in sec
         set.response        = 2.5;  % indicative of max response time 
         set.feedback        = 3;    % this will be just the presentation of the accepted contract
         set.reward          = [1 0.5 0.25]; % rewards best on the 3 ranks
@@ -112,7 +108,9 @@ elseif taskNb == 2
             
             set.trigger11   = 11; % response trigger -- subject accepted a contract
             set.trigger12   = 12; % response trigger -- subject samples again
-            set.trigger13   = 13; % feedback trigger
+            set.trigger13   = 13; % feedback trigger - show accepted contract
+            set.trigger14   = 14; % feedback trigger - out of samples
+            set.trigger15   = 15; % response prompt trigger
             
             set.trigger100  = 100; % sequence start
             set.trigger101  = 101; % sequence end
@@ -147,9 +145,7 @@ elseif taskNb == 3
         set.stimdur         = 1;    % in sec
         set.response        = 2.5;  % indicative of max response time 
         set.feedback        = 3;    % this will be just the presentation of the accepted contract
-        set.rewards         = [1 0.5 0.25]; % rewards best on the 3 ranks
-        set.balance         = 0;
-        
+       
         % STIMULUS SETTINGS
         set.stimsize        = 200;  % resize images or not?
         set.stimsize_deg    = 4;    % degrees of visual angle
@@ -166,7 +162,9 @@ elseif taskNb == 3
             
             set.trigger11   = 11; % response trigger -- subject accepted a contract
             set.trigger12   = 12; % response trigger -- subject samples again
-            set.trigger13   = 13; % feedback trigger
+            set.trigger13   = 13; % feedback trigger -- show the accepted date
+            set.trigger14   = 14; % feedback trigger - out of samples
+            set.trigger15   = 15; % response prompt trigger
             
             set.trigger100  = 100; % sequence start
             set.trigger101  = 101; % sequence end

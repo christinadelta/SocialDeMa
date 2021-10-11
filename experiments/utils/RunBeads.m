@@ -90,6 +90,8 @@ if EEG == 1
     
     ioObj       = set.ioObject;
     status      = set.status;
+    triggerdur  = set.triggerdur;
+    address     = set.address;
     
     trigger1    = set.trigger1;
     trigger2    = set.trigger2;
@@ -151,7 +153,7 @@ trialstart  = fliptime;
 if EEG == 1 
     io64(ioObj, address, trigger102)
     WaitSecs(triggerdur);
-    io64(ioObj, address, 0)
+    io64(ioObj, address, 0) % return port to zero
 end
 
 % object offset
@@ -184,7 +186,7 @@ for thisdraw = 1:drawlen
             % show blue window
             DrawFormattedText(window, 'BLUE', 'center', ycenter, blue);
             if EEG == 1
-                stimtrigger         = trigger1; % assign trigger 1 as stimulus triger
+                stimtrigger     = trigger1; % assign trigger 1 as stimulus triger
             end
 
             previous_colour     = blue;
@@ -195,7 +197,7 @@ for thisdraw = 1:drawlen
             % show green window
             DrawFormattedText(window, 'GREEN', 'center', ycenter, green);
             if EEG == 1
-                stimtrigger         = trigger3;
+                stimtrigger     = trigger3;
             end
 
             previous_colour     = green;
@@ -209,7 +211,7 @@ for thisdraw = 1:drawlen
 
             DrawFormattedText(window, 'GREEN', 'center', ycenter, green);
             if EEG == 1
-                stimtrigger         = trigger2;
+                stimtrigger     = trigger2;
             end
             previous_colour     = green;
             previous_bead       = 'GREEN';
@@ -218,7 +220,7 @@ for thisdraw = 1:drawlen
 
             DrawFormattedText(window, 'BLUE', 'center', ycenter, blue);
             if EEG == 1
-                stimtrigger         = trigger4;
+                stimtrigger     = trigger4;
             end
 
             previous_colour     = blue;
@@ -245,12 +247,14 @@ for thisdraw = 1:drawlen
         end  
     end
     bead_onset     = Screen('Flip', window, object_offset - slack); 
-    bead_offset    = bead_onset + bead_dur - ifi;                          % bead on for 0.5 ms
+    bead_offset    = bead_onset + bead_dur - ifi;                          % bead on for 1 sec
     
-    % send sequence start trigger
-%     if EEG == 1
-%         sp.sendTrigger(stimtrigger) % blue urn -- high prob blue bead trigger
-%     end
+    % send stimulus/bead trigger
+    if EEG == 1
+        io64(ioObj, address, stimtrigger)
+        WaitSecs(triggerdur);
+        io64(ioObj, address, 0) % return port to zero
+    end
     
     % 2. SHOW GO SIGNAL
     % SHOW RECT WITH THE LIST OF BEADS(S)
@@ -290,10 +294,12 @@ for thisdraw = 1:drawlen
         
     response_onset    = Screen('Flip', window, bead_offset - slack); 
     
-%     % send response prompt trigger
-%     if EEG == 1 
-%         sp.sendTrigger(trigger5)
-%     end
+    % send response prompt trigger
+    if EEG == 1
+        io64(ioObj, address, trigger5)
+        WaitSecs(triggerdur);
+        io64(ioObj, address, 0) % return port to zero
+    end
     
     % 3. INIT RESPONSE: initiate on each draw
     rt                  = NaN;
@@ -321,24 +327,26 @@ for thisdraw = 1:drawlen
                 answer      = 1; % blue urn 
                 respmade    = secs;
                 
-%                 % send blue choice trigger
-%                 if EEG == 1 && responseTrigNotSent==1
-%                     sp.sendTrigger(trigger6);
-%                     responseTrigNotSent=0;
-%                 end
-                
+                % send blue choice trigger
+                if EEG == 1 && responseTrigNotSent == 1
+                    io64(ioObj, address, trigger6)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero
+                end
+    
             elseif keycode(1,greenkey) % if subject chose the green urn 
                 resp_input  = greenkey;
                 rt          = secs - response_onset;
                 answer      = 2; % green urn
                 respmade    = secs;
                 
-%                 % send green choice trigger
-%                 if EEG == 1 && responseTrigNotSent==1
-%                     sp.sendTrigger(trigger7);
-%                     responseTrigNotSent=0;
-%                 end
-                
+                % send green choice trigger
+                if EEG == 1 && responseTrigNotSent == 1
+                    io64(ioObj, address, trigger7)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero
+                end
+
             elseif keycode(1,drawkey) % if subject chose to draw again
                 resp_input  = drawkey;
                 rt          = secs - response_onset;
@@ -346,11 +354,12 @@ for thisdraw = 1:drawlen
                 respmade    = secs;
                 draw_count  = draw_count + 1;
                 
-%                 % send draw again trigger
-%                 if EEG == 1 && responseTrigNotSent==1
-%                     sp.sendTrigger(trigger8);
-%                     responseTrigNotSent=0;
-%                 end
+                % send draw again trigger
+                if EEG == 1 && responseTrigNotSent == 1
+                    io64(ioObj, address, trigger8)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero
+                end
             end %  
         end % if responded statement
     end % end of response while loop 
@@ -382,9 +391,11 @@ for thisdraw = 1:drawlen
                object_offset = feedback_onset + dfeedback - ifi;
 
                % send you lose trigger
-%                if EEG == 1
-%                    sp.sendTrigger(trigger15);
-%                end
+               if EEG == 1
+                    io64(ioObj, address, trigger15)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero
+               end
                
                % BRING FIXATION BACK ON
                Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
@@ -422,9 +433,11 @@ for thisdraw = 1:drawlen
                    feedback_onset = Screen('Flip', window, object_offset - slack);  % feedback window on 
 
                    % send you win trigger
-%                     if EEG == 1
-%                         sp.sendTrigger(trigger14);
-%                     end
+                   if EEG == 1 
+                        io64(ioObj, address, trigger14)
+                        WaitSecs(triggerdur);
+                        io64(ioObj, address, 0) % return port to zero
+                   end
 
                else % if "thisurn" is a green urn 
                    accuracy         = 0;
@@ -433,10 +446,14 @@ for thisdraw = 1:drawlen
                    feedback_onset = Screen('Flip', window, object_offset - slack);   % feedback window on 
 
                    % send you lose trigger
-%                     if EEG == 1
-%                         sp.sendTrigger(trigger15);
-%                     end
+                   if EEG == 1 
+                        io64(ioObj, address, trigger15)
+                        WaitSecs(triggerdur);
+                        io64(ioObj, address, 0) % return port to zero
+                   end
                end
+               
+               % feedback duration
                object_offset = feedback_onset + dfeedback - ifi;
                
                % show fixation between ending the trial/sequence
@@ -454,21 +471,28 @@ for thisdraw = 1:drawlen
 
                    Screen('CopyWindow', feedback_window2,window, windrect, windrect) % show "you lose" feedback window
                    feedback_onset = Screen('Flip', window, object_offset - slack);   % feedback window on 
+                   
                    % send you lose trigger
-%                     if EEG == 1
-%                         sp.sendTrigger(trigger15);
-%                     end
+                   if EEG == 1 
+                        io64(ioObj, address, trigger15)
+                        WaitSecs(triggerdur);
+                        io64(ioObj, address, 0) % return port to zero
+                   end
 
                else % if "thisurn" is a green urn 
 
                    Screen('CopyWindow', feedback_window1,window, windrect, windrect) % show "you win" feedback window
                    accuracy = 1;                                                     % update the accuracy var
                    feedback_onset = Screen('Flip', window, object_offset - slack);   % feedback window on 
+                   
                    % send you lose trigger
-%                    if EEG == 1
-%                        sp.sendTrigger(trigger14);
-%                    end
+                   if EEG == 1 
+                        io64(ioObj, address, trigger14)
+                        WaitSecs(triggerdur);
+                        io64(ioObj, address, 0) % return port to zero
+                   end
                end
+               
                object_offset = feedback_onset + dfeedback - ifi;
                
                % show fixation between ending the trial/sequence
@@ -489,11 +513,14 @@ for thisdraw = 1:drawlen
            % DISPLAY THE 3RD FEEDBACK SCREEN
            Screen('CopyWindow', feedback_window3,window, windrect, windrect)
            feedback_onset   = Screen('Flip', window, object_offset - slack); % feedback window on 
-           % send you lose (out of draws) trigger
-%            if EEG == 1
-%                sp.sendTrigger(trigger16);
-%            end
            
+           % send you lose (out of draws) trigger
+           if EEG == 1 
+               io64(ioObj, address, trigger16)
+               WaitSecs(triggerdur);
+               io64(ioObj, address, 0) % return port to zero
+           end
+
            % update answer, given that participant pressed 3 (for draw 10), answer should be 0 (this is an incorrect trial)
            answer           = 0;
            

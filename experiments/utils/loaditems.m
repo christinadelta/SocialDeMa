@@ -63,6 +63,7 @@ elseif taskNb == 3
     
     % remove the headers
     txt(headers,:)          = [];
+    
     data                    = [];
     objects                 = length(vars);
      

@@ -23,15 +23,13 @@ EEG             = set.EEG;
 taskNb          = set.taskNb;
 
 % UNPACK EEG TRIGGERS
-if EEG == 1 
-    
-    sp          = set.sp;
-    trigger9    = set.trigger9;
-    trigger10   = set.trigger10;
-    trigger11   = set.trigger11;
-    trigger12   = set.trigger12;
-    trigger13   = set.trigger13;
-    
+if EEG == 1
+    responseTrigNotSent     = 1;
+    ioObj                   = set.ioObject;
+    status                  = set.status;
+    triggerdur              = set.triggerdur;
+    address                 = set.address;
+    trgs                    = set.ratetrigger; % confidence rating triggers
 end
 
 % define variables 
@@ -75,13 +73,13 @@ Screen('TextSize',fixationdisplay, fixsize);
 DrawFormattedText(fixationdisplay, fixation, 'center', ycenter, white);
 
 % ADD TEXTBOUNDS -- WILL BE USED TO CREATE THE SLIDER 
-textbounds = [Screen('TextBounds', window, sprintf(anchors{1})); Screen('TextBounds', window, sprintf(anchors{3}))];
+textbounds          = [Screen('TextBounds', window, sprintf(anchors{1})); Screen('TextBounds', window, sprintf(anchors{3}))];
 
 % calculate coordinates of scale line 
-midclick    = [center(1) windrect(4)*scalepos - line - 5 center(1), windrect(4)*scalepos + line + 5];
-leftclick   = [windrect(3)*(1-scalelength) windrect(4)*scalepos - line windrect(3)*(1-scalelength) windrect(4)*scalepos + line];
-rightclick  = [windrect(3)*(scalelength) windrect(4)*scalepos - line windrect(3)*(scalelength) windrect(4)*scalepos + line];
-horzline    = [windrect(3)*scalelength windrect(4)*scalepos windrect(3)*(1-scalelength) windrect(4)*scalepos];
+midclick            = [center(1) windrect(4)*scalepos - line - 5 center(1), windrect(4)*scalepos + line + 5];
+leftclick           = [windrect(3)*(1-scalelength) windrect(4)*scalepos - line windrect(3)*(1-scalelength) windrect(4)*scalepos + line];
+rightclick          = [windrect(3)*(scalelength) windrect(4)*scalepos - line windrect(3)*(scalelength) windrect(4)*scalepos + line];
+horzline            = [windrect(3)*scalelength windrect(4)*scalepos windrect(3)*(1-scalelength) windrect(4)*scalepos];
 
 % Calculate the range of the scale, which will be need to calculate the
 % position
@@ -93,10 +91,6 @@ SetMouse(round(x), round(windrect(4)*scalepos), window, 1)
 
 t0                         = GetSecs;
 respmade                   = 0;
-
-if taskNb == 1
-    responseTrigNotSent    = 1;
-end
 
 while respmade == 0 
     
@@ -150,18 +144,23 @@ while respmade == 0
         if EEG == 1 && responseTrigNotSent==1
 
             if round(position) <= 25 
-                sp.sendTrigger(trigger10);
+                ratetrigger = trgs(1);
 
-            elseif round(position) > 25 && round(position) <= 50 
-                sp.sendTrigger(trigger11);
+            elseif round(position) > 25 && round(position) <= 50
+                ratetrigger = trgs(2);
 
             elseif round(position) > 50 && round(position) <= 75
-                sp.sendTrigger(trigger12);
+                ratetrigger = trgs(3);
 
             else 
-                sp.sendTrigger(trigger13);
-            end 
-            responseTrigNotSent=0;
+                ratetrigger = trgs(4);
+            end
+            % send trigger
+            io64(ioObj, address, ratetrigger)
+            WaitSecs(triggerdur);
+            io64(ioObj, address, 0) % return port to zero
+            
+            responseTrigNotSent = 0; % get out of the loop
         end
         
     elseif taskNb == 2

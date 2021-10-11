@@ -163,10 +163,6 @@ try
        
     [trials, set]           = CreateTrialList(set);                         % create trials, sequences, split in runs, etc..
     
-    if phase == 2
-        averaged                = GetAverage(taskName, wd, sub);            % get averaged ratimgs for each face
-        set.items(:,2)          = averaged';                                % store the averaged ratings in the items list
-    end
     %% ---------------------------------------
     % MAKE IMAGE TEXTURES FOR BOTH SIZES (NORMAL AND SMALL)
     % UNPACK STIMULI 
@@ -282,9 +278,15 @@ try
     if EEG == 1
 
         % INIT COMMUNICATION WITH EXTERNAL DEVICES
-        sp      = BioSemiSerialPort();
-        set.sp  = sp;
-        fprintf(' >>> OPENING USB TRIGGER LINK  <<<')
+        ioObj           = io64;             % create an instance of the io64 object
+        status          = io64(ioObj);      % initialize the interface to the inpoutx64 system driver
+        address         = hex2dec('E010');  % LPT3 output port address for windows 10 os
+        
+        fprintf(' >>> OPENING TRIGGER LINK  <<<')
+        
+        set.ioObject    = ioObj ;
+        set.status      = status;
+        set.address     = address;
 
     end
     
@@ -371,15 +373,14 @@ try
                 set.thisTrial   = trial;
                 set.sequence    = block_seq{trial};
                 
-                currentbalance  = set.balance;
+%                 currentbalance  = set.balance;
                 
                 % display trial/sequence information window 
                 Screen('OpenOffscreenWindow', window, windrect);
                 Screen('TextSize', window, scrn.textsize);
                 Screen('FillRect', window, scrn.grey ,windrect);
                 DrawFormattedText(window, sprintf('Starting sequence %d of block %d',trial, iBlock), 'center', scrn.ycenter-50, scrn.white);
-                DrawFormattedText(window, sprintf('Your current credit balance is %3.3f credits',currentbalance), 'center', scrn.ycenter, scrn.white);
-                DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter+50, scrn.white);
+                DrawFormattedText(window, 'Press SPACE to continue, or press ESC to quit', 'center', scrn.ycenter, scrn.white);
                 Screen('Flip', window); 
                 
                  % WAIT FOR THEM TO PRESS SPACE
@@ -478,10 +479,6 @@ try
         WaitSecs(3);
         
     else
-        currentbalance      = set.balance;                  % this is your balance in credits  
-        conversion          = set.conversion;               % conversion rate
-        totalreward         = currentbalance * conversion;  % this is your converted winnings
-        set.totalreward     = totalreward;
 
         % THIS IS IT...
         % show thank you window
@@ -489,8 +486,7 @@ try
         Screen('TextSize', window, scrn.textsize);
         Screen('FillRect', window, scrn.grey ,windrect);
         DrawFormattedText(window, 'This is the end of the experiment.', 'center', scrn.ycenter-50, scrn.white);
-        DrawFormattedText(window, sprintf('Your calculated total reward is: £%3.3f\n. ', totalreward), 'center', scrn.ycenter, scrn.white);
-        DrawFormattedText(window, 'Thank you for your time!', 'center', scrn.ycenter+50, scrn.white);
+        DrawFormattedText(window, 'Thank you for your time!', 'center', scrn.ycenter, scrn.white);
         Screen('Flip',window);
         WaitSecs(3);
     end

@@ -49,6 +49,7 @@ abort       = 0;
 HideCursor;
 
 if phase == 1
+     %% RUN PHASE TWO %%
     
     % UNPACK PHASE ONE PARAMETERS 
     sequence        = set.sequence;     % this is the current sequence/trial
@@ -125,8 +126,8 @@ if phase == 1
     sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
     save(sublogs,'logs');
     
-    WaitSecs(1); % wait two sec before flipping to the next block/
-
+    WaitSecs(1); % wait two sec before flipping to the next block
+    
 else % if phase == 2
     %% RUN PHASE TWO %%
     
@@ -168,17 +169,23 @@ else % if phase == 2
     Screen('FillRect', orangerect_window, grey ,windrect);
     Screen('FrameRect', orangerect_window, orange, centeredrect, penwidth);
     
+    % UNPACK TRIGGER STUFF
     if EEG == 1 
+    
+        ioObj       = set.ioObject;
+        status      = set.status;
+        triggerdur  = set.triggerdur;
+        address     = set.address;
         
-        % UNPACK TRIGGERS
-        sp          = set.sp;
         trigger11   = set.trigger11;
         trigger12   = set.trigger12;
         trigger13   = set.trigger13;
+        trigger14   = set.trigger14;
+        trigger15   = set.triiger15;
         
         trigger100  = set.trigger100; % start of sequence
         trigger101  = set.trigger101; % end of sequence
-
+        
     end
     
     trial_samples   = [];     % store trial info
@@ -203,9 +210,11 @@ else % if phase == 2
     
     % send sequence start trigger
     if EEG == 1 
-        sp.sendTrigger(trigger100)
+        io64(ioObj, address, trigger100)
+        WaitSecs(triggerdur);
+        io64(ioObj, address, 0) % return port to zero
     end
-    
+
     % object offset
     object_offset   = trialstart + isi + randperm(jitter*1000,1)/1000 - ifi;
 
@@ -220,7 +229,7 @@ else % if phase == 2
         end
         
         if EEG == 1
-            trigger1 = 0 + s; % contract triggers 1:10
+            trigger1 = 0 + s; % contract/price trigger codes [1:10]
         end
         
         thisitem        = sequence(s); % index of the current item
@@ -265,9 +274,11 @@ else % if phase == 2
             
         end
         
-        % send sequence start trigger
-        if EEG == 1
-            sp.sendTrigger(trigger1) % current price trigger
+        % send stimulus trigger
+        if EEG == 1 
+            io64(ioObj, address, trigger1)
+            WaitSecs(triggerdur);
+            io64(ioObj, address, 0) % return port to zero
         end
         
         object_offset   = object_onset + stimduration - ifi; % add jitter here?
@@ -298,7 +309,14 @@ else % if phase == 2
             end
         end
 
-        response_onset    = Screen('Flip', window, object_offset - slack); 
+        response_onset    = Screen('Flip', window, object_offset - slack);
+        
+        % send sequence start trigger
+        if EEG == 1 
+            io64(ioObj, address, trigger15)
+            WaitSecs(triggerdur);
+            io64(ioObj, address, 0) % return port to zero
+        end
         
         % WAIT FOR RESPONSE 
         rt                  = NaN;
@@ -318,8 +336,9 @@ else % if phase == 2
                 
                 % send response trigger -- subject accepted an option
                 if EEG == 1 && responseTrigNotSent==1
-                    sp.sendTrigger(trigger11);
-                    responseTrigNotSent=0;
+                    io64(ioObj, address, trigger11)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero   
                 end
                 
             elseif keycode(1,code2) %  
@@ -328,12 +347,13 @@ else % if phase == 2
                 answer      = 2; % subject sampled again
                 respmade    = secs;
                 
-                % send response trigger -- subject accepted an option
+                % send response trigger -- subject sampled again
                 if EEG == 1 && responseTrigNotSent==1
-                    sp.sendTrigger(trigger12);
-                    responseTrigNotSent=0;
+                    io64(ioObj, address, trigger12)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero   
                 end
-                
+               
             else
                 resp_input  = 0; 
                 rt          = nan; 
@@ -401,9 +421,11 @@ else % if phase == 2
             Screen('CopyWindow',feedback_window, window, windrect, windrect);
             object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
             
-            % send confidence screen trigger
-            if EEG == 1 
-                sp.sendTrigger(trigger13)
+            % send feedback screen trigger
+            if EEG == 1
+                io64(ioObj, address, trigger13)
+                WaitSecs(triggerdur);
+                io64(ioObj, address, 0) % return port to zero
             end
             
             % DISPLAY REQUESTED OBJECT OFFSET 
@@ -438,6 +460,13 @@ else % if phase == 2
                 
                 Screen('CopyWindow',feedback_sampling, window, windrect, windrect);
                 object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
+                
+                % send feedback screen trigger - you can't sample again!
+                if EEG == 1
+                    io64(ioObj, address, trigger14)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero
+                end
             
                 % DISPLAY REQUESTED OBJECT OFFSET 
                 object_offset   = object_onset + feedbacktime - ifi;
@@ -472,6 +501,13 @@ else % if phase == 2
 
                 Screen('CopyWindow',feedback_window, window, windrect, windrect);
                 object_onset     = Screen('Flip', window, object_offset - slack); % flip window
+                
+                % send feedback screen trigger
+                if EEG == 1
+                    io64(ioObj, address, trigger13)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero
+                end
 
                 % DISPLAY OFFSET 
                 object_offset    = object_onset + feedbacktime - ifi;
@@ -507,8 +543,11 @@ else % if phase == 2
     sublogs                  = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thistrial,thisession,phase));
     save(sublogs,'logs');
     
+    % send sequence end trigger
     if EEG == 1 
-        sp.sendTrigger(trigger101)
+        io64(ioObj, address, trigger101)
+        WaitSecs(triggerdur);
+        io64(ioObj, address, 0) % return port to zero
     end
     
     % update balance 

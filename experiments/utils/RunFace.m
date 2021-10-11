@@ -151,53 +151,44 @@ else % if this is phase 2
     Screen('FillRect', orangerect_window, grey ,windrect);
     Screen('FrameRect', orangerect_window, orange, centeredrect, penwidth);
     
-    if EEG == 1
+    % UNPACK TRIGGER STUFF
+    if EEG == 1 
+    
+        ioObj       = set.ioObject;
+        status      = set.status;
+        triggerdur  = set.triggerdur;
+        address     = set.address;
         
-        % UNPACK TRIGGERS
-        sp          = set.sp;
         trigger11   = set.trigger11;
         trigger12   = set.trigger12;
         trigger13   = set.trigger13;
+        trigger14   = set.trigger14;
+        trigger15   = set.triiger15;
         
         trigger100  = set.trigger100; % start of sequence
         trigger101  = set.trigger101; % end of sequence
+        
     end
     
     % UNPACK SETTINGS STRUCT for phase 2
     thistrial       = set.thisTrial;    % current sequence/trial number
-    sequence        = set.sequence';     % this is the current sequence/trial
+    sequence        = set.sequence;     % this is the current sequence/trial
     fixduration     = set.fix_dur;      % fixation duration 
     response        = set.response;     % response time (5 sec or self-paced)
     feedbacktime    = set.feedback;     % feedback duration
     smalltex        = set.smalltex;     % small textures 
     stimduration    = set.stimdur;      % stimulus duration
-    items           = set.items(:,1);
-    averaged        = set.items(:,2);
-    balance         = set.balance;
-    rewards         = set.rewards; 
-    
+
      % UNPACK RESPONSE KEYS
     code1           = set.code1;
     code2           = set.code2;
 
     samples         = set.samples;
-    trials          = [];   % store trial info
-    previous        = nan;   % store previous samples
-    blocktrials     = [];   % here we store the info of the current sequence
+    trials          = [];   % store sequence info
+    previous        = [];   % store previous samples
+    blocktrials     = [];   % here we store the info of the current trial
     xcntr           = xcenter - 60; % works better than 'center'
-    
-    % find the averaged prices for the current sequence and define the 3
-    % ranks
-    for i = 1:samples
         
-        rate_item = sequence(i,1);
-        sequence(i,2) = averaged(rate_item);
-        
-    end
-    
-    % get the three best ranks 
-    maxrates = maxk(sequence(:,2),3); 
-    
     % START THE TRIAL WITH A FIXATION CROSS
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
     fliptime    = Screen('Flip', window); % flip fixation window
@@ -205,7 +196,9 @@ else % if this is phase 2
     
     % send sequence start trigger
     if EEG == 1 
-        sp.sendTrigger(trigger100)
+        io64(ioObj, address, trigger100)
+        WaitSecs(triggerdur);
+        io64(ioObj, address, 0) % return port to zero
     end
     
     % object offset
@@ -225,11 +218,9 @@ else % if this is phase 2
             trigger1 = 0 + s; % contract triggers 1:10
         end
         
-        thisitem        = sequence(s,1); % index of the current item
-        thisrate        = sequence(s,2); % index of thisitem averaged rate
-        
-        Xchange         = xcntr-60; % this will help define x positions of the small images
-        Ychange         = ycenter; % this is the y position of the small images
+        thisitem        = sequence(1,s);    % index of the current item       
+        Xchange         = xcntr-60;         % this will help define x positions of the small images
+        Ychange         = ycenter;          % this is the y position of the small images
         xs              = Xchange;
         ys              = Ychange;
         
@@ -271,9 +262,11 @@ else % if this is phase 2
             object_onset    = Screen('Flip', window, object_offset - slack);            % here the current image (thisitem) is fliped
         end
     
-        % send sequence start trigger
-        if EEG == 1
-            sp.sendTrigger(trigger1) % send the stimulus trigger
+        % send stimulus trigger
+        if EEG == 1 
+            io64(ioObj, address, trigger1)
+            WaitSecs(triggerdur);
+            io64(ioObj, address, 0) % return port to zero
         end
         
         object_offset   = object_onset + stimduration - ifi; % add jitter here?
@@ -308,7 +301,14 @@ else % if this is phase 2
         end
         
         % flip screen
-        response_onset    = Screen('Flip', window, object_offset - slack); 
+        response_onset    = Screen('Flip', window, object_offset - slack);
+        
+        % send response prompt trigger
+        if EEG == 1 
+            io64(ioObj, address, trigger15)
+            WaitSecs(triggerdur);
+            io64(ioObj, address, 0) % return port to zero
+        end
         
         % WAIT FOR RESPONSE 
         rt                  = NaN;
@@ -327,9 +327,11 @@ else % if this is phase 2
                 respmade    = secs;
                 
                 % send response trigger -- subject accepted an option
-                if EEG == 1 && responseTrigNotSent==1
-                    sp.sendTrigger(trigger11);
-                    responseTrigNotSent=0;
+                if EEG == 1 && responseTrigNotSent == 1
+                    io64(ioObj, address, trigger11)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero
+                    responseTrigNotSent = 0;
                 end
                 
             elseif keycode(1,code2) %  
@@ -338,10 +340,12 @@ else % if this is phase 2
                 answer      = 2; % subject sampled again
                 respmade    = secs;
                 
-                % send response trigger -- subject accepted an option
+                % send response trigger -- subject sampled again
                 if EEG == 1 && responseTrigNotSent==1
-                    sp.sendTrigger(trigger12);
-                    responseTrigNotSent=0;
+                    io64(ioObj, address, trigger12)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero 
+                    responseTrigNotSent = 0;
                 end
                 
             else
@@ -355,21 +359,6 @@ else % if this is phase 2
         % object offset 
         object_offset   = respmade + isi - ifi;                             % contract window self paced or on for 5000 ms
        
-        % what is the rank of the accepted face?
-        if thisrate == maxrates(1)
-            thisreward  = rewards(1);
-            thisrank    = 1;
-        elseif thisrate == maxrates(2)
-            thisreward  = rewards(2);
-            thisrank    = 2;
-        elseif thisrate == maxrates(3)
-            thisreward  = rewards(3);
-            thisrank    = 3;
-        else
-            thisreward  = 0;
-            thisrank    = 0;
-        end
-       
         % IF SUBJECT ACCEPTED A FACE/DATE SHOW FFEDBACK AND BREAK SEQUENCE
         % IF SUBJECT CHOSE TO SAMPLE AGAIN, SHOW FIXATION AND MOVE TO THE
         % NEXT FACE
@@ -381,30 +370,22 @@ else % if this is phase 2
 
             object_offset       = fixation_onset + fixduration - ifi;  % add jitter here?
             
-            if thisrank == 0
+            % DISPLAY CHOSEN CONTRACT
+            feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+            Screen('TextSize', feedback_window, textsize);
+            Screen('FillRect', feedback_window, grey ,windrect);
+            DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
 
-                % DISPLAY CHOSEN CONTRACT
-                feedback_window = Screen('OpenOffscreenWindow', window, windrect);
-                Screen('TextSize', feedback_window, textsize);
-                Screen('FillRect', feedback_window, grey ,windrect);
-                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
-            else
-                % DISPLAY CHOSEN CONTRACT
-                feedback_window = Screen('OpenOffscreenWindow', window, windrect);
-                Screen('TextSize', feedback_window, textsize);
-                Screen('FillRect', feedback_window, grey ,windrect);
-                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
-                DrawFormattedText(feedback_window, sprintf('Your reward is %3.3f credits', thisreward), 'center', ycenter-200, white);
-            end
-            
             % DISPLAY THE CURRENT FACE
             Screen('DrawTexture', feedback_window, textures{thisitem}, [], destrect);     % display the chosen item
             Screen('CopyWindow',feedback_window, window, windrect, windrect);
             object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
             
-            % send confidence screen trigger
-            if EEG == 1 
-                sp.sendTrigger(trigger13)
+            % send feedback screen trigger (accepted date trigger)
+            if EEG == 1
+                io64(ioObj, address, trigger13)
+                WaitSecs(triggerdur);
+                io64(ioObj, address, 0) % return port to zero
             end
             
             % DISPLAY OFFSET 
@@ -436,6 +417,13 @@ else % if this is phase 2
                 DrawFormattedText(feedback_sampling, 'You you are not allowed to sample again', 'center', ycenter, white);
                 Screen('CopyWindow',feedback_sampling, window, windrect, windrect);
                 object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
+                
+                % send feedback screen trigger - you can't sample again!
+                if EEG == 1
+                    io64(ioObj, address, trigger14)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero
+                end
             
                 % DISPLAY REQUESTED OBJECT OFFSET 
                 object_offset       = object_onset + feedbacktime - ifi;
@@ -446,31 +434,24 @@ else % if this is phase 2
 
                 object_offset       = fixation_onset + fixduration - ifi; % add jitter here?
                 
-                if thisrank == 0 
-                    % DISPLAY CHOSEN FACE/DATE
-                    feedback_window = Screen('OpenOffscreenWindow', window, windrect);
-                    Screen('TextSize', feedback_window, textsize);
-                    Screen('FillRect', feedback_window, grey ,windrect);
-                    DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
-                else
-                    % DISPLAY CHOSEN CONTRACT
-                    feedback_window = Screen('OpenOffscreenWindow', window, windrect);
-                    Screen('TextSize', feedback_window, textsize);
-                    Screen('FillRect', feedback_window, grey ,windrect);
-                    DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
-                    DrawFormattedText(feedback_window, sprintf('Your reward is %3.3f credits', thisreward), 'center', ycenter-250, white);
-                end
+                % DISPLAY CHOSEN FACE/DATE
+                feedback_window = Screen('OpenOffscreenWindow', window, windrect);
+                Screen('TextSize', feedback_window, textsize);
+                Screen('FillRect', feedback_window, grey ,windrect);
+                DrawFormattedText(feedback_window, 'Congratulations! This is your new date.', 'center', ycenter-250, white);
 
                 % DISPLAY THE CURRENT FACE
                 Screen('DrawTexture', feedback_window, textures{thisitem}, [], destrect);     % display the chosen item
                 Screen('CopyWindow',feedback_window, window, windrect, windrect);
                 object_onset        = Screen('Flip', window, object_offset - slack);    % flip window
 
-                % send confidence screen trigger
-                if EEG == 1 
-                    sp.sendTrigger(trigger13)
+                % send feedback screen trigger
+                if EEG == 1
+                    io64(ioObj, address, trigger13)
+                    WaitSecs(triggerdur);
+                    io64(ioObj, address, 0) % return port to zero
                 end
-
+                
                 % DISPLAY OBJECT OFFSET 
                 object_offset   = object_onset + feedbacktime - ifi;
                 
@@ -501,12 +482,19 @@ else % if this is phase 2
         if abort; fclose('all');break; end 
     end % end of sampling loop
     
+    % store the sequence info in logs 
+    logs.trials                 = trials; % save the samples 
+
+    sublogs                     = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
+    save(sublogs,'logs');
+    
+    % send sequence end trigger
     if EEG == 1 
-        sp.sendTrigger(trigger101)
+        io64(ioObj, address, trigger101)
+        WaitSecs(triggerdur);
+        io64(ioObj, address, 0) % return port to zero
     end
     
-    balance                     = balance + thisreward;
-    set.balance                 = balance;
     chosenitem                  = thisitem;
 
     % save the current trial info
@@ -514,23 +502,14 @@ else % if this is phase 2
     blocktrials.block           = thisblock;
     blocktrials.trialnumber     = thistrial;
     blocktrials.trialonset      = trialstart;
-    blocktrials.sequence        = sequence(:,2)';
+    blocktrials.sequence        = sequence;
     blocktrials.numsamples      = s;
     blocktrials.chosenitem      = chosenitem;
-    blocktrials.thisrate        = thisrate;
-    blocktrials.rank            = thisrank;
-    blocktrials.thisreward      = thisreward;
-    blocktrials.balance         = balance;
-    
+    blocktrials.thisrate        = thisrate; 
 
     set.blocktrials             = blocktrials; % (save the info of this trial) this will go to the main script
     
     WaitSecs(1); % wait two sec before flipping to the next block/
-
-    logs.trials                 = trials; % save the samples 
-
-    sublogs                     = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
-    save(sublogs,'logs');
 
 end % end of phase statement 
 
