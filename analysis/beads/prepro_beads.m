@@ -5,7 +5,7 @@
 %% IMPORTANT NOTE %%
 
 % I save two different types of mat files. In 4 mat files I save the block
-% information. This file contains the the trials of the given block, the
+% information. This kind of file contains the trials of the given block, the
 % number of draws for each trial, the balance of this trial (reward/loss),
 % response, accuracy, etc..
 
@@ -21,7 +21,7 @@
 
 %% LOAD DATA %%
 
-% GET PATHS & DEFINE PATHS
+% GET PATHS & DEFINE VARIABLES
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
 resultspath     = fullfile(startpath, 'experiments', 'results');
 task            = 'beads';
@@ -69,7 +69,7 @@ for subI = 1:nsubs
             rate(indx)      = logs.blocktrials(trial).thisrate;
             condition(indx) = logs.blocktrials(trial).condition;
             balance(indx)   = logs.blocktrials(trial).balance;
-            sub(indx)       = subI;
+            subI(indx)      = subI;
             
         end % end of trial loop
         
@@ -78,54 +78,66 @@ for subI = 1:nsubs
 end % end of subject loop
 
 % add data in one matrix
-data = [sub' block' trialno' urntype' draws' response' accuracy' rate' condition' balance'];
+block_data = [subI' block' trialno' urntype' draws' response' accuracy' rate' condition' balance'];
 
 % remove nans if any
-data(any(isnan(data), 2), :)  = [];
+% block_data(any(isnan(block_data), 2), :)  = []; (let's not remove nan's yet)
 
 % % save matrix in csv format for r and python
-csvwrite('beads_data.csv', data)
+csvwrite('beads_blockdata.csv', block_data)
 
+%% EXTRACT AND SAVE THE SEQUENCE DATA %%
 
+% in the lines of code above, I extract info about block trials but the the
+% information for each sequence (e.g. reaction time for deciding to either draw or choose an urn, each bead of the sequence...)  
 
+% load subject
+for subI = 1:nsubs
+    
+    fprintf('loading beads block data\n')  
+    subject = subs(subI).name;
+    subdir = fullfile(resultspath, task,subject);
+    fprintf('\t reading data from subject %d\n',subI); 
+    
+    % load block
+    for blockI = 1:blocks
+        
+        fprintf('\t\t loading block %d\n\n',block);
+        
+        % load trial
+        for trial = 1:blocktrials
+            
+            % load sequence file
+            fprintf('\t\t loading sequence %d\n\n',trial);
+            subFile = fullfile(subdir, sprintf('subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_draw_logs.mat',subI, task, blockI, trial,session));
+            load(subFile)                     
+            
+            % how many draws in that sequence?
+            thisequence(trial)          = length(logs.draws);
+            
+            for i = 1:thisequence(trial)
+                
+                index                   = temp + i;    
 
-% % load subject
-% for sub = 1:nsubs
-%     
-%     fprintf('loading beads block data\n')  
-%     subject = subs(sub).name;
-%     subdir = fullfile(resultspath, task,subject);
-%     fprintf('\t reading data from subject %d\n',sub); 
-%     
-%     % load block
-%     for blockI = 1:blocks
-%         
-%         fprintf('\t\t loading block %d\n\n',block);
-%         
-%         % load trial
-%         for trial = 1:blocktrials
-%             
-%             % load sequence file
-%             fprintf('\t\t loading sequence %d\n\n',trial);
-%             subFile = fullfile(subdir, sprintf('subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_draw_logs.mat',sub, task, blockI, trial,session));
-%             load(subFile)                     
-%             
-%             % how many draws in that sequence?
-%             thisequence(trial) = length(logs.draws);
-%             
-%             for i = 1:thisequence(trial)
-%                 
-%                 index               = temp + i;    
-% 
-%                 block(index)        = logs.draws(i).block;
-%                 trialno(index)      = logs.draws(i).trialnumber;
-%                 drawno(index)       = logs.draws(i).thisdraw;
-%                 bead(index)         = logs.draws(i).thisbead;
-%                 rt(index)           = logs.draws(i).rt;
-%                 
-%             end
-%             temp = temp + thisequence(trial); % update temp 
-%         end
-%     end
-%     
-% end % end of subject loop
+                thisblock(index)        = logs.draws(i).block;
+                trialnb(index)          = logs.draws(i).trialnumber;
+                drawno(index)           = logs.draws(i).thisdraw;
+                bead(index)             = logs.draws(i).thisbead;
+                rt(index)               = logs.draws(i).rt;
+                subj(index)             = subI;
+                
+            end
+            temp                        = temp + thisequence(trial); % update temp 
+            
+        end % end of trial loop
+    end % end of block loop
+end % end of subject loop
+
+% add all sequence data in one matrix
+sequence_data = [subj' thisblock' trialnb' drawno' bead' rt];
+
+% remove nans if any
+% sequence_data(any(isnan(sequence_data), 2), :)  = []; (let's not remove nan's yet)
+
+% % save matrix in csv format for r and python
+csvwrite('beads_sequencedata.csv', sequence_data)
