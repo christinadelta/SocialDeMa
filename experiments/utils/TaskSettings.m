@@ -13,7 +13,7 @@ function [set] = TaskSettings(taskNb, sess)
 set.taskNb      = taskNb;   % initialize settings structure
 set.fixation    = '+';      % fixation cross 
 set.EEG         = 0;        % set to 1 when running in the eeglab
-set.triggerdur  = 0.003;    % duration of the trigger in sec (3 ms) 
+set.triggerdur  = 0.002;    % duration of the trigger in sec (3 ms) 
 set.welcomedur  = 2.5;      % welcome screen duration = 2.5 sec
 set.jitter      = .4;       % 0.4 sec
 set.isi         = .5;       % in seconds

@@ -23,14 +23,14 @@ EEG             = set.EEG;
 taskNb          = set.taskNb;
 
 % UNPACK EEG TRIGGERS
-if EEG == 1
-    responseTrigNotSent     = 1;
-    ioObj                   = set.ioObject;
-    status                  = set.status;
-    triggerdur              = set.triggerdur;
-    address                 = set.address;
-    trgs                    = set.ratetrigger; % confidence rating triggers
-end
+% if EEG == 1
+%     responseTrigNotSent     = 1;
+%     ioObj                   = set.ioObject;
+%     status                  = set.status;
+%     triggerdur              = set.triggerdur;
+%     address                 = set.address;
+%     trgs                    = set.ratetrigger; % confidence rating triggers
+% end
 
 % define variables 
 anchors         = {'0', '50', '100'};
@@ -139,29 +139,6 @@ while respmade == 0
         end
 
         rate_rt = (secs - t0);
-
-        % sent rate (response) trigger
-        if EEG == 1 && responseTrigNotSent==1
-
-            if round(position) <= 25 
-                ratetrigger = trgs(1);
-
-            elseif round(position) > 25 && round(position) <= 50
-                ratetrigger = trgs(2);
-
-            elseif round(position) > 50 && round(position) <= 75
-                ratetrigger = trgs(3);
-
-            else 
-                ratetrigger = trgs(4);
-            end
-            % send trigger
-            io64(ioObj, address, ratetrigger)
-            WaitSecs(triggerdur);
-            io64(ioObj, address, 0) % return port to zero
-            
-            responseTrigNotSent = 0; % get out of the loop
-        end
         
     elseif taskNb == 2
         

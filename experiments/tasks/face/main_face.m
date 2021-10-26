@@ -53,10 +53,12 @@ logs.sess               = sess;
 logs.date               = datestr(now, 'ddmmyy');
 logs.time               = datestr(now, 'hhmm');
 
-logs.trialog            = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_logs.mat';
-logs.txtlog             = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_events.tsv';
-if phase == 2
-    logs.blocktrialog   = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_blocktrials_logs.mat';
+if phase == 1
+    logs.trialog            = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_logs.mat';
+    
+else
+    logs.trialog            = 'subject_%02d_task_%s_block_%02d_trial_%02d_ses_%02d_phase_%02d_logs.mat';
+    logs.blocktrialog       = 'subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_blocktrials_logs.mat';
 end
 
 % % setup study output file

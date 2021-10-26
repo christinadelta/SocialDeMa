@@ -58,7 +58,7 @@ if phase == 1
     % UNPACK STIMULI 
     price           = set.price;
 
-    trials      = [];   % store trial info
+    trials          = [];   % store trial info
  
     % START THE BLOCK WITH A FIXATION CROSS
     Screen('CopyWindow', fixationdisplay,window, windrect, windrect)
@@ -89,12 +89,12 @@ if phase == 1
         % NOW DARW THE CONTRACT AND SCALE WITHOUT THE SLIDER AND ALLOW THE SUBJECT TO
         % CLICK ONCE TO INIT THE SLIDER
         set                 = MakeSlider(scrn, set); % first draw the scale and allow subject to click the mouse
-        WaitSecs(0.1)                % delay to prevent fast mouse clicks mix 
+        WaitSecs(0.3)                % delay to prevent fast mouse clicks mix 
         
         stimonset           = set.object_onset;
 
         set                 = RunSlider(scrn, set);  % once subject click the first time, display slider
-        WaitSecs(0.1)
+        WaitSecs(0.2)
 
         % UNPACK SETTINGS
         object_offset       = set.object_offset;
@@ -128,9 +128,10 @@ if phase == 1
     
     WaitSecs(1); % wait two sec before flipping to the next block
     
+
 else % if phase == 2
     %% RUN PHASE TWO %%
-    
+      
     % UNPACK SETTINGS STRUCT for phase 2
     thistrial       = set.thisTrial;    % current sequence/trial number
     sequence        = set.sequence;     % this is the current sequence/trial
@@ -236,6 +237,7 @@ else % if phase == 2
         thisprice       = prices(thisitem);
         xcenters        = xcntr - 60; % start adding the previous prices at xcenter - 60
         xs              = xcenters;
+        tmp             = 0;
         
         % DISPLAY CONTRACT 
         % FIRST DRAW THE RECT
@@ -254,21 +256,25 @@ else % if phase == 2
         else
             
             previous_len        = length(previous); % how many previous prices?
-
+            
             % background_window = Screen('OpenOffscreenWindow', window, windrect);
             DrawFormattedText(window, sprintf('Contract %d/10',s), 'center', ycenter-200, white);
             Screen('TextStyle', window, textbold);
             DrawFormattedText(window, sprintf('Price: £%3.2f', thisprice), 'center', ycenter, white); 
             
             for l = 1:previous_len
+                
+                indx = previous_len - tmp; % this will be used to present the last bead (of the previous beads) first
                 % show the previous prices at the bottom of the screen
                 Screen('TextSize', window, smalltext);
                 Screen('TextStyle', window, 0)
-                DrawFormattedText(window, sprintf('£%3.2f', previous{l}), xcenters, ycenter, white); 
+                DrawFormattedText(window, sprintf('£%3.2f', previous{indx}), xcenters, ycenter, white); 
                 
                 % update xcenters, so that previous prices are not
                 % displayed on top of each other
                 xcenters = xcenters - 60;
+                tmp = tmp + 1;
+                
             end  
             object_onset = Screen('Flip', window, object_offset - slack);    % flip window
             
@@ -282,6 +288,8 @@ else % if phase == 2
         end
         
         object_offset   = object_onset + stimduration - ifi; % add jitter here?
+        
+        tmp             = 0; % update tmp for the colour now
         
         % 2. SHOW GO SIGNAL
         % SHOW RECT WITH THE LIST OF BEADS(S)
@@ -300,12 +308,16 @@ else % if phase == 2
         if s > 1
             
             previous_len = length(previous);
+            
             for l = 1:previous_len
+                
+                indx = previous_len - tmp; % this will be used to present the last bead (of the previous beads) first
                 % show the previous prices 
-                DrawFormattedText(window, sprintf('£%3.2f', previous{l}), xs, ycenter, white); 
+                DrawFormattedText(window, sprintf('£%3.2f', previous{indx}), xs, ycenter, white); 
                 % update xcenter, so that previous prices are not
                 % displayed on top of each other
                 xs = xs - 60;
+                tmp     = tmp + 1;
             end
         end
 

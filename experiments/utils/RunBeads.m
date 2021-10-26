@@ -171,6 +171,7 @@ for thisdraw = 1:drawlen
     
     xcenters        = xcntr - 70; % start adding the darws prices at xcenter - 30
     xs              = xcenters;
+    tmp             = 0;
     
     % 1. SHOW RECT WITH THE LIST OF BEADS(S)
     Screen('CopyWindow', whiterect_window,window, windrect, windrect)
@@ -235,19 +236,19 @@ for thisdraw = 1:drawlen
         
         for i = 1:previous_len
             
+            indx = previous_len - tmp; % this will be used to present the last bead (of the previous beads) first
             % show the previous prices on the left of the current bead
             Screen('TextSize', window, smalltext);
             Screen('TextStyle', window, 0)
-            DrawFormattedText(window, previous{i}, xcenters, ycenter, colours{i}); 
+            DrawFormattedText(window, previous{indx}, xcenters, ycenter, colours{indx}); 
 
             % update xcenters, so that previous prices are not
             % displayed on top of each other
-            xcenters = xcenters - 60;
-            
+            xcenters    = xcenters - 60;
+            tmp         = tmp + 1;  % update tmp 
         end  
     end
     bead_onset     = Screen('Flip', window, object_offset - slack); 
-    bead_offset    = bead_onset + bead_dur - ifi;                          % bead on for 1 sec
     
     % send stimulus/bead trigger
     if EEG == 1
@@ -255,7 +256,9 @@ for thisdraw = 1:drawlen
         WaitSecs(triggerdur);
         io64(ioObj, address, 0) % return port to zero
     end
+    bead_offset     = bead_onset + bead_dur - ifi;                          % bead on for 1 sec
     
+    tmp             = 0; % update tmp for the coloured rect now
     % 2. SHOW GO SIGNAL
     % SHOW RECT WITH THE LIST OF BEADS(S)
     Screen('CopyWindow', orangerect_window,window, windrect, windrect)
@@ -281,14 +284,17 @@ for thisdraw = 1:drawlen
         
         for i = 1:previous_len
             
+            indx = previous_len - tmp; % this will be used to present the last bead (of the previous beads) first
+            
             % show the previous prices on the left of the current bead
             Screen('TextSize', window, smalltext);
             Screen('TextStyle', window, 0)
-            DrawFormattedText(window, previous{i}, xs, ycenter, colours{i}); 
+            DrawFormattedText(window, previous{indx}, xs, ycenter, colours{indx}); 
 
             % update xcenters, so that previous prices are not
             % displayed on top of each other
-            xs = xs - 60;
+            xs      = xs - 60;
+            tmp     = tmp + 1;
         end
     end
         

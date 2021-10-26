@@ -90,12 +90,12 @@ if phase == 1
         % NOW DARW THE CONTRACT AND SCALE WITHOUT THE SLIDER AND ALLOW THE SUBJECT TO
         % CLICK ONCE TO INIT THE SLIDER
         set = MakeSlider(scrn, set); % first draw the scale and allow subject to click the mouse
-        WaitSecs(0.1)                % delay to prevent fast mouse clicks mix 
+        WaitSecs(0.3)                % delay to prevent fast mouse clicks mix 
         
         stimonset           = set.object_onset;
 
         set = RunSlider(scrn, set);  % once subject click the first time, display slider
-        WaitSecs(0.1)
+        WaitSecs(0.2)
 
         % UNPACK SETTINGS
         object_offset       = set.object_offset;
@@ -223,6 +223,7 @@ else % if this is phase 2
         Ychange         = ycenter;          % this is the y position of the small images
         xs              = Xchange;
         ys              = Ychange;
+        tmp             = 0;
         
         % DISPLAY CONTRACT 
         % FIRST DRAW THE RECT
@@ -247,9 +248,12 @@ else % if this is phase 2
             smallrects  = nan(4,previous_len); 
             
             for l = 1:previous_len
-                smallrects(:,l) = [Xchange-objectx/9, Ychange-objecty/9, Xchange+objectx/9, Ychange+objecty/9];
+                
+                indx            = previous_len - tmp; % this will be used to present the last bead (of the previous beads) first
+                smallrects(:,indx) = [Xchange-objectx/9, Ychange-objecty/9, Xchange+objectx/9, Ychange+objecty/9];
                 
                 Xchange = Xchange - 60;
+                tmp         = tmp + 1;  % update tmp 
             end
             
             % DISPLAY THE CURRENT FACE - Backround window (the number of
@@ -271,6 +275,7 @@ else % if this is phase 2
         
         object_offset   = object_onset + stimduration - ifi; % add jitter here?
         
+        tmp             = 0; % update tmp for the coloured rect now
         % 2. SHOW GO SIGNAL
         % SHOW RECT WITH THE LIST OF BEADS(S)
         Screen('CopyWindow', orangerect_window,window, windrect, windrect)
@@ -291,9 +296,11 @@ else % if this is phase 2
             smallrects  = nan(4,previous_len);
             
             for l = 1:previous_len
-                smallrects(:,l) = [xs-objectx/9, ys-objecty/9, xs+objectx/9, ys+objecty/9];
+                indx            = previous_len - tmp; % this will be used to present the last bead (of the previous beads) first
+                smallrects(:,indx) = [xs-objectx/9, ys-objecty/9, xs+objectx/9, ys+objecty/9];
 
-                xs = xs-60;
+                xs      = xs-60;
+                tmp     = tmp + 1;
             end
             
             % draw the previous faces
@@ -485,7 +492,7 @@ else % if this is phase 2
     % store the sequence info in logs 
     logs.trials                 = trials; % save the samples 
 
-    sublogs                     = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thisession,phase));
+    sublogs                     = fullfile(resfolder,sprintf(logs.trialog,sub,taskname,thisblock,thistrial,thisession,phase));
     save(sublogs,'logs');
     
     % send sequence end trigger
@@ -494,8 +501,6 @@ else % if this is phase 2
         WaitSecs(triggerdur);
         io64(ioObj, address, 0) % return port to zero
     end
-    
-    chosenitem                  = thisitem;
 
     % save the current trial info
     blocktrials.session         = thisession;
@@ -504,8 +509,7 @@ else % if this is phase 2
     blocktrials.trialonset      = trialstart;
     blocktrials.sequence        = sequence;
     blocktrials.numsamples      = s;
-    blocktrials.chosenitem      = chosenitem;
-    blocktrials.thisrate        = thisrate; 
+    blocktrials.chosenitem      = thisitem; 
 
     set.blocktrials             = blocktrials; % (save the info of this trial) this will go to the main script
     

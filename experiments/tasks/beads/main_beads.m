@@ -240,13 +240,13 @@ try
     %% ---------------------------------------
     % RUN THE INSTRUCTIONS QUIZ 
     
-%     % Start instructions
-%     DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
-%     Screen('Flip', window);
-%     WaitSecs(1);
-%     
-%     set = ShortQuiz(set, scrn, set); % RUN the instructions quiz 
-%     
+    % Start instructions
+    DrawFormattedText(window,'INSTRUCTIONS QUIZ','center',scrn.ycenter,scrn.white);
+    Screen('Flip', window);
+    WaitSecs(1);
+    
+    set = ShortQuiz(set, scrn, set); % RUN the instructions quiz 
+    
 
     %% ---------------------------------------
     % ADD THE TRIGGER INFORMATION (IF EEG = 1) 
