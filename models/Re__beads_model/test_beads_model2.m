@@ -12,13 +12,13 @@ R.q = 0.6;
 seq_mat = [sequence1; sequence2];
 
 % let's define a few variables 
-Ntrials         = size(seq_mat,1);
+ntrials         = size(seq_mat,1);
 maxDraws        = size(seq_mat,2);
 drawSequence    = seq_mat;
 
 %% Run simulated data
 
-[r, Qsa] = backWardInduction(Ntrials, maxDraws, drawSequence, R)
+[r, Qsa] = backWardInduction(ntrials, maxDraws, drawSequence, R);
 
 
 
