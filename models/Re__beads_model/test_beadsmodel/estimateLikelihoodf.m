@@ -1,6 +1,6 @@
 function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf(alpha,Cw,q,Cs, sequence, aqvec_switch)
 
-% ?
+% this will be used for stopping at optimal draws (position)
 findPick        = 1;
 
 sequence        = seq_mat;              % rename sequence 
@@ -67,7 +67,5 @@ for i = 1:ntrials
     [biggest_value choice(i)] = max(Qvec);
 
 end % end of trials loop
-
-
 
 end
