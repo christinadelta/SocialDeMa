@@ -1,7 +1,7 @@
-function [logLikelihood, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(alpha,Cw,q,Cs, sequence, aqvec_switch)
+function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf(alpha,Cw,q,Cs, sequence, aqvec_switch)
 
 % ?
-findPick1       = 1;
+findPick        = 1;
 
 sequence        = seq_mat;              % rename sequence 
 sequenceL       = size(sequence, 2);    % length of sequence 
@@ -30,16 +30,41 @@ for i = 1:ntrials
         
         % green or blue bead?
         if thisSequence(j) == 1
-            numGreen = numGreen + 1; % update numGreen  
+            numGreen    = numGreen + 1; % update numGreen  
         end
         
-        % increment draws 
-        numDraws    = numDraws + 1;
+        % also increment draws 
+        numDraws        = numDraws + 1;
         
         % compute action values for each draw (in current sequence)
-        [v, d, Qvec] = Val(q, numDraws, numGreen, alpha, sequenceL, Cw, Cs)
+        [v, d, Qvec]    = Val(q, numDraws, numGreen, alpha, sequenceL, Cw, Cs);
+        
+        % append actios values of the current sequence to dQvec
+        dQvec(j,:)      = Qvec;
+        
+        % append choice probabilities 
+        ddec(j,:)       = d;
+        
+        aQvec{i}(j,:)   = Qvec;
+        
+        % determine optimal stopping position 
+        if findPick == 1 & j < nchoices & (Qvec(1) > Qvec(3) | Qvec(2) > Qvec(3))
+            pickTrial(i) = j;
+            break
+            
+        elseif findPick == 1 & j == nchoices
+            pickTrial(i) = j;
+        end
+        
+        % 
+        if j == sequenceL
+            d = [d; 0];
+        end   
         
     end % end of draws loop
+    
+    % accumulate chosen urns
+    [biggest_value choice(i)] = max(Qvec);
 
 end % end of trials loop
 

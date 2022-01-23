@@ -16,7 +16,7 @@ Cs              = -10;   % the cost to sample
 aqvec_switch    = 1; % still not sure why exactly this is needed 
 
 % so this is how the estimateLikelihoodf is called
-% [ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(alpha,Cw,q,Cs,seq_mat,1);
+[ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(alpha,Cw,q,Cs,seq_mat,1);
 
 choice(find(choice==2)) = 0;
 all_accuracy = mean(choice==1)

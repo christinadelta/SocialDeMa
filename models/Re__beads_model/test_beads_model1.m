@@ -15,3 +15,15 @@ Cw              = -1000;    % The difference between the rewards for being corre
 q               = 0.6;      % proportion of the majority value in sequence (60/40 split in this case)
 Cs              = -10;      % the cost to sample
 aqvec_switch    = 1;        % still not sure why exactly this is needed 
+
+% estimate likelihood function 
+[ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(alpha,Cw,q,Cs,seq_mat,1);
+
+% compute accuracy, mean draws and points based on choices abd pickTrials
+choice(find(choice==2)) = 0;
+all_accuracy            = mean(choice==1);
+all_draws               = mean(pickTrial);
+all_points              = 0 + (sum(choice==0)*Cw) - sum(pickTrial);
+
+
+
