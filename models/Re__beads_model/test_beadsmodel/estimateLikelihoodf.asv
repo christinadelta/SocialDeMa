@@ -34,10 +34,8 @@ for i = 1:ntrials
         end
         
         % increment draws 
-        numDraws    = numDraws + 1;
+        numDraws 
         
-        % compute action values for each draw (in current sequence)
-        [v, d, Qvec] = Val(q, numDraws, numGreen, alpha, sequenceL, Cw, Cs)
         
     end % end of draws loop
 
