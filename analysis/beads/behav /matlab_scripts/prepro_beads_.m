@@ -1,4 +1,4 @@
-% PRE-PROCESSING SCRIPT FOR BEADS TASK
+% PRE-PROCESSING SCRIPT FOR THE BEADS TASK
 
 % Part of the Optimal Stopping Problems Project
 
@@ -19,13 +19,15 @@
 % I first extract block data, remove nans and save the data in a csv file 
 % Then I extract the sequence data, remove nans and save the data in a csv file 
 
-%% LOAD DATA %%
+%% INIT LOAD DATA %%
 
 % GET PATHS & DEFINE VARIABLES
+% The three next lines (paths) should be changed to your paths 
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
 resultspath     = fullfile(startpath, 'experiments', 'results');
+
 task            = 'beads';
-subpath         = fullfile(startpath, task);
+subpath         = fullfile(resultspath, task);
 session         = 1;
 
 subs            = dir(fullfile(resultspath, task, '*sub*'));
@@ -47,7 +49,7 @@ for subI = 1:nsubs
     
     fprintf('loading beads block data\n')  
     subject = subs(subI).name;
-    subdir = fullfile(resultspath, task,subject);
+    subdir  = fullfile(resultspath, task,subject);
     fprintf('\t reading data from subject %d\n',subI); 
     
     for blockI = 1:blocks
@@ -60,7 +62,7 @@ for subI = 1:nsubs
             
             indx = ((blockI -1)*blocktrials) + trial;  
             
-            block(indx)     = logs.blocktrials(trial).block;
+            block(indx)     = blockI;
             trialno(indx)   = logs.blocktrials(trial).trialnumber;
             urntype(indx)   = logs.blocktrials(trial).urntype;
             draws(indx)     = logs.blocktrials(trial).draws;
@@ -69,7 +71,7 @@ for subI = 1:nsubs
             rate(indx)      = logs.blocktrials(trial).thisrate;
             condition(indx) = logs.blocktrials(trial).condition;
             balance(indx)   = logs.blocktrials(trial).balance;
-            subI(indx)      = subI;
+            subj(indx)      = subI;
             
         end % end of trial loop
         
@@ -78,7 +80,7 @@ for subI = 1:nsubs
 end % end of subject loop
 
 % add data in one matrix
-block_data = [subI' block' trialno' urntype' draws' response' accuracy' rate' condition' balance'];
+block_data = [subj' block' trialno' urntype' draws' response' accuracy' rate' condition' balance'];
 
 % remove nans if any
 % block_data(any(isnan(block_data), 2), :)  = []; (let's not remove nan's yet)
@@ -94,15 +96,15 @@ csvwrite('beads_blockdata.csv', block_data)
 % load subject
 for subI = 1:nsubs
     
-    fprintf('loading beads block data\n')  
-    subject = subs(subI).name;
-    subdir = fullfile(resultspath, task,subject);
+    fprintf('loading beads sequence data\n')  
+    subject     = subs(subI).name;
+    subdir      = fullfile(resultspath, task,subject);
     fprintf('\t reading data from subject %d\n',subI); 
     
     % load block
     for blockI = 1:blocks
         
-        fprintf('\t\t loading block %d\n\n',block);
+        fprintf('\t\t loading block %d\n\n',blockI);
         
         % load trial
         for trial = 1:blocktrials
@@ -126,7 +128,7 @@ for subI = 1:nsubs
                 rt(index)               = logs.draws(i).rt;
                 subj(index)             = subI;
                 
-            end
+            end % end of sequence loop
             temp                        = temp + thisequence(trial); % update temp 
             
         end % end of trial loop
@@ -134,7 +136,7 @@ for subI = 1:nsubs
 end % end of subject loop
 
 % add all sequence data in one matrix
-sequence_data = [subj' thisblock' trialnb' drawno' bead' rt];
+sequence_data = [subj' thisblock' trialnb' drawno' bead' rt'];
 
 % remove nans if any
 % sequence_data(any(isnan(sequence_data), 2), :)  = []; (let's not remove nan's yet)
