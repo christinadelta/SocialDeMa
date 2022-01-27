@@ -93,6 +93,7 @@ for subI = 1:nsubs
                 
                 cnt             = counter + j; 
                 trialnum(cnt,1) = iTrial;
+                trialnum(cnt,2) = blockI;
             end 
             
             % update counter 
@@ -100,11 +101,12 @@ for subI = 1:nsubs
             
             clear tmp cnt
         end % end of sequence loop
-        
+
         % remove trialstart and trialend from the trl list
         trl(trl(:,4) == tstart, :)  = [];
         trl(trl(:,4) == tend, :)    = [];
-        trl(:,5)                    = trialnum; % add trialnum to the main list
+        trl(:,5)                    = trialnum(:,1); % add trialnum to the main list
+        trl(:,6)                    = trialnum(:,2); % add trialnum to the main list
         
         % re-write the trl list to the cfg struct 
         cfg.trl                     = trl;
@@ -136,8 +138,8 @@ for subI = 1:nsubs
 
         % we can either visualise the epochs for each trial/sequence seperately or
         % all together. For simplicity, I'll visualise them together. 
-        cfg                 = [];
-        ft_databrowser(cfg, data)
+%         cfg                 = [];
+%         ft_databrowser(cfg, data)
 
     end % end of blocks loop
     
@@ -157,9 +159,10 @@ for subI = 1:nsubs
     
     % Append data
     cfg     = [];
-    data    = ft_appenddata(cfg, partdata(1), partdata(2));
+    data    = ft_appenddata(cfg, partdata(1), partdata(2), partdata(3), partdata(4));
     
     %% Remove artifacts with ICA 
+    
     % THIS PART IS PROBABLY NOT NEEDED 
     % COMMENT IT IF ICA WONT RUN 
     
@@ -201,7 +204,82 @@ for subI = 1:nsubs
     cfg.component   = [21 42 63 68]; % the exact numbers varies per run
     clean_data      = ft_rejectcomponent(cfg, datacomp);
     
-    %% filter data (clean) and run timelock (ERPs) analysis
+    %% filter data (clean) and run timelock (ERPs) analysis (3 analyses)
+    
+    % 1) Run ERPs analysis: 1 average ERP for each sequence
+    % Average ERP: 1:end (epochs) ( 52 averaged ERPs total)  
+    for iBlock = 1:blocks 
+        for itrial = 1:blocktrials
+            cfg                         = [];
+            cfg.lpfilter                = 'yes';
+            cfg.lpfreq                  = 40;
+            cfg.trials                  = find(data.trialinfo(:,3) == iBlock & data.trialinfo(:,2) == itrial);
+            timelock{iBlock, itrial}    = ft_timelockanalysis(cfg, data);
+            
+            % baseline correction
+            cfg                         = [];
+            cfg.baseline                = [-0.2 0];
+            timelock{iBlock, itrial}    = ft_timelockbaseline(cfg, timelock{iBlock, itrial});
+        end
+    end
+    
+    % save the erp analysis 
+    
+    % plot the ERPs over all sensors, over parietal sensors, over frontal
+    % sensors 
+    
+    
+    
+    % 2) Run ERPs analysis: For every condition, in each "sequence" all epochs/draws are a separate ERP 
+    % [e.g., if block 1 trial 1 has 4 draws/epochs of cond 1 -- we compute 4 seperate ERPs]  
+    for cond = 1:nconds
+        for itrial = 1:totaltrials
+            cfg                         = [];
+            cfg.lpfilter                = 'yes';
+            cfg.lpfreq                  = 40;
+            cfg.trials                  = find(data.trialinfo(:,1) == cond & data.trialinfo(:,2) == itrial);
+            timelock{cond, itrial}    = ft_timelockanalysis(cfg, data);
+
+            % baseline correction
+            cfg                         = [];
+            cfg.baseline                = [-0.2 0];
+            timelock{cond, itrial}    = ft_timelockbaseline(cfg, timelock{iBlock, itrial});
+        end
+    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    % 3) Run ERPs analysis: 2 average ERPs for each sequence/condition 
+    % ERP 1: 1:end-1 & ERP 2: end (last epoch)
+    for iBlock = 1:blocks 
+        for itrial = 1:blocktrials
+            for cond = 1:nconds 
+
+                cfg = [];
+                cfg.lpfilter = 'yes';
+                cfg.lpfreq = 40;
+                cfg.trials = find(data.trialinfo(:,3) == iBlock & data.trialinfo(:,2) == itrial & data.trialinfo(:,1) == cond);
+                if ~isempty(cfg.trials)
+                    timelock{iBlock, itrial, cond} = ft_timelockanalysis(cfg, data)
+                end
+            end
+        end
+    end
+    
+   
+ 
+    %% 
+    
+    
+    %% Compute statistics (contrasts)
     
     
   
