@@ -22,8 +22,10 @@
 %% INIT LOAD DATA %%
 
 % GET PATHS & DEFINE VARIABLES
-% The three next lines (paths) should be changed to your paths 
+% The four next lines (paths) should be changed to your paths 
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
+modelpath       = fullfile(startpath, 'analysis', 'beads', 'behav', 'rl_model');
+analysispath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'prepro_data');
 resultspath     = fullfile(startpath, 'experiments', 'results');
 
 task            = 'beads';
@@ -60,18 +62,22 @@ for subI = 1:nsubs
         
         for trial = 1:blocktrials
             
-            indx = ((blockI -1)*blocktrials) + trial;  
+            indx                            = ((blockI -1)*blocktrials) + trial;  
             
-            block(indx)     = blockI;
-            trialno(indx)   = logs.blocktrials(trial).trialnumber;
-            urntype(indx)   = logs.blocktrials(trial).urntype;
-            draws(indx)     = logs.blocktrials(trial).draws;
-            response(indx)  = logs.blocktrials(trial).response;
-            accuracy(indx)  = logs.blocktrials(trial).accuracy;
-            rate(indx)      = logs.blocktrials(trial).thisrate;
-            condition(indx) = logs.blocktrials(trial).condition;
-            balance(indx)   = logs.blocktrials(trial).balance;
-            subj(indx)      = subI;
+            block(indx)                     = blockI;
+            trialno(indx)                   = logs.blocktrials(trial).trialnumber;
+            urntype(indx)                   = logs.blocktrials(trial).urntype;
+            draws(indx)                     = logs.blocktrials(trial).draws;
+            response(indx)                  = logs.blocktrials(trial).response;
+            accuracy(indx)                  = logs.blocktrials(trial).accuracy;
+            rate(indx)                      = logs.blocktrials(trial).thisrate;
+            condition(indx)                 = logs.blocktrials(trial).condition;
+            balance(indx)                   = logs.blocktrials(trial).balance;
+            subj(indx)                      = subI;
+            generaltrial(indx)              = indx;
+            
+            % extract sequences from log file 
+            sequences{subI, blockI, trial}  = logs.blocktrials(trial).sequence;
             
         end % end of trial loop
         
@@ -85,8 +91,58 @@ block_data = [subj' block' trialno' urntype' draws' response' accuracy' rate' co
 % remove nans if any
 % block_data(any(isnan(block_data), 2), :)  = []; (let's not remove nan's yet)
 
-% % save matrix in csv format for r and python
+% save matrix in csv format in case we want to run analyses in r and/or python
 csvwrite('beads_blockdata.csv', block_data)
+
+%% RUN IDEAL OBSERVER %%
+
+% first add modelpath to the path
+addpath(genpath(modelpath));
+
+% define parameters of the model
+alpha           = 1;         % softmax stochasticity parameter (for fitting to human behaviour)
+Cw              = -1000;     % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
+q               = [0.8 0.6]; % proportion of the majority value in sequence (60/40 split in this case)
+Cs              = -10;       % the cost to sample
+aqvec_switch    = 1;         % still not sure why exactly this is needed 
+
+% loop over subjects 
+for sub = 1:nsubs
+    
+    % loop over blocks 
+    for block = 1:blocks
+        
+        % extract block data
+        tmp                     = find(block_data(:,2) == block);
+        this_blockdata          = block_data((tmp),:);
+        
+        for trl = 1:blocktrials
+            % extract sub/block sequences
+            this_sequence       = sequences{sub, block, trl};
+
+            thisurn             = this_blockdata(trl,4); % blue or green urn?
+            accurate            = this_blockdata(trl,7); % correct or incorrect?
+            thiscond            = this_blockdata(trl,9); % 0.8 or 0.6 probabiltiy?
+            
+            % determine the probability (q) for this trial 
+            if thiscond == 1
+                thisq           = q(1);
+            else
+                thisq           = q(2);
+            end
+        
+            % run ideal observer 
+            [ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(alpha,Cw,thisq,Cs,this_sequence,1);
+            
+            pick_trials(trl)    = pickTrial;
+            blockdQvec{trl}     = dQvec;
+            bloxkaQvec{trl}     = aQvec;
+            blockchoices(trl)   = choice;
+            blockddec{trl}      = ddec;
+  
+        end
+    end   
+end
 
 %% EXTRACT AND SAVE THE SEQUENCE DATA %%
 
@@ -141,5 +197,5 @@ sequence_data = [subj' thisblock' trialnb' drawno' bead' rt'];
 % remove nans if any
 % sequence_data(any(isnan(sequence_data), 2), :)  = []; (let's not remove nan's yet)
 
-% % save matrix in csv format for r and python
+% save matrix in csv format in case we want to run analyses in r and/or python
 csvwrite('beads_sequencedata.csv', sequence_data)
