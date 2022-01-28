@@ -232,29 +232,20 @@ for subI = 1:nsubs
     
     % 2) Run ERPs analysis: For every condition, in each "sequence" all epochs/draws are a separate ERP 
     % [e.g., if block 1 trial 1 has 4 draws/epochs of cond 1 -- we compute 4 seperate ERPs]  
-    for cond = 1:nconds
-        for itrial = 1:totaltrials
-            cfg                         = [];
-            cfg.lpfilter                = 'yes';
-            cfg.lpfreq                  = 40;
-            cfg.trials                  = find(data.trialinfo(:,1) == cond & data.trialinfo(:,2) == itrial);
-            timelock{cond, itrial}    = ft_timelockanalysis(cfg, data);
-
-            % baseline correction
-            cfg                         = [];
-            cfg.baseline                = [-0.2 0];
-            timelock{cond, itrial}    = ft_timelockbaseline(cfg, timelock{iBlock, itrial});
-        end
-    end
-    
-    
-    
-    
-    
-    
-    
-    
-    
+%     for cond = 1:nconds
+%         for itrial = 1:totaltrials
+%             cfg                         = [];
+%             cfg.lpfilter                = 'yes';
+%             cfg.lpfreq                  = 40;
+%             cfg.trials                  = find(data.trialinfo(:,1) == cond & data.trialinfo(:,2) == itrial);
+%             timelock{cond, itrial}    = ft_timelockanalysis(cfg, data);
+% 
+%             % baseline correction
+%             cfg                         = [];
+%             cfg.baseline                = [-0.2 0];
+%             timelock{cond, itrial}    = ft_timelockbaseline(cfg, timelock{iBlock, itrial});
+%         end
+%     end
     
     
     % 3) Run ERPs analysis: 2 average ERPs for each sequence/condition 
