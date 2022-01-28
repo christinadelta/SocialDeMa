@@ -134,11 +134,11 @@ for sub = 1:nsubs
             % run ideal observer 
             [ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(alpha,Cw,thisq,Cs,this_sequence,1);
             
-            pick_trials(trl)    = pickTrial;
-            blockdQvec{trl}     = dQvec;
-            bloxkaQvec{trl}     = aQvec;
-            blockchoices(trl)   = choice;
-            blockddec{trl}      = ddec;
+            pick_trials{sub, block, trl}    = pickTrial;
+            blockdQvec{sub, block, trl}     = dQvec;
+            bloxkaQvec{sub, block, trl}     = aQvec;
+            blockchoices(sub, block, trl)   = choice;
+            blockddec{sub, block, trl}      = ddec;
   
         end
     end   
