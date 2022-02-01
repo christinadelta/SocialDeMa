@@ -208,64 +208,97 @@ for subI = 1:nsubs
     
     % 1) Run ERPs analysis: 1 average ERP for each sequence
     % Average ERP: 1:end (epochs) ( 52 averaged ERPs total)  
-    for iBlock = 1:blocks 
-        for itrial = 1:blocktrials
-            cfg                         = [];
-            cfg.lpfilter                = 'yes';
-            cfg.lpfreq                  = 40;
-            cfg.trials                  = find(data.trialinfo(:,3) == iBlock & data.trialinfo(:,2) == itrial);
-            timelock{iBlock, itrial}    = ft_timelockanalysis(cfg, data);
+    for iCond = 1:nconds
+        for iBlock = 1:blocks
+            for iTrial = 1:blocktrials
+                cfg                                 = [];
+                cfg.lpfilter                        = 'yes';
+                cfg.lpfreq                          = 40;
+                tmp                                 = find(data.trialinfo(:,1) == iCond & data.trialinfo(:,3) == iBlock & data.trialinfo(:,2) == iTrial);
+                
+                if ~isempty(tmp) % if tmp is not empty run timelock analysis on current trial/sequence
+                    cfg.trials                      = tmp;
+                    timelock{iCond,iBlock,iTrial}   = ft_timelockanalysis(cfg, data);
+                    
+                    % baseline correction
+                    cfg                             = [];
+                    cfg.baseline                    = [-0.2 0];
+                    timelock{iCond,iBlock,iTrial}   = ft_timelockbaseline(cfg, timelock{iCond,iBlock,iTrial});
+                    
+                end
+            end % end of trials loop
             
-            % baseline correction
-            cfg                         = [];
-            cfg.baseline                = [-0.2 0];
-            timelock{iBlock, itrial}    = ft_timelockbaseline(cfg, timelock{iBlock, itrial});
+        end % end of blocks loop
+        
+        % remove empty cells from timelock cell
+        timelock(cellfun(@(timelock) any(isempty(timelock)),timelock)) = [];
+        
+        % save timelock for each condition in new cell and clear it (otherwise timelock
+        % cell is flattened using the removal function and I can't separate
+        % the conditions)
+        averagedERPs{iCond,:} = timelock; clear timelock
+        
+    end % end of conds loop
+    
+    % 2) Run ERPs analysis: 1 averaged ERP for draws 1:end-1 (first draw until last-1) & 1 averaged
+    % ERP end (last draw) across all sequences/trials for each condition
+    % (easy, difficult)
+    totalconds  = 2; 
+    
+    % add a column of ones and twos for easy difficukt trials in
+    % data.trialinfo
+    trlinfo         = data.trialinfo;
+    totaldraws      = length(trlinfo);
+    
+    for i = 1:totaldraws
+        
+        if trlinfo(i,1) == 1 | trlinfo(i,1) == 2
+            
+            trlinfo(i,4) = 1; % add easy index 
+            
+        elseif trlinfo(i,1) == 3 | trlinfo(i,1) == 4
+            
+            trlinfo(i,4) = 2; % add difficult index 
         end
     end
+    
+    data.trialinfo = trlinfo; clear tlrinfo
+    
+    for block = 1:blocks
+        for cond = 1:totalconds
+            
+            for trial = 1:blocktrials
+                
+                cfg                                 = [];
+                cfg.lpfilter                        = 'yes';
+                cfg.lpfreq                          = 40;
+                tmp                                 = find(data.trialinfo(:,1) == iCond & data.trialinfo(:,3) == iBlock & data.trialinfo(:,2) == iTrial);
+ 
+            end
+        end  
+    end % end of block loop
+    
+    
+    
     
     % save the erp analysis 
+     save(['beads_analysis/erps/beads_sub_', num2str(subI),  '_allerps_averaged_'], 'averagedERPs')
     
-    % plot the ERPs over all sensors, over parietal sensors, over frontal
+    %% Plot the ERPs 
+    
+    % load the data (if needed) and plot the ERPs over all sensors, over parietal sensors, over frontal
     % sensors 
+    % load(['beads_analysis/erps/beads_sub_', num2str(subI),  '_erps_averaged_'], 'averagedERPs');
     
-    
-    
-    % 2) Run ERPs analysis: For every condition, in each "sequence" all epochs/draws are a separate ERP 
-    % [e.g., if block 1 trial 1 has 4 draws/epochs of cond 1 -- we compute 4 seperate ERPs]  
-%     for cond = 1:nconds
-%         for itrial = 1:totaltrials
-%             cfg                         = [];
-%             cfg.lpfilter                = 'yes';
-%             cfg.lpfreq                  = 40;
-%             cfg.trials                  = find(data.trialinfo(:,1) == cond & data.trialinfo(:,2) == itrial);
-%             timelock{cond, itrial}    = ft_timelockanalysis(cfg, data);
-% 
-%             % baseline correction
-%             cfg                         = [];
-%             cfg.baseline                = [-0.2 0];
-%             timelock{cond, itrial}    = ft_timelockbaseline(cfg, timelock{iBlock, itrial});
-%         end
-%     end
-    
-    
-    % 3) Run ERPs analysis: 2 average ERPs for each sequence/condition 
-    % ERP 1: 1:end-1 & ERP 2: end (last epoch)
-    for iBlock = 1:blocks 
-        for itrial = 1:blocktrials
-            for cond = 1:nconds 
-
-                cfg = [];
-                cfg.lpfilter = 'yes';
-                cfg.lpfreq = 40;
-                cfg.trials = find(data.trialinfo(:,3) == iBlock & data.trialinfo(:,2) == itrial & data.trialinfo(:,1) == cond);
-                if ~isempty(cfg.trials)
-                    timelock{iBlock, itrial, cond} = ft_timelockanalysis(cfg, data)
-                end
-            end
-        end
+    % plot averaged ERPs for each condition over all sensors
+    figure 
+    for i = 1:nconds
+        
+        subplot(2,2,i)
+        ft_singleplotER([], averagedERPs{i});
+        title(conditions{i});
+ 
     end
-    
-   
  
     %% 
     
