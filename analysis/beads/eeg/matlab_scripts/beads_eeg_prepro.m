@@ -43,7 +43,7 @@ blocks              = 4;
 blocktrials         = 13; 
 totaltrials         = blocks * blocktrials;
 nconds              = 4;
-conditions          = {'blueEasy', 'greenEasy', 'blueDiff', 'greenDiff'};
+conditions          = {'Easy', 'Difficult'};
 
 % define layout-montage for topoplots 
 % check the biosemi64 layout that will be used for plotting topomaps
@@ -236,7 +236,7 @@ for subI = 1:nsubs
         % save timelock for each condition in new cell and clear it (otherwise timelock
         % cell is flattened using the removal function and I can't separate
         % the conditions)
-        averagedERPs{iCond,:} = timelock; clear timelock
+        averagedERPs{iCond,:} = timelock; clear timelock tmp 
         
     end % end of conds loop
     
@@ -262,27 +262,79 @@ for subI = 1:nsubs
         end
     end
     
-    data.trialinfo = trlinfo; clear tlrinfo
+    data.trialinfo = trlinfo; clear tlrinfo 
+ 
+    % Now run the second ERP/timelock analysis. For this we first need to make
+    % sure that for each condition (easy, diff) we get 2 ERPs; so, let's
+    % first split the draws in different matrices. One that will contain
+    % all the [1: end-1] draws and one matrix that will contain all the [end] draws.
+    for cond = 1:totalconds
+        
+        % init variables
+        tmp_first   = 0;
+        tmp_last    = 0;
+        c           = 0; % counter index
+        l           = 1; % last draw index
     
-    for block = 1:blocks
-        for cond = 1:totalconds
-            
+        for block = 1:blocks
             for trial = 1:blocktrials
                 
-                cfg                                 = [];
-                cfg.lpfilter                        = 'yes';
-                cfg.lpfreq                          = 40;
-                tmp                                 = find(data.trialinfo(:,1) == iCond & data.trialinfo(:,3) == iBlock & data.trialinfo(:,2) == iTrial);
- 
-            end
-        end  
-    end % end of block loop
+                tmp                 = find(data.trialinfo(:,4) == cond & data.trialinfo(:,3) == block & data.trialinfo(:,2) == trial);
+                
+                % if tmp is not empty for this cond/block/trial, split the
+                % draws/epochs in [1:end-1] and [end]
+                if ~isempty(tmp)
+                    
+                    t               = length(tmp)-1; 
+                    tmp_first(c+1:c+t)  = tmp(1:end-1); 
+                    tmp_last(:,l)   = tmp(end);
+                    
+                    % update counter and l
+                    c               = c + t;
+                    l               = l + 1;
+                    
+                end
+
+            end % end of trials loop
+
+        end % end of blocks loop
+        
+        % run timelock/ERP analysis on the trials [1:end-1] for
+        % this condition and this block
+        cfg.trials                  = tmp_first;
+        timelock_first{cond}  = ft_timelockanalysis(cfg, data);
+
+        % baseline correction
+        cfg                         = [];
+        cfg.baseline                = [-0.2 0];
+        timelock_first{cond}  = ft_timelockbaseline(cfg, timelock_first{cond});
+
+        % run timelock/ERP analysis on the trials [end/last] for
+        % this condition and this block
+        cfg.trials                  = tmp_last;
+        timelock_last{cond}   = ft_timelockanalysis(cfg, data);
+
+        % baseline correction
+        cfg                         = [];
+        cfg.baseline                = [-0.2 0];
+        timelock_last{cond}   = ft_timelockbaseline(cfg, timelock_last{cond});
+        
+        % clear temporal variables to re-initialise them for the next
+        % condition 
+        clear tmp_first tmp_last tmp c l t 
+
+    end % end of conditions loop
     
+    timelock_all{1,:} = timelock_first;
+    timelock_all{2,:} = timelock_last;
     
+    clear timelock_first timelock_last
     
-    
-    % save the erp analysis 
-     save(['beads_analysis/erps/beads_sub_', num2str(subI),  '_allerps_averaged_'], 'averagedERPs')
+    % save the averaged [1:end-1] and [last] erp analysis
+    save(['beads_analysis/erps/beads_sub_', num2str(subI), '_alldraws_erps'], 'timelock_all')
+   
+    % save averaged erp analysis 
+    save(['beads_analysis/erps/beads_sub_', num2str(subI),  '_allerps_averaged'], 'averagedERPs')
     
     %% Plot the ERPs 
     
@@ -290,15 +342,23 @@ for subI = 1:nsubs
     % sensors 
     % load(['beads_analysis/erps/beads_sub_', num2str(subI),  '_erps_averaged_'], 'averagedERPs');
     
-    % plot averaged ERPs for each condition over all sensors
-    figure 
-    for i = 1:nconds
+    % plot [all but last and last draw] ERPs for each condition over all sensors
+    erps = {'AllButLast', 'Last'};
+    
+    figure
+    for i = 1:2
+        
+        erp_tmp = timelock_all{i};
         
         subplot(2,2,i)
-        ft_singleplotER([], averagedERPs{i});
-        title(conditions{i});
- 
+        ft_singleplotER([], erp_tmp{1,1}, erp_tmp{1,2});
+        title(erps{i});
+        legend('easy', 'difficult')
     end
+    
+    % plot over frontal sensors 
+    
+    % plot over parietal sensors 
  
     %% 
     
@@ -308,9 +368,4 @@ for subI = 1:nsubs
     
   
 end % end of subject loop
-
-
-
-
-
 
