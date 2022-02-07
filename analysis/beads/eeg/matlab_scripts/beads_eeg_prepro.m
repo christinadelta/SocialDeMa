@@ -27,7 +27,7 @@
 % suggestions)
 
 % TODO:
-% 1). Visualise ERPs in different ways
+% 1). Visualise ERPs in different ways (check)
 % 2). Run stats
 % 3). Extract Frequences 
 
@@ -268,7 +268,8 @@ for subI = 1:nsubs
     
     data.trialinfo = trlinfo; clear tlrinfo 
     
-    % run second ERP analysis
+    % run third ERP analysis using 2 conditions (easy vs diff for each
+    % sequence)
     for cond = 1:totalconds
         for block = 1:blocks
             for trial = 1:blocktrials
@@ -281,12 +282,12 @@ for subI = 1:nsubs
                 if ~isempty(tmp)
                     
                     cfg.trials                      = tmp;
-                    timelock{cond,block,trial}   = ft_timelockanalysis(cfg, data);
+                    timelock{cond,block,trial}      = ft_timelockanalysis(cfg, data);
                     
                     % baseline correction
                     cfg                             = [];
                     cfg.baseline                    = [-0.2 0];
-                    timelock{cond,block,trial}   = ft_timelockbaseline(cfg, timelock{cond,block,trial});
+                    timelock{cond,block,trial}      = ft_timelockbaseline(cfg, timelock{cond,block,trial});
   
                 end % end of if
             end % end of trials
@@ -300,9 +301,42 @@ for subI = 1:nsubs
         % the conditions)
         averagedERPSecond{cond,:} = timelock; clear timelock tmp % this is the second averaged ERP analysis whith 2 conds
         
-    end % end of condos 
+    end % end of conds loop
     
-    % 3) Run ERPs analysis: 1 averaged ERP for draws 1:end-1 (first draw until last-1) & 1 averaged
+    % 3) Run 3rd ERP analysis where you average all diff epochs and all easy
+    % epochs. This will probs be used only for visualising (2 epochs/trials- easy/diff). 
+    for cond = 1:totalconds 
+        
+        cond_all    = 0;
+        cnt         = 0;
+        
+        for block = 1:blocks
+            for trial = 1:blocktrials
+                
+                cfg                                 = [];
+                cfg.lpfilter                        = 'yes';
+                cfg.lpfreq                          = 40;
+                tmp                                 = find(data.trialinfo(:,4) == cond & data.trialinfo(:,3) == block & data.trialinfo(:,2) == trial);
+                
+                if ~isempty(tmp)
+                    
+                    % store tmp indexes of this cond/trial to cond_all
+                    tmp_length                      = length(tmp);
+                    cond_all(cnt+1:cnt+tmp_length)  = tmp;
+                    cnt                             = cnt + tmp_length;
+                end 
+            end % end of trials loop
+        end % end of blocks loop
+        
+        cfg.trials                  = cond_all;
+        timelock{cond}              = ft_timelockanalysis(cfg, data);
+        clear cond_all cnt tmp_length tmp
+    
+    end % end of conds loop
+    
+    twocondsERPs_avr = timelock; clear timelock
+
+    % 4) Run ERPs analysis: 1 averaged ERP for draws 1:end-1 (first draw until last-1) & 1 averaged
     % ERP end (last draw) across all sequences/trials for each condition
     % (easy, difficult). For this we first need to make
     % sure that for each condition (easy, diff) we get 2 ERPs; so, let's
@@ -321,45 +355,43 @@ for subI = 1:nsubs
         for block = 1:blocks
             for trial = 1:blocktrials
                 
-                tmp                 = find(data.trialinfo(:,4) == cond & data.trialinfo(:,3) == block & data.trialinfo(:,2) == trial);
+                tmp                     = find(data.trialinfo(:,4) == cond & data.trialinfo(:,3) == block & data.trialinfo(:,2) == trial);
                 
                 % if tmp is not empty for this cond/block/trial, split the
                 % draws/epochs in [1:end-1] and [end]
                 if ~isempty(tmp)
                     
-                    t               = length(tmp)-1; 
+                    t                   = length(tmp)-1; 
                     tmp_first(c+1:c+t)  = tmp(1:end-1); 
-                    tmp_last(:,l)   = tmp(end);
+                    tmp_last(:,l)       = tmp(end);
                     
                     % update counter and l
-                    c               = c + t;
-                    l               = l + 1;
+                    c                   = c + t;
+                    l                   = l + 1;
                     
                 end
-
             end % end of trials loop
-
         end % end of blocks loop
         
         % run timelock/ERP analysis on the trials [1:end-1] for
         % this condition and this block
         cfg.trials                  = tmp_first;
-        timelock_first{cond}  = ft_timelockanalysis(cfg, data);
+        timelock_first{cond}        = ft_timelockanalysis(cfg, data);
 
         % baseline correction
         cfg                         = [];
         cfg.baseline                = [-0.2 0];
-        timelock_first{cond}  = ft_timelockbaseline(cfg, timelock_first{cond});
+        timelock_first{cond}        = ft_timelockbaseline(cfg, timelock_first{cond});
 
         % run timelock/ERP analysis on the trials [end/last] for
         % this condition and this block
         cfg.trials                  = tmp_last;
-        timelock_last{cond}   = ft_timelockanalysis(cfg, data);
+        timelock_last{cond}         = ft_timelockanalysis(cfg, data);
 
         % baseline correction
         cfg                         = [];
         cfg.baseline                = [-0.2 0];
-        timelock_last{cond}   = ft_timelockbaseline(cfg, timelock_last{cond});
+        timelock_last{cond}         = ft_timelockbaseline(cfg, timelock_last{cond});
         
         % clear temporal variables to re-initialise them for the next
         % condition 
@@ -387,9 +419,11 @@ for subI = 1:nsubs
     % sensors 
     % load(['beads_analysis/erps/beads_sub_', num2str(subI),  '_erps_averaged_'], 'averagedERPs');
     
-    % plot [all but last and last draw] ERPs for each condition over all sensors
-    erps = {'AllButLast', 'Last'};
+    % define new variables 
+    erps        = {'AllButLast', 'Last'};
+    condtrials  = blocktrials * totalconds;
     
+    % plot [all but last and last draw] ERPs for each condition over all sensors
     figure
     for i = 1:2
         
@@ -401,10 +435,55 @@ for subI = 1:nsubs
         legend('easy', 'difficult')
     end
     
-    % plot over frontal sensors 
+    % ------------------------------------
+    % a) plot over frontal sensors (diff vs easy) averaged ERPs
+    cfg = [];
+    cfg.channel = {'F1', 'F3', 'F5', 'F7', 'Fz', 'F2', 'F4', 'F6', 'F8'};
+    figure; 
+    ft_singleplotER(cfg, twocondsERPs_avr{1,1}, twocondsERPs_avr{1,2})
+    legend('easy', 'difficult')
+
+    % b) plot over parietal sensors (diff vs easy) averaged ERPs
+    cfg = [];
+    cfg.channel = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
+    figure; 
+    ft_singleplotER(cfg, twocondsERPs_avr{1,1}, twocondsERPs_avr{1,2})
+    legend('easy', 'difficult')
+
+    % -------------------------------------------
+    % c) plot [all draws - last] vs last draw for easy cond (over frontal
+    % electrodes)
+    cfg = [];
+    cfg.channel = {'F1', 'F3', 'F5', 'F7', 'Fz', 'F2', 'F4', 'F6', 'F8'};
+    figure; 
+    ft_singleplotER(cfg, timelock_all{1,1}{1,1}, timelock_all{1,1}{1,2})
+    legend('allButLast', 'last')
     
-    % plot over parietal sensors
+    % d) plot [all draws - last] vs last draw for easy cond (over frontal
+    % electrodes)
+    cfg = [];
+    cfg.channel = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
+    figure; 
+    ft_singleplotER(cfg, timelock_all{1,1}{1,1}, timelock_all{1,1}{1,2})
+    legend('allButLast', 'last')
     
+    % e) plot [all draws - last] vs last draw for diff cond (over frontal
+    % electrodes)
+    cfg = [];
+    cfg.channel = {'F1', 'F3', 'F5', 'F7', 'Fz', 'F2', 'F4', 'F6', 'F8'};
+    figure; 
+    ft_singleplotER(cfg, timelock_all{2,1}{1,1}, timelock_all{2,1}{1,2})
+    legend('allButLast', 'last')
+    
+    % f) plot [all draws - last] vs last draw for diff cond (over parietal
+    % electrodes)
+    cfg = [];
+    cfg.channel = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
+    figure; 
+    ft_singleplotER(cfg, timelock_all{2,1}{1,1}, timelock_all{2,1}{1,2})
+    legend('allButLast', 'last')
+    
+    % ----------------------------------------------------------
     % plot ERPs on interactive mode (plot all but last for easy cond)
     cfg = [];
     cfg.layout  = 'biosemi64.lay';
@@ -417,6 +496,11 @@ for subI = 1:nsubs
     cfg.interactive = 'yes';
     figure; ft_multiplotER(cfg, timelock_all{1,1}{1,2})
  
+    %% Time-Frequency Analysis (TFR)
+    
+    
+    
+    
     %% Compute contrasts 
     
     % first compute contrasts for averaged trials/sequences (easy vs diff)
