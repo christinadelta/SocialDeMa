@@ -2,7 +2,7 @@
 
 % christinadelta 
 % Date: Jan 2022
-% last Update 10/02/2022
+% last Update 20/02/2022
 
 % final preprocessing and analyses of the EEG data - beads task using
 % FIELDTRIP 
@@ -28,9 +28,9 @@
 % suggestions)
 
 % TODO:
-% 1). Visualise ERPs in different ways (check)
+% 1). Visualise ERPs in different ways (done)
 % 2). Run stats
-% 3). Extract Frequences 
+% 3). Extract Frequences (done)
 
 %% Define paths and variables 
 
@@ -179,24 +179,29 @@ for subI = 1:nsubs
         cfg.trl             = trl;
         alldata             = ft_preprocessing(cfg);
         redata.alldata      = alldata; % update data struct
+        clear cfg.trl
         
         cfg.trl             = trl_easy;
         easy_data           = ft_preprocessing(cfg);
         redata.easy_data    = easy_data;
+        clear cfg.trl
         
         cfg.trl             = trl_diff;
         diff_data           = ft_preprocessing(cfg);
         redata.diff_data    = diff_data;
+        clear cfg.trl
         
         cfg.trl             = first_trl;
         first_data          = ft_preprocessing(cfg);
         redata.first_data   = first_data;
+        clear cfg.trl
         
         cfg.trl             = last_trl;
         last_data           = ft_preprocessing(cfg);
         redata.last_data    = last_data;
         
-        % only keep eeg channels from now on % for all data structures 
+        % only keep eeg channels from now on % for all data structures
+        % [exclude eog and mastoids]
         cfg                 = [];
         cfg.channel         = [1:64];
         
@@ -231,15 +236,20 @@ for subI = 1:nsubs
     %% Append data into one structure
 
     % clear all
+    
 
     % Load the matfiles, seperate them from the data struct and concatenate all blocks 
-   % Load the matfiles and concatenate all blocks 
+    % Load the matfiles and concatenate all blocks 
     for block = 1:blocks
         
+        % if data structure is already in workspace, comment the part disp
+        % and load parts 
         disp(['loading beads_analysis/prepro/beads_preproc_sub_', num2str(subI), '_block_', num2str(block)])
         load(['beads_analysis/prepro/beads_preproc_sub_', num2str(subI), '_block_', num2str(block)], 'data')
         
         partdata(block) = data.alldata;
+        first_data(block)  = data.firstdata;
+        last_data(block)   = data.lastdata;
         
         % visualise the block trials/epochs
 %         cfg                 = [];
@@ -250,6 +260,8 @@ for subI = 1:nsubs
     % Append data
     cfg     = [];
     alldata = ft_appenddata(cfg, partdata(1), partdata(2), partdata(3), partdata(4));
+    all_firstdata   = ft_appenddata(cfg, first_data(1), first_data(2), first_data(3), first_data(4));
+    all_lastdata    = ft_appenddata(cfg, last_data(1), last_data(2), last_data(3), last_data(4));
     
     
     %% Remove artifacts with ICA 
@@ -298,138 +310,51 @@ for subI = 1:nsubs
     
     %% filter data (clean) and run timelock (ERPs) analysis (4 analyses)
     
-    % I will run 4 different ERP analyses only to be able to visualise them
+    % I will run 3 different ERP analyses only to be able to visualise them
     % properly and to explore the data. 
     
-    % The ERPs that will mainly be used from now on are: [averagedERPsSecond, timelock_all]
+    % The ERPs that will mainly be used from now on are: [avgERPtwocond, allButLastERPs, lastERPs]
     
     % 1) Run ERPs analysis: 1 average ERP for each sequence
-    % Average ERP: 1:end (epochs) ( 52 averaged ERPs total) - 4 Conditions   
-    for iCond = 1:nconds
-        for iBlock = 1:blocks
-            for iTrial = 1:blocktrials
-                cfg                                 = [];
-                cfg.lpfilter                        = 'yes';
-                cfg.lpfreq                          = 40;
-                tmp                                 = find(alldata.trialinfo(:,1) == iCond & alldata.trialinfo(:,3) == iBlock & alldata.trialinfo(:,2) == iTrial);
-                
-                if ~isempty(tmp) % if tmp is not empty run timelock analysis on current trial/sequence
-                    cfg.trials                      = tmp;
-                    timelock{iCond,iBlock,iTrial}   = ft_timelockanalysis(cfg, alldata);
-                    
-                    % baseline correction
-                    cfg                             = [];
-                    cfg.baseline                    = [-0.2 0];
-                    timelock{iCond,iBlock,iTrial}   = ft_timelockbaseline(cfg, timelock{iCond,iBlock,iTrial});
-                    
-                end
-            end % end of trials loop
-            
-        end % end of blocks loop
+    % Average ERP: 1:end (epochs) ( 52 averaged ERPs total) - 4 Conditions
+    for icond = 1:nconds 
+        cfg                             = [];
+        cfg.preproc.lpfilter            = 'yes';
+        cfg.preproc.lpfreq              = 40;
+        cfg.trials                      = find(alldata.trialinfo(:,1) == icond);
+        avgERPallcond{icond}            = ft_timelockanalysis(cfg, alldata);
         
-        % remove empty cells from timelock cell
-        timelock(cellfun(@(timelock) any(isempty(timelock)),timelock)) = [];
-        
-        % save timelock for each condition in new cell and clear it (otherwise timelock
-        % cell is flattened using the removal function and I can't separate
-        % the conditions)
-        averagedERPs{iCond,:} = timelock; clear timelock tmp 
-        
-    end % end of conds loop
+        cfg                             = [];
+        cfg.baseline                    = [-0.2 0];
+        avgERPallcond{icond}            = ft_timelockbaseline(cfg, avgERPallcond{icond});
+    end
     
     % 2) Run ERPs analysis: 1 average ERP for each sequence
     % Average ERP: 1:end (epochs) ( 52 averaged ERPs total) - 2 Conditions
-    totalconds  = 2; 
     
-    % add a column of ones and twos for easy difficukt trials in
-    % data.trialinfo
-    trlinfo         = alldata.trialinfo;
-    totaldraws      = length(trlinfo);
+    % add a few more variables 
+    totalconds      = 2; 
+    totaldraws      = length(alldata.trialinfo);
     condtrials      = blocktrials * totalconds;
     
-    for i = 1:totaldraws
-        
-        if trlinfo(i,1) == 1 | trlinfo(i,1) == 2
-            
-            trlinfo(i,4) = 1; % add easy index 
-            
-        elseif trlinfo(i,1) == 3 | trlinfo(i,1) == 4
-            
-            trlinfo(i,4) = 2; % add difficult index 
-        end
-    end
-    
-    data.trialinfo = trlinfo; clear tlrinfo 
-    
-    % run third ERP analysis using 2 conditions (easy vs diff for each
+    % run 2ND ERP analysis using 2 conditions (easy vs diff for each
     % sequence)
-    for thiscond = 1:totalconds
-        for block = 1:blocks
-            for trial = 1:blocktrials
-                
-                cfg                                 = [];
-                cfg.lpfilter                        = 'yes';
-                cfg.lpfreq                          = 40;
-                tmp                                 = find(alldata.trialinfo(:,4) == thiscond & alldata.trialinfo(:,3) == block & alldata.trialinfo(:,2) == trial);
-                
-                if ~isempty(tmp)
-                    
-                    cfg.trials                      = tmp;
-                    timelock{thiscond,block,trial}  = ft_timelockanalysis(cfg, alldata);
-                    
-                    % baseline correction
-                    cfg                             = [];
-                    cfg.baseline                    = [-0.2 0];
-                    timelock{thiscond,block,trial}  = ft_timelockbaseline(cfg, timelock{thiscond,block,trial});
-  
-                end % end of if
-            end % end of trials
-        end % end of blocks
+    for icond = 1:totalconds 
         
-        % remove empty cells from timelock cell
-        timelock(cellfun(@(timelock) any(isempty(timelock)),timelock)) = [];
+        cfg                             = [];
+        cfg.preproc.lpfilter            = 'yes';
+        cfg.preproc.lpfreq              = 40;
+        cfg.trials                      = find(alldata.trialinfo(:,4) == icond);
+        avgERPtwocond{icond}            = ft_timelockanalysis(cfg, alldata);
         
-        % save timelock for each condition in new cell and clear it (otherwise timelock
-        % cell is flattened using the removal function and I can't separate
-        % the conditions)
-        averagedERPSecond{thiscond,:} = timelock; clear timelock tmp % this is the second averaged ERP analysis whith 2 conds
+        cfg                             = [];
+        cfg.baseline                    = [-0.2 0];
+        avgERPtwocond{icond}            = ft_timelockbaseline(cfg, avgERPtwocond{icond});
         
-    end % end of conds loop
-    
-    % 3) Run 3rd ERP analysis where you average all diff epochs and all easy
-    % epochs. This will probs be used only for visualising (2 epochs/trials- easy/diff). 
-    for thiscond = 1:totalconds 
         
-        cond_all    = 0;
-        cnt         = 0;
-        
-        for block = 1:blocks
-            for trial = 1:blocktrials
-                
-                cfg                                 = [];
-                cfg.lpfilter                        = 'yes';
-                cfg.lpfreq                          = 40;
-                tmp                                 = find(alldata.trialinfo(:,4) == thiscond & alldata.trialinfo(:,3) == block & alldata.trialinfo(:,2) == trial);
-                
-                if ~isempty(tmp)
-                    
-                    % store tmp indexes of this cond/trial to cond_all
-                    tmp_length                      = length(tmp);
-                    cond_all(cnt+1:cnt+tmp_length)  = tmp;
-                    cnt                             = cnt + tmp_length;
-                end 
-            end % end of trials loop
-        end % end of blocks loop
-        
-        cfg.trials                  = cond_all;
-        timelock{thiscond}              = ft_timelockanalysis(cfg, alldata);
-        clear cond_all cnt tmp_length tmp
-    
-    end % end of conds loop
-    
-    twocondsERPs_avr                = timelock; clear timelock
+    end   
 
-    % 4) Run ERPs analysis: 1 averaged ERP for draws 1:end-1 (first draw until last-1) & 1 averaged
+    % 3) Run ERPs analysis: 1 averaged ERP for draws 1:end-1 (first draw until last-1) & 1 averaged
     % ERP end (last draw) across all sequences/trials for each condition
     % (easy, difficult). For this we first need to make
     % sure that for each condition (easy, diff) we get 2 ERPs; so, let's
@@ -438,120 +363,136 @@ for subI = 1:nsubs
     % [end] draws. Then run timelock analysis (ERPs) and store in cell for
     % each condition separately.
     
-    for thiscond = 1:totalconds
+    for icond = 1:totalconds
         
-        % init variables
-        tmp_first                       = 0;
-        tmp_last                        = 0;
-        c                               = 0; % counter index
-        l                               = 1; % last draw index
-    
-        for block = 1:blocks
-            for trial = 1:blocktrials
-                
-                tmp                     = find(alldata.trialinfo(:,4) == thiscond & alldata.trialinfo(:,3) == block & alldata.trialinfo(:,2) == trial);
-                
-                % if tmp is not empty for this cond/block/trial, split the
-                % draws/epochs in [1:end-1] and [end]
-                if ~isempty(tmp)
-                    
-                    t                   = length(tmp)-1; 
-                    tmp_first(c+1:c+t)  = tmp(1:end-1); 
-                    tmp_last(:,l)       = tmp(end);
-                    
-                    % update counter and l
-                    c                   = c + t;
-                    l                   = l + 1;
-                    
-                end
-            end % end of trials loop
-        end % end of blocks loop
+        % compute average ERPs for all-but-last draws
+        cfg                             = [];
+        cfg.preproc.lpfilter            = 'yes';
+        cfg.preproc.lpfreq              = 40;
+        cfg.trials                      = find(all_firstdata.trialinfo(:,4) == icond);
+        allButLastERPs{icond}           = ft_timelockanalysis(cfg, all_firstdata);
         
-        % run timelock/ERP analysis on the trials [1:end-1] for
-        % this condition and this block
-        cfg.trials                      = tmp_first;
-        timelock_first{thiscond}        = ft_timelockanalysis(cfg, alldata);
-
-        % baseline correction
         cfg                             = [];
         cfg.baseline                    = [-0.2 0];
-        timelock_first{thiscond}        = ft_timelockbaseline(cfg, timelock_first{thiscond});
-
-        % run timelock/ERP analysis on the trials [end/last] for
-        % this condition and this block
-        cfg.trials                      = tmp_last;
-        timelock_last{thiscond}         = ft_timelockanalysis(cfg, alldata);
-
-        % baseline correction
+        allButLastERPs{icond}           = ft_timelockbaseline(cfg, allButLastERPs{icond});
+        
+        % compute average ERPs for last draws
+        cfg                             = [];
+        cfg.preproc.lpfilter            = 'yes';
+        cfg.preproc.lpfreq              = 40;
+        cfg.trials                      = find(all_lastdata.trialinfo(:,4) == icond);
+        lastERPs{icond}                 = ft_timelockanalysis(cfg, all_lastdata);
+        
         cfg                             = [];
         cfg.baseline                    = [-0.2 0];
-        timelock_last{thiscond}         = ft_timelockbaseline(cfg, timelock_last{thiscond});
-        
-        % clear temporal variables to re-initialise them for the next
-        % condition 
-        clear tmp_first tmp_last tmp c l t 
-
-    end % end of conditions loop
+        lastERPs{icond}                 = ft_timelockbaseline(cfg, lastERPs{icond});
+         
+    end
     
-    timelock_all{1,:}   = timelock_first;
-    timelock_all{2,:}   = timelock_last;
-    
-    
-    clear timelock_first timelock_last allButLast_one allButLast_two last_one last_two
-    
-    % save the averaged [1:end-1] and [last] erp analysis for each subject 
-    save(['beads_analysis/erps/beads_sub_', num2str(subI), '_alldraws_erps'], 'timelock_all')
+    % save timelock analyses in cell for every subject
+    allsubERPallcond{1,subI}            = avgERPallcond;
+    allsubERPtwocond{1,subI}            = avgERPtwocond;
+    allsubfirstERPs{1,subI}             = allButLastERPs;
+    allsublastERPs{1,subI}              = lastERPs;
    
-    % save erp analysis (4 conds)
-    save(['beads_analysis/erps/beads_sub_', num2str(subI),  '_allerps'], 'averagedERPs')
+    % NOTE THAT IN THE TIMELOCK ANALYSIS ABOVE WE DID NOT INCLUDE THE
+    % KEEPTRIALS OPTION WHICH MEANS THAT THE TRIALS ARE BEEING AVERAGED
+    % (THIS IS HELPFUL FOR COMPUTING DIFFERENCE BETWEEN THE CONDITIONS) 
+    % NOW WE CAN ALSO RUN TIMELOCK ANALYSIS AND SAVE ALL TRIALS INSTEAD OF
+    % AVERAGED BY ADDING THE cfg.keeptrials = 'yes' OPTION - these will be
+    % used for between trials stats (1st level)
     
-    % save erp analysis (2 conds)
-    save(['beads_analysis/erps/beads_sub_', num2str(subI),  '_allerps_second'], 'averagedERPSecond')
+    % 1) Run ERPs analysis: 4 Conditions
+    for icond = 1:nconds 
+        cfg                             = [];
+        cfg.preproc.lpfilter            = 'yes';
+        cfg.preproc.lpfreq              = 40;
+        cfg.keeptrials                  = 'yes';
+        cfg.trials                      = find(alldata.trialinfo(:,1) == icond);
+        ERPallcond{icond}               = ft_timelockanalysis(cfg, alldata);
+        
+        cfg                             = [];
+        cfg.baseline                    = [-0.2 0];
+        ERPallcond{icond}               = ft_timelockbaseline(cfg, ERPallcond{icond});
+    end
     
-    % save averaged erps (2 conds) analysis
-    save(['beads_analysis/erps/beads_sub_', num2str(subI),  '_erps_avr'], 'twocondsERPs_avr')
+    % 2) Run ERPs analysis: 2 Conditions
+    for icond = 1:totalconds 
+        
+        cfg                             = [];
+        cfg.preproc.lpfilter            = 'yes';
+        cfg.preproc.lpfreq              = 40;
+        cfg.keeptrials                  = 'yes';
+        cfg.trials                      = find(alldata.trialinfo(:,4) == icond);
+        ERPtwocond{icond}               = ft_timelockanalysis(cfg, alldata);
+        
+        cfg                             = [];
+        cfg.baseline                    = [-0.2 0];
+        ERPtwocond{icond}               = ft_timelockbaseline(cfg, ERPtwocond{icond});
+        
+        
+    end   
+
+    % 3) Run ERPs analysis: 1 averaged ERP for draws 1:end-1 (first draw until last-1) & 1 averaged
+    % ERP end (last draw) across all sequences/trials for each condition
+    % (easy, difficult).
+    for icond = 1:totalconds
+        
+        % compute average ERPs for all-but-last draws
+        cfg                             = [];
+        cfg.preproc.lpfilter            = 'yes';
+        cfg.preproc.lpfreq              = 40;
+        cfg.keeptrials                  = 'yes';
+        cfg.trials                      = find(all_firstdata.trialinfo(:,4) == icond);
+        allfirstERPs{icond}             = ft_timelockanalysis(cfg, all_firstdata);
+        
+        cfg                             = [];
+        cfg.baseline                    = [-0.2 0];
+        allfirstERPs{icond}             = ft_timelockbaseline(cfg, allfirstERPs{icond});
+        
+        % compute average ERPs for last draws
+        cfg                             = [];
+        cfg.preproc.lpfilter            = 'yes';
+        cfg.preproc.lpfreq              = 40;
+        cfg.keeptrials                  = 'yes';
+        cfg.trials                      = find(all_lastdata.trialinfo(:,4) == icond);
+        alllastERPs{icond}              = ft_timelockanalysis(cfg, all_lastdata);
+        
+        cfg                             = [];
+        cfg.baseline                    = [-0.2 0];
+        alllastERPs{icond}              = ft_timelockbaseline(cfg, alllastERPs{icond});
+         
+    end
     
-    %% Plot the ERPs 
+    % save the ERPs in a cell for all subjects
+    allsubs_ERPallcond_keeptrials{1,subI}   = ERPallcond;
+    allsubs_ERPtwocond_keeptrials{1,subI}   = ERPtwocond;
+    allsubs_allfirstERPs_keeptrials{1,subI} = allfirstERPs;
+    allsubs_alllastERPs_keeptrials{1,subI}  = alllastERPs;
+
     
-    % load the data (if needed) and plot the ERPs over all sensors, over parietal sensors, over frontal
-    % sensors 
-    % load(['beads_analysis/erps/beads_sub_', num2str(subI),  '_erps_averaged_'], 'averagedERPs');
-    
-    % define new variables 
-    erps        = {'AllButLast', 'Last'};
-    
-%    % plot [all but last and last draw] ERPs for each condition over all sensors
-%     figure
-%     for i = 1:2
-%         
-%         erp_tmp = timelock_all{i};
-%         
-%         subplot(2,2,i)
-%         ft_singleplotER([], erp_tmp{1,1}, erp_tmp{1,2});
-%         title(erps{i});
-%         legend('easy', 'difficult')
-%     end
+    %% Plot the ERPs
     
     % ------------------------------------
     % a) plot over frontal sensors (diff vs easy) averaged ERPs
     cfg = [];
     cfg.channel = {'F1', 'F3', 'F5', 'F7', 'Fz', 'F2', 'F4', 'F6', 'F8'};
     figure; 
-    ft_singleplotER(cfg, twocondsERPs_avr{1,1}, twocondsERPs_avr{1,2})
+    ft_singleplotER(cfg, avgERPtwocond{1,1}, avgERPtwocond{1,2})
     title('forntal channels averaged ERPs')
     legend('easy', 'difficult')
     
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_fig1_avrERP'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_fig1_avrERP_frontal'])
 
     % b) plot over parietal sensors (diff vs easy) averaged ERPs
     cfg = [];
     cfg.channel = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
     figure; 
-    ft_singleplotER(cfg, twocondsERPs_avr{1,1}, twocondsERPs_avr{1,2})
+    ft_singleplotER(cfg, avgERPtwocond{1,1}, avgERPtwocond{1,2})
     title('parietal channels averaged ERPs')
     legend('easy', 'difficult')
     
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_fig2_avrERP'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_fig2_avrERP_parietal'])
 
     % -------------------------------------------
     % c) plot [all draws - last] vs last draw for easy cond (over frontal
@@ -559,58 +500,58 @@ for subI = 1:nsubs
     cfg = [];
     cfg.channel = {'F1', 'F3', 'F5', 'F7', 'Fz', 'F2', 'F4', 'F6', 'F8'};
     figure; 
-    ft_singleplotER(cfg, timelock_all{1,1}{1,1}, timelock_all{2,1}{1,1})
+    ft_singleplotER(cfg, allButLastERPs{1,1}, lastERPs{1,1})
     title('all draws but last vs last draw easy-frontal')
     legend('allButLast', 'last')
     
     % save figures
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_frontal_easy_mainERPs'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_frontal_easy_allButLastERPs'])
 
     % d) plot [all draws - last] vs last draw for easy cond (over parietal
     % electrodes)
     cfg = [];
     cfg.channel = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
     figure; 
-    ft_singleplotER(cfg, timelock_all{1,1}{1,1}, timelock_all{2,1}{1,1})
+    ft_singleplotER(cfg, allButLastERPs{1,1}, lastERPs{1,1})
     title('all draws but last vs last draw easy-parietal')
     legend('allButLast', 'last')
     
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_parietal_easy_mainERPs'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_parietal_easy_allButLastERPs'])
     
     % e) plot [all draws - last] vs last draw for diff cond (over frontal
     % electrodes)
     cfg = [];
     cfg.channel = {'F1', 'F3', 'F5', 'F7', 'Fz', 'F2', 'F4', 'F6', 'F8'};
     figure; 
-    ft_singleplotER(cfg, timelock_all{1,1}{1,2}, timelock_all{2,1}{1,2})
+    ft_singleplotER(cfg, allButLastERPs{1,2}, lastERPs{1,2})
     title('all draws but last vs last draw diff-frontal')
     legend('allButLast', 'last')
     
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_frontal_diff_mainERPs'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_frontal_diff_allButLastERPs'])
     
     % f) plot [all draws - last] vs last draw for diff cond (over parietal
     % electrodes)
     cfg = [];
     cfg.channel = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
     figure; 
-    ft_singleplotER(cfg, timelock_all{1,1}{1,2}, timelock_all{2,1}{1,2})
+    ft_singleplotER(cfg, allButLastERPs{1,2}, lastERPs{1,2})
     title('all draws but last vs last draw diff-parietal')
     legend('allButLast', 'last')
     
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_parietal_diff_mainERPs'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_parietal_diff_allButLastERPs'])
     
     % ----------------------------------------------------------
     % plot ERPs on interactive mode (plot all but last and last for easy cond)
     cfg = [];
     cfg.layout  = 'biosemi64.lay';
     cfg.interactive = 'yes';
-    figure; ft_multiplotER(cfg, timelock_all{1,1}{1,1}, timelock_all{2,1}{1,1})
+    figure; ft_multiplotER(cfg, allButLastERPs{1,1}, lastERPs{1,1})
     
     % plot ERPs on interactive mode (plot all but last and last draws for diff cond)
     cfg = [];
     cfg.layout  = 'biosemi64.lay';
     cfg.interactive = 'yes';
-    figure; ft_multiplotER(cfg, timelock_all{1,1}{1,2}, timelock_all{2,1}{1,2})
+    figure; ft_multiplotER(cfg, allButLastERPs{1,2}, lastERPs{1,2})
     
     % -----------------------------------------------------------------
     % maybe plot main ERPs in topoplots?
@@ -621,10 +562,10 @@ for subI = 1:nsubs
     cfg.layout  = 'biosemi64.lay';
     cfg.parameter = 'avg';
     cfg.interactive = 'yes';
-    figure; ft_topoplotER(cfg, timelock_all{1,1}{1,1}); colorbar
+    figure; ft_topoplotER(cfg, allButLastERPs{1,1}); colorbar
     
     % save
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_allbutlast_easy_topo'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_allbutlast_easy_topo'])
     
     % Last, Easy
     cfg = [];
@@ -632,9 +573,9 @@ for subI = 1:nsubs
     cfg.layout  = 'biosemi64.lay';
     cfg.parameter = 'avg';
     cfg.interactive = 'yes';
-    figure; ft_topoplotER(cfg, timelock_all{2,1}{1,1}); colorbar
+    figure; ft_topoplotER(cfg, lastERPs{1,1}); colorbar
     
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_last_easy_topo'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_last_easy_topo'])
     
     % ALL but last, DIFF
     cfg = [];
@@ -642,10 +583,10 @@ for subI = 1:nsubs
     cfg.layout  = 'biosemi64.lay';
     cfg.parameter = 'avg';
     cfg.interactive = 'yes';
-    figure; ft_topoplotER(cfg, timelock_all{1,1}{1,2}); colorbar
+    figure; ft_topoplotER(cfg, allButLastERPs{1,2}); colorbar
     
     % save
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_allbutlast_diff_topo'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_allbutlast_diff_topo'])
     
     % Last, DIFF
     cfg = [];
@@ -653,11 +594,90 @@ for subI = 1:nsubs
     cfg.layout  = 'biosemi64.lay';
     cfg.parameter = 'avg';
     cfg.interactive = 'yes';
-    figure; ft_topoplotER(cfg, timelock_all{2,1}{1,2}); colorbar
+    figure; ft_topoplotER(cfg, lastERPs{1,2}); colorbar
     
     % save
-    print(gcf, '-dpng', ['beads_analysis/figures/beads_sub', num2str(subI), '_last_diff_topo'])
+    print(gcf, '-dpng', ['beads_analysis/figures/erps/beads_sub', num2str(subI), '_last_diff_topo'])
+    
+    % -------------------------------------------------------
+    % Plot the difference between easy and diff trials over frontal &
+    % partietal sensors
+    cfg                     = [];
+    cfg.operation           = 'x2-x1';
+    cfg.parameter           = 'avg';
+    difference_condwave     = ft_math(cfg, avgERPtwocond{1,1}, avgERPtwocond{1,2});
+    
+    % plot over frontal sensors
+    cfg = [];
+    cfg.channel = {'F1', 'F3', 'F5', 'F7', 'Fz', 'F2', 'F4', 'F6', 'F8'};
+    figure; 
+    ft_singleplotER(cfg, difference_condwave)
+    title('forntal channels difference in averaged ERPs')
+    
+    print(gcf, '-dpng', ['beads_analysis/figures/averages/beads_sub', num2str(subI), '_fig1_differenceERPavg_twoconds'])
+    
+    % plot over parietal sensors 
+    cfg = [];
+    cfg.channel = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
+    figure; 
+    ft_singleplotER(cfg, difference_condwave)
+    title('parietal channels difference in averaged ERPs')
+    
+    print(gcf, '-dpng', ['beads_analysis/figures/averages/beads_sub', num2str(subI), '_fig2_differenceERPavg_twoconds'])
+    
+    % show difference between conditions in time as a movie
+    figure
+    cfg        = [];
+    cfg.layout = 'biosemi64.lay';
+    ft_movieplotER(cfg, difference_condwave); colorbar
 
+    % -------------------------------------------------------
+    % Plot the difference between all-but-last and last draws (for easy and diff trials) over frontal &
+    % partietal sensors
+    
+    % first calculate the differences for all-but-last vs last draws ERPs
+    % for easy and diff trials
+    cfg                     = [];
+    cfg.operation           = 'x2-x1';
+    cfg.parameter           = 'avg';
+    difference_wave_one     = ft_math(cfg, allButLastERPs{1,1}, lastERPs{1,1}); % for easy trials 
+    difference_wave_two     = ft_math(cfg, allButLastERPs{1,2}, lastERPs{1,2}); % for diff trials 
+    
+    % plot over frontal sensors
+    cfg = [];
+    cfg.channel = {'F1', 'F3', 'F5', 'F7', 'Fz', 'F2', 'F4', 'F6', 'F8'};
+    figure; 
+    ft_singleplotER(cfg, difference_wave_one, difference_wave_two)
+    title('forntal channels difference in all-but-last vs last ERPs')
+    legend('easy', 'difficult')
+    
+    print(gcf, '-dpng', ['beads_analysis/figures/averages/beads_sub', num2str(subI), '_fig1_differenceERPallbutlast_vs_last'])
+    
+    % plot over parietal sensors 
+    cfg = [];
+    cfg.channel = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
+    figure; 
+    ft_singleplotER(cfg, difference_wave_one, difference_wave_two)
+    title('parietal channels difference in all-but-last vs last ERPs')
+    legend('easy', 'difficult')
+    
+    print(gcf, '-dpng', ['beads_analysis/figures/averages/beads_sub', num2str(subI), '_fig2_differenceERPallbutlast_vs_last'])
+    
+    % plot diferences as a movie
+    % differences between all-but-last vs last draw ERPs for easy cond
+    figure
+    cfg        = [];
+    cfg.layout = 'biosemi64.lay';
+    ft_movieplotER(cfg, difference_wave_one); colorbar
+    
+    % differences between all-but-last vs last draw ERPs for diff cond
+    figure
+    cfg        = [];
+    cfg.layout = 'biosemi64.lay';
+    ft_movieplotER(cfg, difference_wave_two); colorbar
+    
+    
+    
     %% Time-Frequency Representation Analysis (TFR)
     
     % For TFR analysis I will need to use the "partdata" structure (the
@@ -677,21 +697,17 @@ for subI = 1:nsubs
     for blocki = 1:blocks
         
         % load structure 
-        disp(['loading beads_analysis/prepro/beads_preproc_sub_', num2str(subI), '_block_', num2str(block)])
-        load(['beads_analysis/prepro/beads_preproc_sub_', num2str(subI), '_block_', num2str(block)], 'data')
+        disp(['loading beads_analysis/prepro/beads_preproc_sub_', num2str(subI), '_block_', num2str(blocki)])
+        load(['beads_analysis/prepro/beads_preproc_sub_', num2str(subI), '_block_', num2str(blocki)], 'data')
 
         easy_data(blocki)   = data.easydata;
         diff_data(blocki)   = data.diffdata;
-        first_data(blocki)  = data.firstdata;
-        last_data(blocki)   = data.lastdata;
-        
+
     end
     
     cfg             = [];
     all_easydata    = ft_appenddata(cfg, easy_data(1), easy_data(2), easy_data(3), easy_data(4));
     all_diffdata    = ft_appenddata(cfg, diff_data(1), diff_data(2), diff_data(3), diff_data(4));
-    all_firstdata   = ft_appenddata(cfg, first_data(1), first_data(2), first_data(3), first_data(4));
-    all_lastdata    = ft_appenddata(cfg, last_data(1), last_data(2), last_data(3), last_data(4));
     
     % ---------------------------
     % run TFR for Group 1 conditions
@@ -705,7 +721,11 @@ for subI = 1:nsubs
     cfg.toi        = 'all'; % for computation efficiency use 'all'
     TFRwave_easy   = ft_freqanalysis(cfg, all_easydata);
     TFRwave_diff   = ft_freqanalysis(cfg, all_diffdata);
-%     
+    
+    % save mat files in all subs cell 
+    allsub_TFReasy{1,subI} = TFRwave_easy;
+    allsub_TFRdiff{1,subI} = TFRwave_diff;
+    
     
     cfg = [];
     cfg.baseline     = [-0.2 0];
@@ -713,7 +733,22 @@ for subI = 1:nsubs
     cfg.marker       = 'on';
     cfg.showlabels   = 'yes';
     cfg.layout       = 'biosemi64.lay';
-    figure; ft_multiplotTFR(cfg, TFRwave_easy); ft_multiplotTFR(cfg, TFRwave_diff);
+    figure; ft_multiplotTFR(cfg, TFRwave_easy); ft_multiplotTFR(cfg, TFRwave_diff); colorbar;
+    
+    % single plot 
+    cfg = [];
+    cfg.baseline     = [-0.2 0];
+    cfg.baselinetype = 'absolute';
+    cfg.marker       = 'on';
+    cfg.maskstyle        = 'saturation';
+    cfg.channel      = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
+    cfg.layout       = 'biosemi64.lay';
+    
+    figure; ft_singleplotTFR(cfg, TFRwave_easy); colorbar;
+    print(gcf, '-dpng', ['beads_analysis/figures/tfr/beads_sub', num2str(subI), '_tfr_easy'])
+    
+    figure; ft_singleplotTFR(cfg, TFRwave_diff); colorbar;
+    print(gcf, '-dpng', ['beads_analysis/figures/tfr/beads_sub', num2str(subI), '_tfr_diff'])
     
     % ---------------------------
     % run TFR for Group 2 conditions
@@ -725,9 +760,12 @@ for subI = 1:nsubs
     cfg.output     = 'pow';
     cfg.foi        = 1:1:30;
     cfg.toi        = 'all'; % for computation efficiency use 'all'
-    TFRwave_first   = ft_freqanalysis(cfg, all_firstdata);
+    TFRwave_first  = ft_freqanalysis(cfg, all_firstdata);
     TFRwave_last   = ft_freqanalysis(cfg, all_lastdata);
-%     
+    
+    % save mat files in all subs cell 
+    allsub_TFRfirst{1,subI}     = TFRwave_first;
+    allsub_TFRlast{1,subI}      = TFRwave_last;
     
     cfg = [];
     cfg.baseline     = [-0.2 0];
@@ -735,23 +773,1078 @@ for subI = 1:nsubs
     cfg.marker       = 'on';
     cfg.showlabels   = 'yes';
     cfg.layout       = 'biosemi64.lay';
-    figure; ft_multiplotTFR(cfg, TFRwave_first); ft_multiplotTFR(cfg, TFRwave_last);
-
-   
-
-   
+    figure; ft_multiplotTFR(cfg, TFRwave_first); colorbar; ft_multiplotTFR(cfg, TFRwave_last); colorbar;
     
-  
-    %% Compute contrasts 
+    % single plots 
+    cfg = [];
+    cfg.baseline     = [-0.2 0];
+    cfg.baselinetype = 'absolute';
+    cfg.marker       = 'on';
+    cfg.maskstyle        = 'saturation';
+    cfg.channel      = {'P1', 'P3', 'P5', 'P7', 'P9', 'Pz', 'P2', 'P4', 'P6', 'P8', 'P10'};
+    cfg.layout       = 'biosemi64.lay';
     
-    % first compute contrasts for averaged trials/sequences (easy vs diff)
+    figure; ft_singleplotTFR(cfg, TFRwave_first); colorbar;
+    print(gcf, '-dpng', ['beads_analysis/figures/tfr/beads_sub', num2str(subI), '_tfr_all_but_last'])
     
+    figure; ft_singleplotTFR(cfg, TFRwave_last); colorbar;
+    print(gcf, '-dpng', ['beads_analysis/figures/tfr/beads_sub', num2str(subI), '_tfr_last'])
     
-    
-    
-    %% Compute statistics (contrasts)
-    
-    
-  
 end % end of subject loop
+
+%% Save all sub cell files for later subject-level & group-level analyses
+
+% save all subjects ERP analyes 
+save('beads_analysis/erps/beads_allsubsAllCondsERPs', 'allsubERPallcond')
+save('beads_analysis/erps/beads_allsubsTwoCondsERPs', 'allsubERPtwocond')
+save('beads_analysis/erps/beads_allsubsAllButLastERPs', 'allsubfirstERPs')
+save('beads_analysis/erps/beads_allsubsLastERPs', 'allsublastERPs')
+
+save('beads_analysis/erps/beads_allsubs_keeptrialsAllERPs', 'allsubs_ERPallcond_keeptrials')
+save('beads_analysis/erps/beads_allsubs_keeptrialsTwoERPs', 'allsubs_ERPtwocond_keeptrials')
+save('beads_analysis/erps/beads_allsubs_keeptrialsFirstERPs', 'allsubs_allfirstERPs_keeptrials')
+save('beads_analysis/erps/beads_allsubs_keeptrialsLastERPs', 'allsubs_alllastERPs_keeptrials')
+
+% save all subjects TFR analyes 
+save('beads_analysis/tfr/beads_allsubs_tfrEasy', 'allsub_TFReasy')
+save('beads_analysis/tfr/beads_allsubs_tfrDiff', 'allsub_TFRdiff')
+save('beads_analysis/tfr/beads_allsubs_tfrFirst', 'allsub_TFRfirst')
+save('beads_analysis/tfr/beads_allsubs_tfrLast', 'allsub_TFRlast')
+
+
+%% Run ERP statistics (between-trials/first level)
+
+% 
+load('beads_analysis/erps/beads_allsubs_keeptrialsAllERPs', 'allsubs_ERPallcond_keeptrials')
+load('beads_analysis/erps/beads_allsubs_keeptrialsTwoERPs', 'allsubs_ERPtwocond_keeptrials')
+load('beads_analysis/erps/beads_allsubs_keeptrialsFirstERPs', 'allsubs_allfirstERPs_keeptrials')
+load('beads_analysis/erps/beads_allsubs_keeptrialsLastERPs', 'allsubs_alllastERPs_keeptrials')
+
+% ------------------------------
+% Run statitics at the trial-level for each subject first 
+% Claster-based permutation tests will be used to look at differences
+% between conditions: (easy vs diff) and draws: (all-but-last vs last darw)
+
+% extract current subject mat file from a given cell loaded above and run
+% analysis
+for sub = 1:nsubs 
+    
+    % load the original easy and difficult data for current sub 
+    for blocki = 1:blocks
+        
+        % load structure 
+        disp(['loading beads_analysis/prepro/beads_preproc_sub_', num2str(sub), '_block_', num2str(blocki)])
+        load(['beads_analysis/prepro/beads_preproc_sub_', num2str(sub), '_block_', num2str(blocki)], 'data')
+
+        easy_data(blocki)   = data.easydata;
+        diff_data(blocki)   = data.diffdata;
+
+    end
+    
+    cfg                     = [];
+    all_easydata            = ft_appenddata(cfg, easy_data(1), easy_data(2), easy_data(3), easy_data(4));
+    all_diffdata            = ft_appenddata(cfg, diff_data(1), diff_data(2), diff_data(3), diff_data(4));
+    
+    % run cluster-based permutations using the monte-carlo method for easy
+    % vs difficult trials/epochs for each subject seperately 
+    thissub_twocondERPs     = allsubs_ERPtwocond_keeptrials{1,sub};
+    
+    condeasy                = thissub_twocondERPs{1,1};
+    conddiff                = thissub_twocondERPs{1,2};
+    
+    % create the neighbours structure which will be critical to compute
+    % stats
+    cfg_neighb              = [];
+    cfg_neighb.layout       = 'biosemi64.lay'; %in meters
+    cfg_neighb.method       = 'distance';
+    neighbours              = ft_prepare_neighbours(cfg_neighb, all_easydata);
+    
+    cfg                     = [];
+    cfg.neighbours          = neighbours;   % the neighbours specify for each sensor with
+                                            % which other sensors it can form clusters
+    cfg.channel             = 'all';        % cell-array with selected channel labels
+    cfg.latency             = [0.3 0.6];    % time interval over which the experimental
+                                            % conditions must be compared (in seconds)
+
+    % permutation tests
+    cfg.method              = 'montecarlo';     % use the Monte Carlo Method to calculate the significance probability
+    cfg.statistic           = 'indepsamplesT';  % use the independent samples T-statistic as a measure to
+                                                % evaluate the effect at the sample level
+    cfg.correctm            = 'cluster';
+    cfg.clusteralpha        = 0.05;         % alpha level of the sample-specific test statistic that
+                                            % will be used for thresholding
+    cfg.clusterstatistic    = 'maxsum';     % test statistic that will be evaluated under the
+                                            % permutation distribution.
+    cfg.minnbchan           = 2;            % minimum number of neighborhood channels that is
+                                            % required for a selected sample to be included
+                                            % in the clustering algorithm (default=0).
+    cfg.tail                = 0;            % -1, 1 or 0 (default = 0); one-sided or two-sided test
+    cfg.clustertail         = 0;
+    cfg.alpha               = 0.025;        % alpha level of the permutation test (if two-sided set to 0.025)
+    cfg.numrandomization    = 1000;         % number of draws from the permutation distribution
+
+    n_easy                  = size(condeasy.trial,1);
+    n_diff                  = size(conddiff.trial,1);
+    
+    cfg.design              = [ones(1,n_diff), ones(1,n_easy)*2]; % design matrix
+    cfg.ivar                = 1; % number or list with indices indicating the independent variable(s)
+
+    % run stats 
+    [stat]               = ft_timelockstatistics(cfg, conddiff, condeasy);
+    
+    %%% -------------------------------------------------------------- %%%
+    % Make a vector of all p-values associated with the clusters from ft_timelockstatistics.
+    pos_cluster_pvals = [stat.posclusters(:).prob];
+
+    % Then, find which clusters are deemed interesting to visualize, here we use a cutoff criterion based on the
+    % cluster-associated p-value, and take a 5% two-sided cutoff (i.e. 0.025 for the positive and negative clusters,
+    % respectively
+    pos_clust = find(pos_cluster_pvals < 0.025);
+    pos       = ismember(stat.posclusterslabelmat, pos_clust);
+
+
+    % and now for the negative clusters...
+    neg_cluster_pvals = [stat.negclusters(:).prob];
+    neg_clust         = find(neg_cluster_pvals < 0.025);
+    neg               = ismember(stat.negclusterslabelmat, neg_clust);
+
+    % if any positive cluster survived the cutoff.. loop over all sig positive clusters
+    if ~isempty(pos_clust)
+        for i=pos_clust
+            
+            cfg=[];
+            cfg.highlight = 'on';
+            cfg.zparam    = 'stat';
+            cfg.layout    = 'biosemi64.lay';
+            cfg.style     = 'straight';
+            cfg.gridscale = 500;
+
+            % find the significant time range for this cluster
+            tmp=[];
+            for t = 1:length(stat.time)
+                if ~isempty(find(any(stat.posclusterslabelmat(:,t)==pos_clust)))
+                  tmp = [tmp t];
+                end
+            end
+            cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+            % find the channels belonging to this cluster
+            cfg.highlightchannel = [];
+
+            for c = 1:length(stat.label)
+                if ~isempty(find(any(stat.posclusterslabelmat(:, c)==pos_clust)))
+                  cfg.highlightchannel = [cfg.highlightchannel c];
+                end
+            end
+
+            figure
+            ft_topoplotER(cfg, stat);
+            title('positive cluster')
+            print(gcf, '-dpng', ['beads_analysis/figures/stats_erps/beads_fig1_STAT_pos', num2str(i), '_subject', num2str(sub)])
+        end
+    end
+    
+    % now run the same for negative clusters 
+    if ~isempty(neg_clust)
+        
+        for i=neg_clust
+            
+            cfg=[];
+            cfg.highlight = 'on';
+            cfg.zparam    = 'stat';
+            cfg.layout    = 'biosemi64.lay';
+            cfg.style     = 'straight';
+            cfg.gridscale = 500;
+
+            % find the significant time range for this cluster
+            tmp=[];
+
+            for t = 1:length(stat.time)
+                if ~isempty(find(any(stat.negclusterslabelmat(:,t)==neg_clust)))
+                  tmp = [tmp t];
+                end
+            end
+            cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+            % find the channels belonging to this cluster
+            cfg.highlightchannel = [];
+            for c = 1:length(stat.label)
+                if ~isempty(find(any(stat.negclusterslabelmat(:,c)==neg_clust)))
+                  cfg.highlightchannel = [cfg.highlightchannel c];
+                end
+            end
+
+            figure
+            ft_topoplotER(cfg, stat);
+            title('negative cluster')
+            print(gcf, '-dpng', ['beads_analysis/figures/stats_erps/beads_fig1_STAT_neg', num2str(i), '_subject', num2str(sub)])
+        end
+    end
+    %%% -------------------------------------------------------------- %%%
+    
+    % save stats 
+    save(['beads_analysis/stats/beads_sub', num2str(sub), '_stats_1stlevel_diff_vs_easy'], 'stat')
+    
+    % try ploting on clusterplots for time-windows, more informative than the plots above!!
+    % negative & positive clusters
+    % find max and min t-values first 
+    if ~isempty(pos_clust) | ~isempty(neg_clust) % if there are any positive or negative clusters 
+        maxval                  = max(stat.stat, [], 'all');
+        minval                  = min(stat.stat, [], 'all');
+
+        cfg                     = [];
+        cfg.zlim                = [minval maxval]; % T-values
+        cfg.alpha               = 0.025;
+        cfg.highlightcolorpos   = [0 0 0];
+        cfg.highlightcolorneg   = [1 1 0];
+        cfg.saveaspng           = ['beads_analysis/figures/stats_erps/sub', num2str(sub), '_1stlevel_stats_diff_vs_easy'];
+        cfg.toi                 = 0.3:0.01:0.6; % times of interest
+        cfg.layout              = 'biosemi64.lay';
+        ft_clusterplot(cfg,stat); 
+    end
+
+    clear stat neighbours cfg_neighb cfg
+    
+    %% Compute statistics for all-but-last vs last draws for easy trials 
+    
+    % load the original data for this subject
+    for block = 1:blocks
+        
+        % if data structure is already in workspace, comment the part disp
+        % and load parts 
+        disp(['loading beads_analysis/prepro/beads_preproc_sub_', num2str(sub), '_block_', num2str(block)])
+        load(['beads_analysis/prepro/beads_preproc_sub_', num2str(sub), '_block_', num2str(block)], 'data')
+        
+        first_data(block)  = data.firstdata;
+        last_data(block)   = data.lastdata;
+        
+        
+    end
+    
+    % Append data
+    cfg             = [];
+    all_firstdata   = ft_appenddata(cfg, first_data(1), first_data(2), first_data(3), first_data(4));
+    all_lastdata    = ft_appenddata(cfg, last_data(1), last_data(2), last_data(3), last_data(4));
+    
+    % split data into all-but-last vs last easy and all-but-last vs last
+    % diff
+    thissub_first   = allsubs_allfirstERPs_keeptrials{1,sub};
+    thissub_last    = allsubs_alllastERPs_keeptrials{1,sub};
+    easy_first      = thissub_first{1,1};
+    easy_last       = thissub_last{1,1};
+    diff_first      = thissub_first{1,2};
+    diff_last       = thissub_last{1,2};
+    
+    % first create the neighbours structure 
+    cfg_neighb              = [];
+    cfg_neighb.layout       = 'biosemi64.lay'; %in meters
+    cfg_neighb.method       = 'distance';
+    neighbours              = ft_prepare_neighbours(cfg_neighb, all_easydata);
+    
+    cfg                     = [];
+    cfg.neighbours          = neighbours;   
+                                            
+    cfg.channel             = 'all';        
+    cfg.latency             = [0 0.8];   
+                                           
+
+    % permutation tests
+    cfg.method              = 'montecarlo';    
+    cfg.statistic           = 'indepsamplesT'; 
+                                               
+    cfg.correctm            = 'cluster';
+    cfg.clusteralpha        = 0.05;         
+                                           
+    cfg.clusterstatistic    = 'maxsum';                            
+    cfg.minnbchan           = 2;            
+    cfg.tail                = 0;           
+    cfg.clustertail         = 0;
+    cfg.alpha               = 0.025;        
+    cfg.numrandomization    = 1000;       
+    n_easyfirst             = size(easy_first.trial,1);
+    n_easylast              = size(easy_last.trial,1);
+    
+    cfg.design              = [ones(1,n_easylast), ones(1,n_easyfirst)*2]; % design matrix
+    cfg.ivar                = 1; % number or list with indices indicating the independent variable(s)
+
+    % run stats 
+    [stat]               = ft_timelockstatistics(cfg, easy_last, easy_first);
+    
+    % save stats 
+    save(['beads_analysis/stats/beads_sub', num2str(sub), '_stats_1stlevel_easyfirst_vs_easylast'], 'stat')
+    
+    
+    %%% -------------------------------------------------------------- %%%
+    % Make a vector of all p-values associated with the clusters from ft_timelockstatistics.
+    pos_cluster_pvals = [stat.posclusters(:).prob];
+
+    % Then, find which clusters are deemed interesting to visualize, here we use a cutoff criterion based on the
+    % cluster-associated p-value, and take a 5% two-sided cutoff (i.e. 0.025 for the positive and negative clusters,
+    % respectively
+    pos_clust = find(pos_cluster_pvals < 0.025);
+    pos       = ismember(stat.posclusterslabelmat, pos_clust);
+
+
+    % and now for the negative clusters...
+    neg_cluster_pvals = [stat.negclusters(:).prob];
+    neg_clust         = find(neg_cluster_pvals < 0.025);
+    neg               = ismember(stat.negclusterslabelmat, neg_clust);
+
+    % if any positive clusters survived the cutoff.. loop over all sig positive clusters
+    if ~isempty(pos_clust)
+        for i=pos_clust
+            
+            cfg=[];
+            cfg.highlight = 'on';
+            cfg.zparam    = 'stat';
+            cfg.layout    = 'biosemi64.lay';
+            cfg.style     = 'straight';
+            cfg.gridscale = 500;
+
+            % find the significant time range for this cluster
+            tmp=[];
+            for t = 1:length(stat.time)
+                if ~isempty(find(any(stat.posclusterslabelmat(:,t)==pos_clust)))
+                  tmp = [tmp t];
+                end
+            end
+            cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+            % find the channels belonging to this cluster
+            cfg.highlightchannel = [];
+
+            for c = 1:length(stat.label)
+                if ~isempty(find(any(stat.posclusterslabelmat(:, c)==pos_clust)))
+                  cfg.highlightchannel = [cfg.highlightchannel c];
+                end
+            end
+
+            figure
+            ft_topoplotER(cfg, stat);
+            title('positive cluster')
+            print(gcf, '-dpng', ['beads_analysis/figures/stats_erps/beads_fig2_STAT_pos', num2str(i), '_subject', num2str(sub)])
+        end
+    end
+    
+    % now run the same for negative clusters 
+    if ~isempty(neg_clust)
+        
+        for i=neg_clust
+            
+            cfg=[];
+            cfg.highlight = 'on';
+            cfg.zparam    = 'stat';
+            cfg.layout    = 'biosemi64.lay';
+            cfg.style     = 'straight';
+            cfg.gridscale = 500;
+
+            % find the significant time range for this cluster
+            tmp=[];
+
+            for t = 1:length(stat.time)
+                if ~isempty(find(any(stat.negclusterslabelmat(:,t)==neg_clust)))
+                  tmp = [tmp t];
+                end
+            end
+            cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+            % find the channels belonging to this cluster
+            cfg.highlightchannel = [];
+            for c = 1:length(stat.label)
+                if ~isempty(find(any(stat.negclusterslabelmat(:,c)==neg_clust)))
+                  cfg.highlightchannel = [cfg.highlightchannel c];
+                end
+            end
+
+            figure
+            ft_topoplotER(cfg, stat);
+            title('negative cluster')
+            print(gcf, '-dpng', ['beads_analysis/figures/stats_erps/beads_fig2_STAT_neg', num2str(i), '_subject', num2str(sub)])
+        end
+    end
+    %%% -------------------------------------------------------------- %%%
+    
+    % try ploting on clusterplots for time-windows, more informative than the plots above!!
+    % negative & positive clusters
+    % find max and min t-values first 
+    if ~isempty(pos_clust) | ~isempty(neg_clust) 
+        maxval                  = max(stat.stat, [], 'all');
+        minval                  = min(stat.stat, [], 'all');
+
+        cfg                     = [];
+        cfg.zlim                = [minval maxval]; % T-values
+        cfg.alpha               = 0.025;
+        cfg.highlightcolorpos   = [0 0 0];
+        cfg.highlightcolorneg   = [1 1 0];
+        cfg.saveaspng           = ['beads_analysis/figures/stats_erps/sub', num2str(sub), '_1stlevel_stats_easylast_vs_easyfirst'];
+        cfg.toi                 = 0.2:0.01:0.8;
+        cfg.layout              = 'biosemi64.lay';
+        ft_clusterplot(cfg,stat); 
+    end
+
+    clear stat cfg cfg_neighb neigbours
+    
+    %% run stats for diff all-but-last vs last draws 
+    
+    % first create the neighbours structure 
+    cfg_neighb              = [];
+    cfg_neighb.layout       = 'biosemi64.lay'; %in meters
+    cfg_neighb.method       = 'distance';
+    neighbours              = ft_prepare_neighbours(cfg_neighb, all_diffdata);
+    
+    cfg                     = [];
+    cfg.neighbours          = neighbours;   
+                                            
+    cfg.channel             = 'all';        
+    cfg.latency             = [0 0.8];   
+                                           
+
+    % permutation tests
+    cfg.method              = 'montecarlo';    
+    cfg.statistic           = 'indepsamplesT'; 
+                                               
+    cfg.correctm            = 'cluster';
+    cfg.clusteralpha        = 0.05;         
+                                           
+    cfg.clusterstatistic    = 'maxsum';                            
+    cfg.minnbchan           = 2;            
+    cfg.tail                = 0;           
+    cfg.clustertail         = 0;
+    cfg.alpha               = 0.025;        
+    cfg.numrandomization    = 1000;       
+    n_difffirst             = size(diff_first.trial,1);
+    n_difflast              = size(diff_last.trial,1);
+    
+    cfg.design              = [ones(1,n_difflast), ones(1,n_difffirst)*2]; % design matrix
+    cfg.ivar                = 1; % number or list with indices indicating the independent variable(s)
+
+    % run stats 
+    [stat]               = ft_timelockstatistics(cfg, diff_last, diff_first);
+    
+    % save stats 
+    save(['beads_analysis/stats/beads_sub', num2str(sub), '_stats_1stlevel_difffirst_vs_difflast'], 'stat')
+    
+    %%% -------------------------------------------------------------- %%%
+    % Make a vector of all p-values associated with the clusters from ft_timelockstatistics.
+    pos_cluster_pvals = [stat.posclusters(:).prob];
+
+    % Then, find which clusters are deemed interesting to visualize, here we use a cutoff criterion based on the
+    % cluster-associated p-value, and take a 5% two-sided cutoff (i.e. 0.025 for the positive and negative clusters,
+    % respectively
+    pos_clust = find(pos_cluster_pvals < 0.025);
+    pos       = ismember(stat.posclusterslabelmat, pos_clust);
+
+
+    % and now for the negative clusters...
+    neg_cluster_pvals = [stat.negclusters(:).prob];
+    neg_clust         = find(neg_cluster_pvals < 0.025);
+    neg               = ismember(stat.negclusterslabelmat, neg_clust);
+
+    % if any positive clusters survived the cutoff.. loop over all sig positive clusters
+    if ~isempty(pos_clust)
+        for i=pos_clust
+            
+            cfg=[];
+            cfg.highlight = 'on';
+            cfg.zparam    = 'stat';
+            cfg.layout    = 'biosemi64.lay';
+            cfg.style     = 'straight';
+            cfg.gridscale = 500;
+
+            % find the significant time range for this cluster
+            tmp=[];
+            for t = 1:length(stat.time)
+                if ~isempty(find(any(stat.posclusterslabelmat(:,t)==pos_clust)))
+                  tmp = [tmp t];
+                end
+            end
+            cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+            % find the channels belonging to this cluster
+            cfg.highlightchannel = [];
+
+            for c = 1:length(stat.label)
+                if ~isempty(find(any(stat.posclusterslabelmat(:, c)==pos_clust)))
+                  cfg.highlightchannel = [cfg.highlightchannel c];
+                end
+            end
+
+            figure
+            ft_topoplotER(cfg, stat);
+            title('positive cluster')
+            print(gcf, '-dpng', ['beads_analysis/figures/stats_erps/beads_fig3_STAT_pos', num2str(i), '_subject', num2str(sub)])
+        end
+    end
+    
+    % now run the same for negative clusters 
+    if ~isempty(neg_clust)
+        
+        for i=neg_clust
+            
+            cfg=[];
+            cfg.highlight = 'on';
+            cfg.zparam    = 'stat';
+            cfg.layout    = 'biosemi64.lay';
+            cfg.style     = 'straight';
+            cfg.gridscale = 500;
+
+            % find the significant time range for this cluster
+            tmp=[];
+
+            for t = 1:length(stat.time)
+                if ~isempty(find(any(stat.negclusterslabelmat(:,t)==neg_clust)))
+                  tmp = [tmp t];
+                end
+            end
+            cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+            % find the channels belonging to this cluster
+            cfg.highlightchannel = [];
+            for c = 1:length(stat.label)
+                if ~isempty(find(any(stat.negclusterslabelmat(:,c)==neg_clust)))
+                  cfg.highlightchannel = [cfg.highlightchannel c];
+                end
+            end
+
+            figure
+            ft_topoplotER(cfg, stat);
+            title('negative cluster')
+            print(gcf, '-dpng', ['beads_analysis/figures/stats_erps/beads_fig3_STAT_neg', num2str(i), '_subject', num2str(sub)])
+        end
+    end
+    %%% -------------------------------------------------------------- %%%
+    
+    % try ploting on clusterplots for time-windows, more informative than the plots above!!
+    % negative & positive clusters
+    % find max and min t-values first 
+    if ~isempty(pos_clust) | ~isempty(neg_clust) 
+        maxval                  = max(stat.stat, [], 'all');
+        minval                  = min(stat.stat, [], 'all');
+
+        cfg                     = [];
+        cfg.zlim                = [minval maxval]; % T-values
+        cfg.alpha               = 0.025;
+        cfg.highlightcolorpos   = [0 0 0];
+        cfg.highlightcolorneg   = [1 1 0];
+        cfg.saveaspng           = ['beads_analysis/figures/stats_erps/sub', num2str(sub), '_1stlevel_stats_difflast_vs_difffirst'];
+        cfg.toi                 = 0.2:0.01:0.8;
+        cfg.layout              = 'biosemi64.lay';
+        ft_clusterplot(cfg,stat); 
+    end
+
+    clear stat cfg cfg_neighb neigbours
+    
+    
+end % end of subject loop
+
+%% Within-Subjects statitsics ERPs 
+
+% load the averaged ERPs 
+load('beads_analysis/erps/beads_allsubs_keeptrialsAllERPs', 'allsubERPallcond')
+load('beads_analysis/erps/beads_allsubsTwoCondsERPs', 'allsubERPtwocond')
+load('beads_analysis/erps/beads_allsubsAllButLastERPs', 'allsubfirstERPs')
+load('beads_analysis/erps/beads_allsubsLastERPs', 'allsublastERPs')
+
+%% Run group stats to diff vs easy trials 
+
+% use the original data of one sub as example dataset to feed the cfg.neighbours matrix
+% (to get sensor labels)
+tmp_sub     = 1;
+blocks      = 4;
+
+% load the original easy and difficult data for tmp subject
+for blocki = 1:blocks
+
+    % load structure 
+    disp(['loading beads_analysis/prepro/beads_preproc_sub_', num2str(tmp_sub), '_block_', num2str(blocki)])
+    load(['beads_analysis/prepro/beads_preproc_sub_', num2str(tmp_sub), '_block_', num2str(blocki)], 'data')
+
+    easy_data(blocki)   = data.easydata;
+    diff_data(blocki)   = data.diffdata;
+
+end
+
+cfg                     = [];
+all_easydata            = ft_appenddata(cfg, easy_data(1), easy_data(2), easy_data(3), easy_data(4));
+all_diffdata            = ft_appenddata(cfg, diff_data(1), diff_data(2), diff_data(3), diff_data(4));
+
+% split the averaged erps to diff and easy
+subs = length(allsubERPtwocond);
+
+for i = 1:subs
+    
+    avg_allsubs_easy{1,i} = allsubERPtwocond{1,i}{1,1};
+    avg_allsubs_diff{1,i} = allsubERPtwocond{1,i}{1,2};
+       
+end
+
+% first create the neighbours structure 
+cfg_neighb              = [];
+cfg_neighb.layout       = 'biosemi64.lay'; %in meters
+cfg_neighb.method       = 'distance';
+neighbours              = ft_prepare_neighbours(cfg_neighb, all_diffdata);
+
+cfg                     = [];
+cfg.neighbours          = neighbours;   
+
+cfg.channel             = 'all';        
+cfg.latency             = [0.3 0.6];   
+
+
+% permutation tests
+cfg.method              = 'montecarlo';    
+cfg.statistic           = 'depsamplesT'; 
+
+cfg.correctm            = 'cluster';
+cfg.clusteralpha        = 0.05;         
+
+cfg.clusterstatistic    = 'maxsum';                            
+cfg.minnbchan           = 2;            
+cfg.tail                = 0;           
+cfg.clustertail         = 0;
+cfg.alpha               = 0.025;        
+cfg.numrandomization    = 'all';       
+
+% create the design matrix
+design                  = zeros(2, subs*2);
+design(1,:)             = [1:subs 1:subs];
+design(2,:)             = [ones(1,subs) ones(1,subs)*2];
+
+cfg.design              = design;
+cfg.uvar                = 1; % row 1 of design matrix contain var 1
+cfg.ivar                = 2; % row 2 of design matrix contain var 2
+
+[stat] = ft_timelockstatistics(cfg, avg_allsubs_diff{:}, avg_allsubs_easy{:});
+
+% save stats 
+save('beads_analysis/erps_group_stats/beads_stats_group_diff_vs_easy', 'stat')
+
+% Make a vector of all p-values associated with the clusters from ft_timelockstatistics.
+pos_cluster_pvals   = [stat.posclusters(:).prob];
+
+% Then, find which clusters are deemed interesting to visualize, here we use a cutoff criterion based on the
+% cluster-associated p-value, and take a 5% two-sided cutoff (i.e. 0.025 for the positive and negative clusters,
+% respectively
+pos_clust           = find(pos_cluster_pvals < 0.025);
+pos                 = ismember(stat.posclusterslabelmat, pos_clust);
+
+
+% and now for the negative clusters...
+neg_cluster_pvals   = [stat.negclusters(:).prob];
+neg_clust           = find(neg_cluster_pvals < 0.025);
+neg                 = ismember(stat.negclusterslabelmat, neg_clust);
+
+% if any positive clusters survived the cutoff.. loop over all sig positive clusters
+if ~isempty(pos_clust)
+    for i=pos_clust
+
+        cfg=[];
+        cfg.highlight = 'on';
+        cfg.zparam    = 'stat';
+        cfg.layout    = 'biosemi64.lay';
+        cfg.style     = 'straight';
+        cfg.gridscale = 500;
+
+        % find the significant time range for this cluster
+        tmp=[];
+        for t = 1:length(stat.time)
+            if ~isempty(find(any(stat.posclusterslabelmat(:,t)==pos_clust)))
+              tmp = [tmp t];
+            end
+        end
+        cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+        % find the channels belonging to this cluster
+        cfg.highlightchannel = [];
+
+        for c = 1:length(stat.label)
+            if ~isempty(find(any(stat.posclusterslabelmat(:, c)==pos_clust)))
+              cfg.highlightchannel = [cfg.highlightchannel c];
+            end
+        end
+
+        figure
+        ft_topoplotER(cfg, stat);
+        title('positive cluster')
+        print(gcf, '-dpng', ['beads_analysis/figures/group_stats_erps/fig1_STAT_pos', num2str(i)])
+    end
+end
+
+% now run the same for negative clusters 
+if ~isempty(neg_clust)
+
+    for i=neg_clust
+
+        cfg=[];
+        cfg.highlight = 'on';
+        cfg.zparam    = 'stat';
+        cfg.layout    = 'biosemi64.lay';
+        cfg.style     = 'straight';
+        cfg.gridscale = 500;
+
+        % find the significant time range for this cluster
+        tmp=[];
+
+        for t = 1:length(stat.time)
+            if ~isempty(find(any(stat.negclusterslabelmat(:,t)==neg_clust)))
+              tmp = [tmp t];
+            end
+        end
+        cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+        % find the channels belonging to this cluster
+        cfg.highlightchannel = [];
+        for c = 1:length(stat.label)
+            if ~isempty(find(any(stat.negclusterslabelmat(:,c)==neg_clust)))
+              cfg.highlightchannel = [cfg.highlightchannel c];
+            end
+        end
+
+        figure
+        ft_topoplotER(cfg, stat);
+        title('negative cluster')
+        print(gcf, '-dpng', ['beads_analysis/figures/group_stats_erps/fig2_STAT_neg', num2str(i)])
+    end
+end
+
+% try ploting on clusterplots for time-windows, more informative than the plots above!!
+% negative & positive clusters
+% find max and min t-values first 
+if ~isempty(pos_clust) | ~isempty(neg_clust) 
+    maxval                  = max(stat.stat, [], 'all');
+    minval                  = min(stat.stat, [], 'all');
+
+    cfg                     = [];
+    cfg.zlim                = [minval maxval]; % T-values
+    cfg.alpha               = 0.025;
+    cfg.highlightcolorpos   = [0 0 0];
+    cfg.highlightcolorneg   = [1 1 0];
+    cfg.saveaspng           = 'beads_analysis/figures/group_stats_erps/beads_group_difflast_vs_difffirst';
+    cfg.toi                 = 0.3:0.01:0.6; % times of interest
+    cfg.layout              = 'biosemi64.lay';
+    ft_clusterplot(cfg,stat); 
+end
+
+clear stat cfg cfg_neighb neigbours
+
+%% Run Within-Subjects stats for all-but-last vs last darws easy trials
+
+% split the averaged all-but-lust and last erps to diff and easy
+subs = length(allsubERPtwocond);
+
+for i = 1:subs
+    
+    avg_allsubs_first_easy{1,i} = allsubfirstERPs{1,i}{1,1};
+    avg_allsubs_first_diff{1,i} = allsubfirstERPs{1,i}{1,2};
+    
+    avg_allsubs_last_easy{1,i} = allsublastERPs{1,i}{1,1};
+    avg_allsubs_last_diff{1,i} = allsublastERPs{1,i}{1,2};
+  
+end
+
+% first create the neighbours structure 
+cfg_neighb              = [];
+cfg_neighb.layout       = 'biosemi64.lay'; %in meters
+cfg_neighb.method       = 'distance';
+neighbours              = ft_prepare_neighbours(cfg_neighb, all_easydata);
+
+cfg                     = [];
+cfg.neighbours          = neighbours;   
+
+cfg.channel             = 'all';        
+cfg.latency             = [0 0.8];   
+
+
+% permutation tests
+cfg.method              = 'montecarlo';    
+cfg.statistic           = 'depsamplesT'; 
+
+cfg.correctm            = 'cluster';
+cfg.clusteralpha        = 0.05;         
+
+cfg.clusterstatistic    = 'maxsum';                            
+cfg.minnbchan           = 2;            
+cfg.tail                = 0;           
+cfg.clustertail         = 0;
+cfg.alpha               = 0.025;        
+cfg.numrandomization    = 'all';       
+
+% create the design matrix
+design                  = zeros(2, subs*2);
+design(1,:)             = [1:subs 1:subs];
+design(2,:)             = [ones(1,subs) ones(1,subs)*2];
+
+cfg.design              = design;
+cfg.uvar                = 1; % row 1 of design matrix contain var 1
+cfg.ivar                = 2; % row 2 of design matrix contain var 2
+
+[stat] = ft_timelockstatistics(cfg, avg_allsubs_last_easy{:}, avg_allsubs_first_easy{:});
+
+% save stats 
+save('beads_analysis/erps_group_stats/beads_stats_group_easyfirst_vs_easylast', 'stat')
+
+% Make a vector of all p-values associated with the clusters from ft_timelockstatistics.
+pos_cluster_pvals   = [stat.posclusters(:).prob];
+
+% Then, find which clusters are deemed interesting to visualize, here we use a cutoff criterion based on the
+% cluster-associated p-value, and take a 5% two-sided cutoff (i.e. 0.025 for the positive and negative clusters,
+% respectively
+pos_clust           = find(pos_cluster_pvals < 0.025);
+pos                 = ismember(stat.posclusterslabelmat, pos_clust);
+
+
+% and now for the negative clusters...
+neg_cluster_pvals   = [stat.negclusters(:).prob];
+neg_clust           = find(neg_cluster_pvals < 0.025);
+neg                 = ismember(stat.negclusterslabelmat, neg_clust);
+
+% if any positive clusters survived the cutoff.. loop over all sig positive clusters
+if ~isempty(pos_clust)
+    for i=pos_clust
+
+        cfg=[];
+        cfg.highlight = 'on';
+        cfg.zparam    = 'stat';
+        cfg.layout    = 'biosemi64.lay';
+        cfg.style     = 'straight';
+        cfg.gridscale = 500;
+
+        % find the significant time range for this cluster
+        tmp=[];
+        for t = 1:length(stat.time)
+            if ~isempty(find(any(stat.posclusterslabelmat(:,t)==pos_clust)))
+              tmp = [tmp t];
+            end
+        end
+        cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+        % find the channels belonging to this cluster
+        cfg.highlightchannel = [];
+
+        for c = 1:length(stat.label)
+            if ~isempty(find(any(stat.posclusterslabelmat(:, c)==pos_clust)))
+              cfg.highlightchannel = [cfg.highlightchannel c];
+            end
+        end
+
+        figure
+        ft_topoplotER(cfg, stat);
+        title('positive cluster')
+        print(gcf, '-dpng', ['beads_analysis/figures/group_stats_erps/fig3_STAT_pos', num2str(i)])
+    end
+end
+
+% now run the same for negative clusters 
+if ~isempty(neg_clust)
+
+    for i=neg_clust
+
+        cfg=[];
+        cfg.highlight = 'on';
+        cfg.zparam    = 'stat';
+        cfg.layout    = 'biosemi64.lay';
+        cfg.style     = 'straight';
+        cfg.gridscale = 500;
+
+        % find the significant time range for this cluster
+        tmp=[];
+
+        for t = 1:length(stat.time)
+            if ~isempty(find(any(stat.negclusterslabelmat(:,t)==neg_clust)))
+              tmp = [tmp t];
+            end
+        end
+        cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+        % find the channels belonging to this cluster
+        cfg.highlightchannel = [];
+        for c = 1:length(stat.label)
+            if ~isempty(find(any(stat.negclusterslabelmat(:,c)==neg_clust)))
+              cfg.highlightchannel = [cfg.highlightchannel c];
+            end
+        end
+
+        figure
+        ft_topoplotER(cfg, stat);
+        title('negative cluster')
+        print(gcf, '-dpng', ['beads_analysis/figures/group_stats_erps/fig4_STAT_neg', num2str(i)])
+    end
+end
+
+% try ploting on clusterplots for time-windows, more informative than the plots above!!
+% negative & positive clusters
+% find max and min t-values first 
+if ~isempty(pos_clust) | ~isempty(neg_clust) 
+    maxval                  = max(stat.stat, [], 'all');
+    minval                  = min(stat.stat, [], 'all');
+
+    cfg                     = [];
+    cfg.zlim                = [minval maxval]; % T-values
+    cfg.alpha               = 0.025;
+    cfg.highlightcolorpos   = [0 0 0];
+    cfg.highlightcolorneg   = [1 1 0];
+    cfg.saveaspng           = 'beads_analysis/figures/group_stats_erps/beads_group_easylast_vs_easyfirst';
+    cfg.toi                 = 0.2:0.01:0.8;
+    cfg.layout              = 'biosemi64.lay';
+    ft_clusterplot(cfg,stat); 
+end
+
+clear stat cfg cfg_neighb neigbours
+
+%% Run Within-Subjects stats for all-but-last vs last darws easy trials
+
+% first create the neighbours structure 
+cfg_neighb              = [];
+cfg_neighb.layout       = 'biosemi64.lay'; %in meters
+cfg_neighb.method       = 'distance';
+neighbours              = ft_prepare_neighbours(cfg_neighb, all_diffdata);
+
+cfg                     = [];
+cfg.neighbours          = neighbours;   
+
+cfg.channel             = 'all';        
+cfg.latency             = [0 0.8];   
+
+
+% permutation tests
+cfg.method              = 'montecarlo';    
+cfg.statistic           = 'depsamplesT'; 
+
+cfg.correctm            = 'cluster';
+cfg.clusteralpha        = 0.05;         
+
+cfg.clusterstatistic    = 'maxsum';                            
+cfg.minnbchan           = 2;            
+cfg.tail                = 0;           
+cfg.clustertail         = 0;
+cfg.alpha               = 0.025;        
+cfg.numrandomization    = 'all';       
+
+% create the design matrix
+design                  = zeros(2, subs*2);
+design(1,:)             = [1:subs 1:subs];
+design(2,:)             = [ones(1,subs) ones(1,subs)*2];
+
+cfg.design              = design;
+cfg.uvar                = 1; % row 1 of design matrix contain var 1
+cfg.ivar                = 2; % row 2 of design matrix contain var 2
+
+[stat] = ft_timelockstatistics(cfg, avg_allsubs_last_diff{:}, avg_allsubs_first_diff{:});
+
+% save stats 
+save('beads_analysis/erps_group_stats/beads_stats_group_difffirst_vs_difflast', 'stat')
+
+% Make a vector of all p-values associated with the clusters from ft_timelockstatistics.
+pos_cluster_pvals   = [stat.posclusters(:).prob];
+
+% Then, find which clusters are deemed interesting to visualize, here we use a cutoff criterion based on the
+% cluster-associated p-value, and take a 5% two-sided cutoff (i.e. 0.025 for the positive and negative clusters,
+% respectively
+pos_clust           = find(pos_cluster_pvals < 0.025);
+pos                 = ismember(stat.posclusterslabelmat, pos_clust);
+
+
+% and now for the negative clusters...
+neg_cluster_pvals   = [stat.negclusters(:).prob];
+neg_clust           = find(neg_cluster_pvals < 0.025);
+neg                 = ismember(stat.negclusterslabelmat, neg_clust);
+
+% if any positive clusters survived the cutoff.. loop over all sig positive clusters
+if ~isempty(pos_clust)
+    for i=pos_clust
+
+        cfg=[];
+        cfg.highlight = 'on';
+        cfg.zparam    = 'stat';
+        cfg.layout    = 'biosemi64.lay';
+        cfg.style     = 'straight';
+        cfg.gridscale = 500;
+
+        % find the significant time range for this cluster
+        tmp=[];
+        for t = 1:length(stat.time)
+            if ~isempty(find(any(stat.posclusterslabelmat(:,t)==pos_clust)))
+              tmp = [tmp t];
+            end
+        end
+        cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+        % find the channels belonging to this cluster
+        cfg.highlightchannel = [];
+
+        for c = 1:length(stat.label)
+            if ~isempty(find(any(stat.posclusterslabelmat(:, c)==pos_clust)))
+              cfg.highlightchannel = [cfg.highlightchannel c];
+            end
+        end
+
+        figure
+        ft_topoplotER(cfg, stat);
+        title('positive cluster')
+        print(gcf, '-dpng', ['beads_analysis/figures/group_stats_erps/fig4_STAT_pos', num2str(i)])
+    end
+end
+
+% now run the same for negative clusters 
+if ~isempty(neg_clust)
+
+    for i=neg_clust
+
+        cfg=[];
+        cfg.highlight = 'on';
+        cfg.zparam    = 'stat';
+        cfg.layout    = 'biosemi64.lay';
+        cfg.style     = 'straight';
+        cfg.gridscale = 500;
+
+        % find the significant time range for this cluster
+        tmp=[];
+
+        for t = 1:length(stat.time)
+            if ~isempty(find(any(stat.negclusterslabelmat(:,t)==neg_clust)))
+              tmp = [tmp t];
+            end
+        end
+        cfg.xlim      = [stat.time(tmp(1)) stat.time(tmp(end))];
+
+        % find the channels belonging to this cluster
+        cfg.highlightchannel = [];
+        for c = 1:length(stat.label)
+            if ~isempty(find(any(stat.negclusterslabelmat(:,c)==neg_clust)))
+              cfg.highlightchannel = [cfg.highlightchannel c];
+            end
+        end
+
+        figure
+        ft_topoplotER(cfg, stat);
+        title('negative cluster')
+        print(gcf, '-dpng', ['beads_analysis/figures/group_stats_erps/fig5_STAT_neg', num2str(i)])
+    end
+end
+
+% try ploting on clusterplots for time-windows, more informative than the plots above!!
+% negative & positive clusters
+% find max and min t-values first 
+if ~isempty(pos_clust) | ~isempty(neg_clust) 
+    maxval                  = max(stat.stat, [], 'all');
+    minval                  = min(stat.stat, [], 'all');
+
+    cfg                     = [];
+    cfg.zlim                = [minval maxval]; % T-values
+    cfg.alpha               = 0.025;
+    cfg.highlightcolorpos   = [0 0 0];
+    cfg.highlightcolorneg   = [1 1 0];
+    cfg.saveaspng           = 'beads_analysis/figures/group_stats_erps/beads_group_difflast_vs_difffirst';
+    cfg.toi                 = 0.2:0.01:0.8;
+    cfg.layout              = 'biosemi64.lay';
+    ft_clusterplot(cfg,stat); 
+end
+
+clear stat cfg cfg_neighb neigbours
+
+%% Run TFR statistics (between-trials/first level)
+
+
+
+
 
