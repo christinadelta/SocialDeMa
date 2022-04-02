@@ -186,8 +186,13 @@ for thisdraw = 1:drawlen
 
             % show blue window
             DrawFormattedText(window, 'BLUE', 'center', ycenter, blue);
+            
             if EEG == 1
-                stimtrigger     = trigger1; % assign trigger 1 as stimulus triger
+                if cond == 1
+                    stimtrigger     = trigger1; % assign trigger 1 as stimulus triger (easy blue)
+                else
+                    stimtrigger     = trigger3; % assign trigger 3 as stimulus triger (diff blue)
+                end
             end
 
             previous_colour     = blue;
@@ -198,7 +203,11 @@ for thisdraw = 1:drawlen
             % show green window
             DrawFormattedText(window, 'GREEN', 'center', ycenter, green);
             if EEG == 1
-                stimtrigger     = trigger3;
+                if cond == 1
+                    stimtrigger     = trigger2;
+                else 
+                    stimtrigger     = trigger4;
+                end
             end
 
             previous_colour     = green;
@@ -211,8 +220,13 @@ for thisdraw = 1:drawlen
         if thisurn == 1 % blue urn and green bead
 
             DrawFormattedText(window, 'GREEN', 'center', ycenter, green);
+            
             if EEG == 1
-                stimtrigger     = trigger2;
+                if cond == 1
+                    stimtrigger     = trigger1;
+                else
+                    stimtrigger     = trigger3;
+                end
             end
             previous_colour     = green;
             previous_bead       = 'GREEN';
@@ -220,8 +234,13 @@ for thisdraw = 1:drawlen
         else % % green urn and blue bead
 
             DrawFormattedText(window, 'BLUE', 'center', ycenter, blue);
+            
             if EEG == 1
-                stimtrigger     = trigger4;
+                if cond == 1
+                    stimtrigger     = trigger2;
+                else
+                    stimtrigger     = trigger4;
+                end
             end
 
             previous_colour     = blue;
@@ -334,11 +353,11 @@ for thisdraw = 1:drawlen
                 respmade    = secs;
                 
                 % send blue choice trigger
-                if EEG == 1 && responseTrigNotSent == 1
-                    io64(ioObj, address, trigger6)
-                    WaitSecs(triggerdur);
-                    io64(ioObj, address, 0) % return port to zero
-                end
+%                 if EEG == 1 && responseTrigNotSent == 1
+%                     io64(ioObj, address, trigger6)
+%                     WaitSecs(triggerdur);
+%                     io64(ioObj, address, 0) % return port to zero
+%                 end
     
             elseif keycode(1,greenkey) % if subject chose the green urn 
                 resp_input  = greenkey;
@@ -347,11 +366,11 @@ for thisdraw = 1:drawlen
                 respmade    = secs;
                 
                 % send green choice trigger
-                if EEG == 1 && responseTrigNotSent == 1
-                    io64(ioObj, address, trigger7)
-                    WaitSecs(triggerdur);
-                    io64(ioObj, address, 0) % return port to zero
-                end
+%                 if EEG == 1 && responseTrigNotSent == 1
+%                     io64(ioObj, address, trigger7)
+%                     WaitSecs(triggerdur);
+%                     io64(ioObj, address, 0) % return port to zero
+%                 end
 
             elseif keycode(1,drawkey) % if subject chose to draw again
                 resp_input  = drawkey;
@@ -361,11 +380,11 @@ for thisdraw = 1:drawlen
                 draw_count  = draw_count + 1;
                 
                 % send draw again trigger
-                if EEG == 1 && responseTrigNotSent == 1
-                    io64(ioObj, address, trigger8)
-                    WaitSecs(triggerdur);
-                    io64(ioObj, address, 0) % return port to zero
-                end
+%                 if EEG == 1 && responseTrigNotSent == 1
+%                     io64(ioObj, address, trigger8)
+%                     WaitSecs(triggerdur);
+%                     io64(ioObj, address, 0) % return port to zero
+%                 end
             end %  
         end % if responded statement
     end % end of response while loop 
@@ -420,10 +439,10 @@ for thisdraw = 1:drawlen
            % THIS IS THE PART WHERE WE DRAW THE SLIDER AND SHOW THE
            % CONFIDENCE SCREEN
            set = MakeSlider(scrn, set); % first draw the scale and allow subject to click the mouse
-           WaitSecs(0.1)                % delay to prevent fast mouse clicks mix 
+           WaitSecs(0.3)                % delay to prevent fast mouse clicks mix 
 
            set = RunSlider(scrn, set);  % once subject click the first time, display slider
-           WaitSecs(0.1)
+           WaitSecs(0.2)
                
            % UNPACK SETTINGS
            object_offset    = set.object_offset;

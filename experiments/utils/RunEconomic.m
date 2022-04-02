@@ -178,8 +178,9 @@ else % if phase == 2
         triggerdur  = set.triggerdur;
         address     = set.address;
         
-        trigger11   = set.trigger11;
-        trigger12   = set.trigger12;
+%         trigger11   = set.trigger11;
+%         trigger12   = set.trigger12;
+        trigger1    = set.trigger1;
         trigger13   = set.trigger13;
         trigger14   = set.trigger14;
         trigger15   = set.triiger15;
@@ -227,10 +228,6 @@ else % if phase == 2
         if keyisdown && keycode(esckey)
             abort = 1;
             break;
-        end
-        
-        if EEG == 1
-            trigger1 = 0 + s; % contract/price trigger codes [1:10]
         end
         
         thisitem        = sequence(s); % index of the current item
@@ -347,11 +344,11 @@ else % if phase == 2
                 respmade    = secs;
                 
                 % send response trigger -- subject accepted an option
-                if EEG == 1 && responseTrigNotSent==1
-                    io64(ioObj, address, trigger11)
-                    WaitSecs(triggerdur);
-                    io64(ioObj, address, 0) % return port to zero   
-                end
+%                 if EEG == 1 && responseTrigNotSent==1
+%                     io64(ioObj, address, trigger11)
+%                     WaitSecs(triggerdur);
+%                     io64(ioObj, address, 0) % return port to zero   
+%                 end
                 
             elseif keycode(1,code2) %  
                 resp_input  = code2;
@@ -360,11 +357,11 @@ else % if phase == 2
                 respmade    = secs;
                 
                 % send response trigger -- subject sampled again
-                if EEG == 1 && responseTrigNotSent==1
-                    io64(ioObj, address, trigger12)
-                    WaitSecs(triggerdur);
-                    io64(ioObj, address, 0) % return port to zero   
-                end
+%                 if EEG == 1 && responseTrigNotSent==1
+%                     io64(ioObj, address, trigger12)
+%                     WaitSecs(triggerdur);
+%                     io64(ioObj, address, 0) % return port to zero   
+%                 end
                
             else
                 resp_input  = 0; 

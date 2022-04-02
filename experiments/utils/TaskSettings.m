@@ -45,19 +45,15 @@ if taskNb == 1 % if this is the beads task
     if set.EEG == 1
         
         % 1. start with the sequence related triggers
-        set.trigger1    = 1;             % BLUE URN - blue bead (high prob)
-        set.trigger2    = 2;             % BLUE URN - green bead (low prob)
-        set.trigger3    = 3;             % GREEN URN - green bead (high prob)
-        set.trigger4    = 4;             % GREEN URN - blue bead (low prob)
+        set.trigger1    = 1;             % EASY COND - blue urn
+        set.trigger2    = 2;             % EASY COND - green urn
+        set.trigger3    = 3;             % DIFF COND - blue urn
+        set.trigger4    = 4;             % DIFF COND - green urn
         
         set.trigger5    = 5;             % response prompt
-        set.trigger6    = 6;             % blue urn (choice)
-        set.trigger7    = 7;             % green urn (choice)
-        set.trigger8    = 8;             % draw again
         
         % 2. Confidence rating and feedback relatd triggers
         set.trigger9    = 9;             % confidence screen
-        set.ratetrigger = [10 11 12 13]; % confidence ratings 
         set.trigger14   = 14;            % feedback screen (you win!)
         set.trigger15   = 15;            % feedback screen (you lose!)
         set.trigger16   = 16;            % feedback screen (you lose - out of draws)
@@ -78,7 +74,7 @@ elseif taskNb == 2
     if phase == 1
         
         % EXPERIMENTAL SETTINGS
-        set.fix_dur         = .7;   % in sec
+        set.fix_dur         = .5;   % in sec
         
         % TASK/PHASE SETTINGS
         set.blocks          = 20; 
@@ -106,8 +102,7 @@ elseif taskNb == 2
         % DEFINE EEG TRIGGERS 
         if set.EEG == 1
             
-            set.trigger11   = 11; % response trigger -- subject accepted a contract
-            set.trigger12   = 12; % response trigger -- subject samples again
+            set.trigger1    = 1;  %stimulus trigger (current price)
             set.trigger13   = 13; % feedback trigger - show accepted contract
             set.trigger14   = 14; % feedback trigger - out of samples
             set.trigger15   = 15; % response prompt trigger
@@ -126,11 +121,11 @@ elseif taskNb == 3
     if phase == 1
         
         % EXPERIMENTAL SETTINGS
-        set.fix_dur         = .7;   % in sec
+        set.fix_dur         = .5;   % in sec
         
         % STIMULUS SETTINGS
         set.stimsize        = 250;  % resize images or not?
-        set.stimsize_deg    = 5;    % degrees of visual angle
+        set.stimsize_deg    = 6;    % degrees of visual angle
         
         % TASK/PHASE SETTINGS
         set.blocks          = 20; 
@@ -160,6 +155,7 @@ elseif taskNb == 3
         % DEFINE EEG TRIGGERS 
         if set.EEG == 1
             
+            set.trigger     = 1;  % stimulus trigger 
             set.trigger11   = 11; % response trigger -- subject accepted a contract
             set.trigger12   = 12; % response trigger -- subject samples again
             set.trigger13   = 13; % feedback trigger -- show the accepted date
