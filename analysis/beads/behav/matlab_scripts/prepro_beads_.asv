@@ -94,7 +94,7 @@ all_data = [subj' block' trialno' urntype' draws' response' accuracy' rate' cond
 % save matrix in csv format in case we want to run analyses in r and/or python
 csvwrite('beads_alldata.csv', all_data)
 
-clear accuracy balance block urntype trialno draws response accuracy rate condition balance indx subj
+clear accuracy balance block urntype trialno draws response accuracy rate condition balance indx 
 
 %% RUN MODEL FITTING %%
 
@@ -102,12 +102,11 @@ clear accuracy balance block urntype trialno draws response accuracy rate condit
 addpath(genpath(modelpath));
 
 % define parameters of the model
-alpha           = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
-Cw              = -10;          % cost for being wrong     
-cost_diff       = -20;          % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
-q               = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
-Cs              = -0.25;        % the cost to sample
-aqvec_switch    = 1;            % still not sure why exactly this is needed 
+alpha           = 1;         % softmax stochasticity parameter (for fitting to human behaviour)
+Cw              = -1000;     % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
+q               = [0.8 0.6]; % proportion of the majority value in sequence (60/40 split in this case)
+Cs              = -10;       % the cost to sample
+aqvec_switch    = 1;         % still not sure why exactly this is needed 
 
 % loop over subjects 
 for sub = 1:nsubs
@@ -116,8 +115,8 @@ for sub = 1:nsubs
     for block = 1:blocks
         
         % extract block data
-        tmp             = find(all_data(:,2) == block);
-        this_blockdata  = all_data((tmp),:);
+        tmp             = find(block_data(:,2) == block);
+        this_blockdata  = block_data((tmp),:);
         
         for trl = 1:blocktrials
             % extract sub/block sequences
@@ -133,7 +132,16 @@ for sub = 1:nsubs
             else
                 thisq = q(2);
             end
-
+        
+            % run ideal observer 
+            [ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(alpha,Cw,thisq,Cs,this_sequence,1);
+            
+            pick_trials{sub, block, trl}    = pickTrial;
+            blockdQvec{sub, block, trl}     = dQvec;
+            bloxkaQvec{sub, block, trl}     = aQvec;
+            blockchoices(sub, block, trl)   = choice;
+            blockddec{sub, block, trl}      = ddec;
+             
         end
     end   
 end
