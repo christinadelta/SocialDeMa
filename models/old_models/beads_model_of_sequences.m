@@ -1,7 +1,7 @@
-function [] = beads_model_of_sequences
+function [] = beads_model_of_sequences;
 
-sequence1 = [1 1 0 1 0 0 1 1 0 1];
-sequence2 = [1 1 1 0 0 1 1 0 1 0];
+sequence1 = 1101001101;
+sequence2 = 1110011010;
 
 R.correct = 0;
 R.error = -1000;
@@ -10,15 +10,9 @@ R.q = 0.6;
 
 seq_mat = [sequence1; sequence2];
 
-% let's define a few variables 
-Ntrials         = size(seq_mat,1);
-maxDraws        = size(seq_mat,2);
-drawSequence    = seq_mat;
-
-% is this a simple example of how to run the function?
 [r, Qsa] = backWardInduction(size(seq_mat,1), size(seq_mat,2), seq_mat, R);
 
-for dri=1:size(seq_mat,1)
+for dri=1:size(seq_mat,1);
     choiceTrial = find(squeeze(Qsa(dri, :, 3)) - max(squeeze(Qsa(dri, :, 1:2))') < 0);   %which options this seq have an urn > sample
     pickTrial(dri) = choiceTrial(1);    %which option was the first one where saample was inferior to urn (choice)?
     [ma ma_i] = max(squeeze(Qsa(dri,pickTrial(dri),:)));    %index of max value on choice option (which urn was chosen/best)?

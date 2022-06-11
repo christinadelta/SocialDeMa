@@ -6,11 +6,11 @@ library(readxl)
 prepro_data = read.csv("githubstuff/rhul_stuff/SocialDeMa/economic_phase2_data.csv", 
                 header = F)
 
-prepro_beads = read.csv("githubstuff/rhul_stuff/SocialDeMa/beads_data.csv", 
+prepro_beads = read.csv("githubstuff/rhul_stuff/SocialDeMa/beads_blockdata.csv", 
                         header = F)
 
-colnames(prepro_beads) = c("subject", "trialNo", "urntype", "draws", "response", "accuracy",
-                           "rate", "condition", "balance")
+colnames(prepro_beads) = c("subject", "block", "trialNo", "urntype", "draws", "response", 
+                           "accuracy","rate", "condition", "balance")
 
 colnames(prepro_data) = c("trialNo", "item", "samples", "price", "rank",
                            "reward", "balance")
