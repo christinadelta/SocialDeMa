@@ -24,7 +24,7 @@
 % GET PATHS & DEFINE VARIABLES
 % The four next lines (paths) should be changed to your paths 
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
-modelpath       = fullfile(startpath, 'analysis', 'beads', 'behav', 'rl_model');
+modelpath       = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fitting');
 analysispath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'prepro_data');
 resultspath     = fullfile(startpath, 'experiments', 'results');
 
@@ -41,6 +41,7 @@ blocks          = 4;
 conditions      = 2;
 thisequence     = nan(1,blocktrials); % every sequence has different number of draws
 temp            = 0;
+respoptions     = 3; % b,g,s
 
 % only keep subnames
 subname         = {subs.name};
@@ -79,10 +80,47 @@ for subI = 1:nsubs
             % extract sequences from log file 
             sequences{subI, blockI, trial}  = logs.blocktrials(trial).sequence;
             
+            % for each block and trial, create matricies with 3 columns and
+            % rows of draw-length. This will correspond to responses.
+            % Columns: [blue, green, sample] -- this is because for some
+            % reason I did not save within-sequence responses!! 
+            t = nan(draws(indx), respoptions);
+            
+            for d = 1:draws(indx)
+                if d ~= draws(indx)
+                    
+                    t(d,1:2) = 0; % index zero for b and g columns
+                    t(d,3) = 1; % index one for s column
+                else
+                    if urntype(indx) == 1 & accuracy(indx) == 1
+                        
+                        t(d,2:3) = 0; % index zero for g and w columns
+                        t(d,1) = 1; % index one for b column
+                        
+                    elseif urntype(indx) == 1 & accuracy(indx) == 0
+                        
+                        t(d,1) = 0; % index zero for b 
+                        t(d,2) = 1; % index one for g column
+                        t(d,3) = 0; % index zero for s 
+                    elseif urntype(indx) == 0 & accuracy(indx) == 1
+                        
+                        t(d,1) = 0; % index zero for b 
+                        t(d,2) = 1; % index one for g column
+                        t(d,3) = 0; % index zero for s 
+                        
+                    elseif urntype(indx) == 0 & accuracy(indx) == 0
+                        
+                        t(d,2:3) = 0; % index zero for g and s columns
+                        t(d,1) = 1; % index one for b column                      
+                    end
+                end
+            end % end of for loop
+            % add responses to 
+            response_batches{subI, blockI, trial} = t;
+            clear t
+            
         end % end of trial loop
-        
     end % end of block loop
-    
 end % end of subject loop
 
 % add data in one matrix
@@ -95,48 +133,6 @@ all_data = [subj' block' trialno' urntype' draws' response' accuracy' rate' cond
 csvwrite('beads_alldata.csv', all_data)
 
 clear accuracy balance block urntype trialno draws response accuracy rate condition balance indx subj
-
-%% RUN MODEL FITTING %%
-
-% first add modelpath to the path
-addpath(genpath(modelpath));
-
-% define parameters of the model
-alpha           = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
-Cw              = -10;          % cost for being wrong     
-cost_diff       = -20;          % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
-q               = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
-Cs              = -0.25;        % the cost to sample
-aqvec_switch    = 1;            % still not sure why exactly this is needed 
-
-% loop over subjects 
-for sub = 1:nsubs
-    
-    % loop over blocks 
-    for block = 1:blocks
-        
-        % extract block data
-        tmp             = find(all_data(:,2) == block);
-        this_blockdata  = all_data((tmp),:);
-        
-        for trl = 1:blocktrials
-            % extract sub/block sequences
-            this_sequence   = sequences{sub, block, trl};
-
-            thisurn         = this_blockdata(trl,4); % blue or green urn?
-            accurate        = this_blockdata(trl,7); % correct or incorrect?
-            thiscond        = this_blockdata(trl,9); % 0.8 or 0.6 probabiltiy?
-            
-            % determine the probability (q) for this trial 
-            if thiscond == 1
-                thisq = q(1);
-            else
-                thisq = q(2);
-            end
-
-        end
-    end   
-end
 
 %% EXTRACT AND SAVE THE SEQUENCE DATA %%
 
@@ -193,3 +189,46 @@ sequence_data = [subj' thisblock' trialnb' drawno' bead' rt'];
 
 % save matrix in csv format in case we want to run analyses in r and/or python
 csvwrite('beads_sequencedata.csv', sequence_data)
+
+%% RUN MODEL FITTING %%
+
+% first add modelpath to the path
+addpath(genpath(modelpath));
+
+% define parameters of the model
+alpha           = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
+Cw              = -10;          % cost for being wrong     
+cost_diff       = -20;          % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
+q               = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
+Cs              = -0.25;        % the cost to sample
+aqvec_switch    = 1;            % still not sure why exactly this is needed 
+
+% loop over subjects 
+for sub = 1:nsubs
+    
+    % loop over blocks 
+    for block = 1:blocks
+        
+        % extract block data
+        tmp             = find(all_data(:,2) == block);
+        this_blockdata  = all_data((tmp),:);
+        
+        for trl = 1:blocktrials
+            % extract sub/block sequences
+            this_sequence   = sequences{sub, block, trl};
+
+            thisurn         = this_blockdata(trl,4); % blue or green urn?
+            accurate        = this_blockdata(trl,7); % correct or incorrect?
+            thiscond        = this_blockdata(trl,9); % 0.8 or 0.6 probabiltiy?
+            
+            % determine the probability (q) for this trial 
+            if thiscond == 1
+                thisq = q(1);
+            else
+                thisq = q(2);
+            end
+
+        end
+    end   
+end
+
