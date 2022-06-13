@@ -29,19 +29,24 @@ SVNrev = '$Rev: 7132 $';
 
 %-Startup
 %--------------------------------------------------------------------------
-spm('sFnBanner', mfilename, SVNrev);
-spm_figure('FindWin','Interactive'); spm_clf('Interactive');
+% spm('sFnBanner', mfilename, SVNrev);
+% spm_figure('FindWin','Interactive'); spm_clf('Interactive');
 
 %-Get MEEG object
 %--------------------------------------------------------------------------
-try
-    D = S.D;
-catch
-    [D, sts] = spm_select(1, 'mat', 'Select M/EEG mat file');
-    if ~sts, trl = []; conditionlabels = {}; S = []; return; end
-    S.D = D;
-end
 
+% --- not needed -------%
+% try
+%     D = S.D;
+% catch
+%     [D, sts] = spm_select(1, 'mat', 'Select M/EEG mat file');
+%     if ~sts, trl = []; conditionlabels = {}; S = []; return; end
+%     S.D = D;
+% end
+% --- not needed -------%
+
+
+D = S.D;
 D = spm_eeg_load(D);
 
 %-Get input parameters
@@ -53,43 +58,49 @@ end
 event    = events(D, 1, 'samples');
 fsample  = D.fsample;
 
-if isempty(event)
-    error('No event information was found in the input.');
-end
+% --- not needed -------%
+% if isempty(event)
+%     error('No event information was found in the input.');
+% end
+% 
+% if ~isfield(S, 'timewin')
+%     S.timewin = spm_input('Time window (ms)', '+1', 'r', [], 2);
+% end
+% --- not needed -------%
 
-if ~isfield(S, 'timewin')
-    S.timewin = spm_input('Time window (ms)', '+1', 'r', [], 2);
-end
-
+% define peristimulus time
 pretrig  = S.timewin(1);
 posttrig = S.timewin(2);
 
-if ~isfield(S, 'trialdef')
-    S.trialdef = [];
-    ncond = spm_input('How many conditions?', '+1', 'n', '1');
-    for i = 1:ncond
-        OK = false;
-        pos = '+1';
-        while ~OK
-            conditionlabel = spm_input(['Label of condition ' num2str(i)], pos, 's');
-            selected = spm_eeg_select_event_ui(event);
-            if isempty(conditionlabel) || isempty(selected)
-                pos = '-1';
-            else
-                shift = spm_input('Shift triggers (ms)', pos, 'r', '0');
-                for j = 1:size(selected, 1)
-                    S.trialdef = [S.trialdef ...
-                        struct('conditionlabel', conditionlabel, ...
-                        'eventtype', selected{j, 1}, ...
-                        'eventvalue', selected{j, 2}, ...
-                        'trlshift', shift)];
-                    OK = true;
-                end
-            end
-        end
-    end
-end
+% --- not needed -------%
+% if ~isfield(S, 'trialdef')
+%     S.trialdef = [];
+%     ncond = spm_input('How many conditions?', '+1', 'n', '1');
+%     for i = 1:ncond
+%         OK = false;
+%         pos = '+1';
+%         while ~OK
+%             conditionlabel = spm_input(['Label of condition ' num2str(i)], pos, 's');
+%             selected = spm_eeg_select_event_ui(event);
+%             if isempty(conditionlabel) || isempty(selected)
+%                 pos = '-1';
+%             else
+%                 shift = spm_input('Shift triggers (ms)', pos, 'r', '0');
+%                 for j = 1:size(selected, 1)
+%                     S.trialdef = [S.trialdef ...
+%                         struct('conditionlabel', conditionlabel, ...
+%                         'eventtype', selected{j, 1}, ...
+%                         'eventvalue', selected{j, 2}, ...
+%                         'trlshift', shift)];
+%                     OK = true;
+%                 end
+%             end
+%         end
+%     end
+% end
+% --- not needed -------%
 
+% calculate trialshift (if trlshift is not 0)
 for i = 1:length(S.trialdef)
     if ~isfield(S.trialdef(i),'trlshift')
         trlshift(i) = 0;
@@ -102,8 +113,9 @@ end
 %--------------------------------------------------------------------------
 trl = [];
 conditionlabels = {};
-for i=1:numel(S.trialdef)
+for i=1:numel(S.trialdef) % out of 6?
 
+    % if event value is character 
     if ischar(S.trialdef(i).eventvalue)
         % convert single string into cell-array, otherwise the intersection does not work as intended
         S.trialdef(i).eventvalue = {S.trialdef(i).eventvalue};
@@ -114,6 +126,8 @@ for i=1:numel(S.trialdef)
     for j=find(strcmp(S.trialdef(i).eventtype, {event.type}))
         if isempty(S.trialdef(i).eventvalue)
             sel = [sel j];
+            
+            % Find the values common to both A and B.
         elseif ~isempty(intersect(event(j).value, S.trialdef(i).eventvalue))
             sel = [sel j];
         end

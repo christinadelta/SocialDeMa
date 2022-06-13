@@ -138,19 +138,19 @@ S.trialdef(2).conditionlabel = 'end';
 S.trialdef(2).eventtype = 'STATUS';
 S.trialdef(2).eventvalue = 103;
 S.trialdef(2).trlshift = 0;
-S.trialdef(3).conditionlabel = 'easyblue';
+S.trialdef(3).conditionlabel = 'easy';
 S.trialdef(3).eventtype = 'STATUS';
 S.trialdef(3).eventvalue = 1;
 S.trialdef(3).trlshift = 0;
-S.trialdef(4).conditionlabel = 'easygreen';
+S.trialdef(4).conditionlabel = 'easy';
 S.trialdef(4).eventtype = 'STATUS';
 S.trialdef(4).eventvalue = 2;
 S.trialdef(4).trlshift = 0;
-S.trialdef(5).conditionlabel = 'diffblue';
+S.trialdef(5).conditionlabel = 'difficult';
 S.trialdef(5).eventtype = 'STATUS';
 S.trialdef(5).eventvalue = 3;
 S.trialdef(5).trlshift = 0;
-S.trialdef(6).conditionlabel = 'diffgreen';
+S.trialdef(6).conditionlabel = 'difficult';
 S.trialdef(6).eventtype = 'STATUS';
 S.trialdef(6).eventvalue = 4;
 S.trialdef(6).trlshift = 0;
@@ -255,4 +255,12 @@ S.label = {
 S.save = 1;
 D = spm_eeg_prep(S);
 
+%% convert to images
 
+matlabbatch{1}.spm.meeg.images.convert2images.D = {'/Users/christinadelta/Desktop/os_data/beads/spmdir/output/macbefdfMspmeeg_sub_01_beads_block_01.mat'};
+matlabbatch{1}.spm.meeg.images.convert2images.mode = 'scalp x time';
+matlabbatch{1}.spm.meeg.images.convert2images.conditions = {};
+matlabbatch{1}.spm.meeg.images.convert2images.channels{1}.type = 'EEG';
+matlabbatch{1}.spm.meeg.images.convert2images.timewin = [-Inf Inf];
+matlabbatch{1}.spm.meeg.images.convert2images.freqwin = [-Inf Inf];
+matlabbatch{1}.spm.meeg.images.convert2images.prefix = '';
