@@ -1,12 +1,22 @@
-function [mparams, lla, aQvec] = bayesbeads(sequence, choiceVec, subject, types, p, cost_diff)
+function [mparams, lla, aQvec] = bayesbeads(sequence, choiceVec, trialinfo, alpha, Cw, cost_diff, Cs, sub)
 
-% choice indecies
+% choice indecies (i don't think i need these
 b               = 1;
 g               = 2;
 s               = 3;
 
+% extract trialinfo
+q               = trialinfo.q;
+urn             = trialinfo.urn;
+cond            = trialinfo.cond;
+accurate        = trialinfo.accurate;
+
+% when running the func through prepro_beads.m comment this part 
+sequence        = this_sequence;
+choiceVec       = this_response;
+
 params          = [Cw ];
-fixedparams     = [alpha; thisq; Cs];
+fixedparams     = [alpha; q; Cs];
 findpick        = 0;
 
 % optimizing parameters for invidual subjects

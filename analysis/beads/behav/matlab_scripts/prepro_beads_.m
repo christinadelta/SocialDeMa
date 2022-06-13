@@ -84,34 +84,34 @@ for subI = 1:nsubs
             % rows of draw-length. This will correspond to responses.
             % Columns: [blue, green, sample] -- this is because for some
             % reason I did not save within-sequence responses!! 
-            t = nan(draws(indx), respoptions);
+            t                               = nan(draws(indx), respoptions);
             
             for d = 1:draws(indx)
                 if d ~= draws(indx)
                     
-                    t(d,1:2) = 0; % index zero for b and g columns
-                    t(d,3) = 1; % index one for s column
+                    t(d,1:2)                = 0; % index zero for b and g columns
+                    t(d,3)                  = 1; % index one for s column
                 else
                     if urntype(indx) == 1 & accuracy(indx) == 1
                         
-                        t(d,2:3) = 0; % index zero for g and w columns
-                        t(d,1) = 1; % index one for b column
+                        t(d,2:3)            = 0; % index zero for g and w columns
+                        t(d,1)              = 1; % index one for b column
                         
                     elseif urntype(indx) == 1 & accuracy(indx) == 0
                         
-                        t(d,1) = 0; % index zero for b 
-                        t(d,2) = 1; % index one for g column
-                        t(d,3) = 0; % index zero for s 
+                        t(d,1)              = 0; % index zero for b 
+                        t(d,2)              = 1; % index one for g column
+                        t(d,3)              = 0; % index zero for s 
                     elseif urntype(indx) == 0 & accuracy(indx) == 1
                         
-                        t(d,1) = 0; % index zero for b 
-                        t(d,2) = 1; % index one for g column
-                        t(d,3) = 0; % index zero for s 
+                        t(d,1)              = 0; % index zero for b 
+                        t(d,2)              = 1; % index one for g column
+                        t(d,3)              = 0; % index zero for s 
                         
                     elseif urntype(indx) == 0 & accuracy(indx) == 0
                         
-                        t(d,2:3) = 0; % index zero for g and s columns
-                        t(d,1) = 1; % index one for b column                      
+                        t(d,2:3)            = 0; % index zero for g and s columns
+                        t(d,1)              = 1; % index one for b column                      
                     end
                 end
             end % end of for loop
@@ -214,8 +214,13 @@ for sub = 1:nsubs
         this_blockdata  = all_data((tmp),:);
         
         for trl = 1:blocktrials
+            
+            % init trial info struct
+            trialinfo       = [];
+            
             % extract sub/block sequences
             this_sequence   = sequences{sub, block, trl};
+            this_response   = response_batches{sub, block, trl};
 
             thisurn         = this_blockdata(trl,4); % blue or green urn?
             accurate        = this_blockdata(trl,7); % correct or incorrect?
@@ -227,8 +232,17 @@ for sub = 1:nsubs
             else
                 thisq = q(2);
             end
+            
+            % add trial info in one struct for modelling
+            trialinfo.q         = thisq;
+            trialinfo.urn       = thisurn;
+            trialinfo.accurate  = accurate;
+            trialinfo.cond      = thiscond;
+            
+            % model fitting 
+            [mprarams, lla, aQvec] = bayesbeads(this_sequence, this_response, trialinfo, alpha, Cw, cost_diff, Cs, sub);
 
-        end
-    end   
-end
+        end % end of trials loop
+    end % end of blocks loop
+end % end of subject loop
 

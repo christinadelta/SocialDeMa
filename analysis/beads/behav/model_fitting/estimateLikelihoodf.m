@@ -11,14 +11,16 @@ q       = fixedparams(2);
 Cs      = fixedparams(3);
 
 lseq    = size(sequence, 2);    % length of sequence
-ntrials = size(setdata, 1);     % number of sequences 
 ll      = 0;                    % init log likelihood to 0
 
-% rename sequence
-thisSequence        = sequence;
+% rename current sequence
+this_sequence       = sequence;
 
-% number of choices for this sequence
-nchoices            = lseq;
+% choices of subject for current sequence of draws 
+choiceVec           = setdata;
+
+% number of choices for this sequence (number of draws)
+nchoices            = size(choiceVec,1);
 
 % initialise number of draws and number green beads (zero)
 numDraws            = 0;
@@ -32,7 +34,7 @@ for j = 1:nchoices
     
     % green or blue bead? or majority beads colour in the urn? -- I think it is
     % the majority colour 
-    if thisSequence(j) == 1
+    if this_sequence(j) == 1
         numGreen    = numGreen + 1; % update numGreen  
     end
 
