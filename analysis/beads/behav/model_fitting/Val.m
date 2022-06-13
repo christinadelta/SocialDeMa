@@ -1,4 +1,4 @@
-function [v, d, Qvec] = Val(q, numDraws, numGreen, alpha, sequenceL, Cw, Cs)
+function [v, d, Qvec] = Val(q, numDraws, numGreen, alpha, lseq, Cw, Cs)
 
 % Computes action values Q for the 3 options (choose blue, choose
 % green, draw again). 
@@ -19,15 +19,15 @@ QG          = Cw * pb; % cost of choosing green
 QB          = Cw * pg; % cost of choosing blue
 
 % compute value for drawing again (QD)
-if numDraws + 1 <= sequenceL
+if numDraws + 1 <= lseq
     
     try
     
         % compute value of next state given that we draw a green bead
-        val11   = vVal(q, numDraws+1, numGreen+1, alpha, sequenceL, Cw, Cs);
+        val11   = vVal(q, numDraws+1, numGreen+1, alpha, lseq, Cw, Cs);
 
         % compute value of next state given that we draw a blue bead
-        val10   = vVal(q, numDraws+1, numGreen, alpha, sequenceL, Cw, Cs);
+        val10   = vVal(q, numDraws+1, numGreen, alpha, lseq, Cw, Cs);
 
         % action value is cost to sample plus expected value of future state
         QS      = Cs + pg * (val11 * q + val10 * (1 - q)) + pb * (val11 * (1 - q) + val10 * q);

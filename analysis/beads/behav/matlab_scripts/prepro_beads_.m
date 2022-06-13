@@ -197,7 +197,7 @@ addpath(genpath(modelpath));
 
 % define parameters of the model
 alpha           = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
-Cw              = -10;          % cost for being wrong     
+Cw              = -50;          % cost for being wrong     
 cost_diff       = -20;          % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
 q               = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
 Cs              = -0.25;        % the cost to sample

@@ -1,6 +1,6 @@
 function [ll, picktrial, dQvec, ddec, aQvec] = estimateLikelihoodf(params, sequence, setdata, fixedparams, findpick)
 
-%%% extract parameters from parameter vector
+% extract parameters from parameter vector
 Cw = params(1);
 % Cs = params(2);
 % alpha  = params(3);
@@ -9,6 +9,7 @@ Cw = params(1);
 alpha   = fixedparams(1);
 q       = fixedparams(2);
 Cs      = fixedparams(3);
+u       = fixedparams(4);
 
 lseq    = size(sequence, 2);    % length of sequence
 ll      = 0;                    % init log likelihood to 0
@@ -20,7 +21,8 @@ this_sequence       = sequence;
 choiceVec           = setdata;
 
 % number of choices for this sequence (number of draws)
-nchoices            = size(choiceVec,1);
+% nchoices            = size(choiceVec,1);
+nchoices            = length(this_sequence);
 
 % initialise number of draws and number green beads (zero)
 numDraws            = 0;
@@ -37,7 +39,7 @@ for j = 1:nchoices
     if this_sequence(j) == 1
         numGreen    = numGreen + 1; % update numGreen  
     end
-
+    
     % also increment draws 
     numDraws        = numDraws + 1;
     
@@ -53,7 +55,7 @@ for j = 1:nchoices
         picktrial   = j; % number of draws
         break
 
-    elseif findPick == 1 & j == nchoices
+    elseif findpick == 1 & j == nchoices
         picktrial = j;
     end
 
@@ -62,10 +64,10 @@ for j = 1:nchoices
         d = [d; 0];
     end  
     
-    % I need to work on this
+%     % I need to work on this
 %     if choiceVec(j,:) * d == 0
-%         fprintf('missing data sequence')
-%         coiceVec(j,:) = [1/3 1/3 1/3];
+%         fprintf('missing data of draw %d', j)
+%         choiceVec(j,:) = [1/3 1/3 1/3];
 %     end
 
     % update log likelihood
@@ -78,9 +80,9 @@ for j = 1:nchoices
     
 end % end of draws for loop
 
-% if findPick == 0
-%     fprintf('ll %.2f Cw %.1f Cs %.1f alpha %.2f\n', ll, Cw, Cs, alpha);
-% end
+if findpick == 0
+    fprintf('ll %.2f Cw %.1f Cs %.1f alpha %.2f\n', ll, Cw, Cs, alpha);
+end
 
 
 return
