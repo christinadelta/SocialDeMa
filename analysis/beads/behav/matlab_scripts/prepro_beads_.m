@@ -24,7 +24,8 @@
 % GET PATHS & DEFINE VARIABLES
 % The four next lines (paths) should be changed to your paths 
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
-modelpath       = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fitting');
+modelfitpath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fitting');
+modelpath       = fullfile(startpath, 'analysis', 'beads', 'behav', 'ideal_observer');
 analysispath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'prepro_data');
 resultspath     = fullfile(startpath, 'experiments', 'results');
 
@@ -126,13 +127,13 @@ end % end of subject loop
 % add data in one matrix
 all_data = [subj' block' trialno' urntype' draws' response' accuracy' rate' condition' balance'];
 
+clear accuracy balance block urntype trialno draws response accuracy rate condition balance indx subj
+
 % remove nans if any
 % block_data(any(isnan(block_data), 2), :)  = []; (let's not remove nan's yet)
 
 % save matrix in csv format in case we want to run analyses in r and/or python
 csvwrite('beads_alldata.csv', all_data)
-
-clear accuracy balance block urntype trialno draws response accuracy rate condition balance indx subj
 
 %% EXTRACT AND SAVE THE SEQUENCE DATA %%
 
@@ -193,11 +194,11 @@ csvwrite('beads_sequencedata.csv', sequence_data)
 %% RUN MODEL FITTING %%
 
 % first add modelpath to the path
-addpath(genpath(modelpath));
+addpath(genpath(modelfitpath));
 
 % define parameters of the model
 alpha           = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
-Cw              = -50;          % cost for being wrong     
+Cw              = -10;          % cost for being wrong     
 cost_diff       = -20;          % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
 q               = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
 Cs              = -0.25;        % the cost to sample
@@ -217,6 +218,8 @@ for sub = 1:nsubs
             
             % init trial info struct
             trialinfo       = [];
+            
+            index           = ((block - 1) * blocktrials) + trl;
             
             % extract sub/block sequences
             this_sequence   = sequences{sub, block, trl};
@@ -240,9 +243,84 @@ for sub = 1:nsubs
             trialinfo.cond      = thiscond;
             
             % model fitting 
-            [mprarams, lla, aQvec] = bayesbeads(this_sequence, this_response, trialinfo, alpha, Cw, cost_diff, Cs, sub);
+            [mparams, lla, aQvec] = bayesbeads(this_sequence, this_response, trialinfo, alpha, Cw, cost_diff, Cs, sub);
+            
+            tempparams{sub}{thiscond}{index}   = mparams;
+            templla{sub}{thiscond}{index}      = lla;
+            tempaQvec{sub}{thiscond}{index}    = aQvec;
 
         end % end of trials loop
-    end % end of blocks loop
-end % end of subject loop
+    end % end of block loop
+end % end of sub loop
+
+
+clear thisurn thisq thiscond accurate mparams lla aQvec index this_sequence this_response trialinfo sub
+
+% remove empty cells from the model outputs 
+for sub = 1:nsubs 
+    for cond = 1:conditions
+        modelparams{1,sub}{1,cond}  = tempparams{1,sub}{1,cond}(~cellfun('isempty',tempparams{1,sub}{1,cond}));
+        modellla{1,sub}{1,cond}     = templla{1,sub}{1,cond}(~cellfun('isempty',templla{1,sub}{1,cond}));
+        modelaQvec{1,sub}{1,cond}   = tempaQvec{1,sub}{1,cond}(~cellfun('isempty',tempaQvec{1,sub}{1,cond}));
+        
+    end 
+end
+
+%% RUN IDEAL OBSERVER %%
+
+% first add modelpath to the path
+addpath(genpath(modelpath));
+
+% TODO:
+% INstead of looping over blocks, loop and run ideal observer over conditions  
+
+% define parameters of the model
+alpha       = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
+Cw          = -10;          % cost for being wrong
+Cd          = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+Cc          = 10;           % cost for being correct
+q           = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
+cs          = -0.25;        % the cost to sample
+
+% loop over subjects 
+for sub = 1:nsubs
+    
+    % loop over blocks 
+    for block = 1:blocks
+        
+        % extract block data
+        tmp                     = find(block_data(:,2) == block);
+        this_blockdata          = block_data((tmp),:);
+        
+        for trl = 1:blocktrials
+            % extract sub/block sequences
+            this_sequence       = sequences{sub, block, trl};
+
+            thisurn             = this_blockdata(trl,4); % blue or green urn?
+            accurate            = this_blockdata(trl,7); % correct or incorrect?
+            thiscond            = this_blockdata(trl,9); % 0.8 or 0.6 probabiltiy?
+            
+            % determine the probability (q) for this trial 
+            if thiscond == 1
+                thisq           = q(1);
+            else
+                thisq           = q(2);
+            end
+        
+            % run ideal observer 
+            [ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(alpha,Cw,thisq,Cs,this_sequence,1);
+            
+            pick_trials{sub, block, trl}    = pickTrial;
+            blockdQvec{sub, block, trl}     = dQvec;
+            bloxkaQvec{sub, block, trl}     = aQvec;
+            blockchoices(sub, block, trl)   = choice;
+            blockddec{sub, block, trl}      = ddec;
+  
+        end % end of trial loop
+    end % end of block loop
+end % end of sub loop
+
+
+
+
 

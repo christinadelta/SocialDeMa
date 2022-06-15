@@ -1,6 +1,6 @@
 function [mparams, lla, aQvec] = bayesbeads(sequence, choiceVec, trialinfo, alpha, Cw, cost_diff, Cs, sub)
 
-% choice indecies (i don't think i need these
+% choice indecies (i don't think i need these)
 b               = 1;
 g               = 2;
 s               = 3;
@@ -17,7 +17,7 @@ accurate        = trialinfo.accurate;
 
 % params          = Cw;
 params          = cost_diff; 
-fixedparams     = [alpha; q; Cs; urn];
+fixedparams     = [alpha; q; Cs];
 % findpick        = 0;
 findpick        = 1;
 
