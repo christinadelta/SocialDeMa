@@ -344,15 +344,15 @@ for i = 1:nsubs
     for j = 1:conditions
         
         % compute accuracy 
-        tmp_acc             = cell2mat(blockchoices{1,i}{1,j});
-        all_accuracy{i}{j}  = mean(tmp_acc == 1);
+        tmp_acc = cell2mat(blockchoices{1,i}{1,j});
+        all_accuracy{i}{j} = mean(tmp_acc == 1);
         
         % compute number of draws
-        tmp_draws           = cell2mat(pick_trials{1,i}{1,j});
-        all_draws{i}{j}     = mean(tmp_draws);
+        tmp_draws = cell2mat(pick_trials{1,i}{1,j});
+        all_draws{i}{j} = mean(tmp_draws);
         
         % compute points
-        all_points{i}{j}    = (sum(tmp_acc == 1) * Cc) + (sum(tmp_acc == 2) * Cw) - (sum(tmp_draws) * Cs);
+        all_points{i}{j} = (sum(tmp_acc == 1) * Cc) + (sum(tmp_acc == 2) * Cw) - (sum(tmp_draws) * Cs);
         
     end
 end
