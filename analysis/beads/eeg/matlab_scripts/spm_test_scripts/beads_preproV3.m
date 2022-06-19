@@ -451,40 +451,97 @@ D = spm_eeg_tf_rescale(S);
 
 %% average power over frequency
 
+% S = [];
+% S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/rtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
+% S.freqwin = 1:55;
+% S.prefix = 'P';
+% D = spm_eeg_avgfreq(S);
+% 
+% %% average power over time
+% S = [];
+% S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/rtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
+% S.timewin = [-500 800];
+% S.prefix = 'S';
+% D = spm_eeg_avgtime(S);
+
+% %% average phase over frequency
+% S = [];
+% S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/tph_cefdfMspmeeg_sub_01_beads_block_01.mat';
+% S.freqwin = 1:55;
+% S.prefix = 'P';
+% D = spm_eeg_avgfreq(S);
+
+%% Run convensional averaging 
 S = [];
 S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/rtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
-S.freqwin = 1:55;
-S.prefix = 'P';
-D = spm_eeg_avgfreq(S);
-
-%% average power over time
-S = [];
-S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/rtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
-S.timewin = [-500 800];
-S.prefix = 'S';
-D = spm_eeg_avgtime(S);
-
-%% average phase over frequency
-S = [];
-S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/tph_cefdfMspmeeg_sub_01_beads_block_01.mat';
-S.freqwin = 1:55;
-S.prefix = 'P';
-D = spm_eeg_avgfreq(S);
+S.robust.ks = 3;
+S.robust.bycondition = true;
+S.robust.savew = false;
+S.robust.removebad = false;
+S.circularise = false;
+S.prefix = 'm';
+D = spm_eeg_average(S);
 
 %% contrast power and phase-locking files
 
 % As with evoked responses, TFRs also will be contrasted in 5 ways:
-% 1. 
+% 1. Draw vs Urn contrast
 S = [];
-S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/Prtf_cefdfMspmeeg_sub_01_beads_block_01.mat';
-% S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/mtph_cefdfMspmeeg_sub_01_beads_block_01.mat';
-S.c = [-1 1 -1 1]; % difficult difference 
-S.label = {'diff_difference'};
+S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/mrtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
+S.c = [-1 1 -1 1]; 
+S.label = {'drawVSurn'};
 S.weighted = 1;
-S.prefix = 'w';
+S.prefix = 'w_urnVSdraw';
+D = spm_eeg_contrast(S);
+
+% 2. Diff vs Easy contrast
+S = [];
+S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/mrtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
+S.c = [1 1 -1 -1]; 
+S.label = {'diffVSeasy'};
+S.weighted = 1;
+S.prefix = 'w_diffVSeasy';
+D = spm_eeg_contrast(S);
+
+% 3. Interaction contrast
+S = [];
+S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/mrtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
+S.c = [-1 1 1 -1]; 
+S.label = {'interaction'};
+S.weighted = 1;
+S.prefix = 'w_interaction';
+D = spm_eeg_contrast(S);
+
+% 4. Only Urn contrast
+S = [];
+S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/mrtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
+S.c = [0 1 0 1]; 
+S.label = {'Urn'};
+S.weighted = 1;
+S.prefix = 'w_urn';
+D = spm_eeg_contrast(S);
+
+% 5. Only Draws contrast
+S = [];
+S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/mrtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
+S.c = [1 0 1 0]; 
+S.label = {'draws'};
+S.weighted = 1;
+S.prefix = 'w_draws';
 D = spm_eeg_contrast(S);
 
 %% convert TFR to images
+
+S = [];
+S.D = '/Users/christinadelta/Desktop/os_data/beads/spmdir/output_tfr/w_diffVSeasymrtf_ce_nobase_fdfMspmeeg_sub_01_beads_block_01.mat';
+S.mode = 'time x frequency';
+S.conditions = {};
+S.channels = 'EEG';
+S.timewin = [-Inf Inf];
+S.freqwin = [-Inf Inf];
+S.prefix = '';
+
+D = spm_eeg_convert2images(S);
 
 
 %%  extract evoked (ERP) parietal data for analysis with behaviour and model
