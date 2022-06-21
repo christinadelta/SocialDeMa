@@ -1,4 +1,4 @@
-% PRE-PROCESSING SCRIPT FOR THE BEADS TASK
+% PRE-PROCESSING SCRIPT FOR THE BEADS TASK VERSION 2
 
 % Part of the Optimal Stopping Problems Project
 
@@ -133,7 +133,7 @@ clear accuracy balance block urntype trialno draws response accuracy rate condit
 % block_data(any(isnan(block_data), 2), :)  = []; (let's not remove nan's yet)
 
 % save matrix in csv format in case we want to run analyses in r and/or python
-csvwrite('beads_alldata.csv', all_data)
+% csvwrite('beads_alldata.csv', all_data)
 
 %% EXTRACT AND SAVE THE SEQUENCE DATA %%
 
@@ -243,7 +243,7 @@ for sub = 1:nsubs
             trialinfo.cond      = thiscond;
             
             % model fitting 
-            [mparams, lla, aQvec] = bayesbeads(this_sequence, this_response, trialinfo, alpha, Cw, cost_diff, Cs, sub);
+            [mparams, lla, aQvec] = bayesbeads(this_sequence, this_response, trialinfo, alpha, Cw, cost_diff, Cs);
             
             tempparams{sub}{thiscond}{index}   = mparams;
             templla{sub}{thiscond}{index}      = lla;
