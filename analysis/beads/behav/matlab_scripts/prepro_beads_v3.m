@@ -50,14 +50,15 @@ conditions      = 2;
 thisequence     = nan(1,blocktrials); % every sequence has different number of draws
 temp            = 0;
 respoptions     = 3; % b,g,s
-
+co              = 1; % this will be used for spliting sequences and choice vectors in conditions one and two
+ct              = 1; % this will be used for spliting sequences and choice vectors in conditions one and two
 % only keep subnames
 subname         = {subs.name};
 
 
 %% EXTRACT AND SAVE THE BLOCK DATA %%
 
-for subI = 1:nsubs 
+for subI = 1:nsubs
     
     fprintf('loading beads block data\n')  
     subject = subs(subI).name;
@@ -71,7 +72,6 @@ for subI = 1:nsubs
         load(subFile)
         
         for trial = 1:blocktrials
-            
             indx                            = ((blockI -1)*blocktrials) + trial;  
             
             block(indx)                     = blockI;
@@ -86,56 +86,57 @@ for subI = 1:nsubs
             subj(indx)                      = subI;
             generaltrial(indx)              = indx;
             
-            % extract sequences from log file 
-            sequences{subI, blockI, trial}  = logs.blocktrials(trial).sequence;
+            sequence                        = logs.blocktrials(trial).sequence; % extract tish trial sequence of draws
             
-            % for each block and trial, create matricies with 3 columns and
-            % rows of draw-length. This will correspond to responses.
-            % Columns: [blue, green, sample] -- this is because for some
-            % reason I did not save within-sequence responses!! 
-            t                               = nan(draws(indx), respoptions);
+            % maybe here add this trial's responses. Given that I was not saving within sequence resposes but we need that info for
+            % the model, I will create a nx3 matrix of choices for each sequence, when n=number of draws and 3=choice options (b,g,d)
+            t                               = nan(draws(indx), respoptions); % init empty matrix
             
             for d = 1:draws(indx)
-                if d ~= draws(indx)
-                    
+                if d ~= draws(indx) % if this is not the last draw add 0's to b and g columns and 1 to draw column
                     t(d,1:2)                = 0; % index zero for b and g columns
-                    t(d,3)                  = 1; % index one for s column
+                    t(d,3)                  = 1; % index one for draw column
                 else
-                    if urntype(indx) == 1 & accuracy(indx) == 1
-                        
-                        t(d,2:3)            = 0; % index zero for g and w columns
-                        t(d,1)              = 1; % index one for b column
-                        
-                    elseif urntype(indx) == 1 & accuracy(indx) == 0
-                        
+                    if urntype(indx) == 1 & accuracy(indx) == 1 % this is a blue urn and sub was correct
+                        t(d,2:3)            = 0; % index zero for g and draw columns
+                        t(d,1)              = 1; % index one for b column (sub ressed blue)
+                    elseif urntype(indx) == 1 & accuracy(indx) == 0 % this is a blue urn and sub was incorrect or did not respond
+                        t(d,1)              = 0; % index zero for b 
+                        t(d,2)              = 1; % index one for g column
+                        t(d,3)              = 0; % index zero for draw 
+                    elseif urntype(indx) == 0 & accuracy(indx) == 1 % this is a green urn and sub was correct
                         t(d,1)              = 0; % index zero for b 
                         t(d,2)              = 1; % index one for g column
                         t(d,3)              = 0; % index zero for s 
-                    elseif urntype(indx) == 0 & accuracy(indx) == 1
-                        
-                        t(d,1)              = 0; % index zero for b 
-                        t(d,2)              = 1; % index one for g column
-                        t(d,3)              = 0; % index zero for s 
-                        
-                    elseif urntype(indx) == 0 & accuracy(indx) == 0
-                        
-                        t(d,2:3)            = 0; % index zero for g and s columns
-                        t(d,1)              = 1; % index one for b column                      
+                    elseif urntype(indx) == 0 & accuracy(indx) == 0 % this is a green urn and sub was incorrect or did not respond
+                        t(d,2:3)            = 0; % index zero for g and draw columns
+                        t(d,1)              = 1; % index one for b column            
                     end
-                end
-            end % end of for loop
-            % add responses to 
-            response_batches{subI, blockI, trial} = t;
-            clear t
+                end % end of if statement
+            end % end of draws loop
             
+            % add thistrial sequence and choive vector t in correct cell
+            % based on condition
+            if condition(indx) == 1 
+                allsequences{1,subI}{1,condition(indx)}{1,co}       = sequence;
+                allchoicevectors{1,subI}{1,condition(indx)}{1,co}   = t;
+                
+                co                                                  = co+1; % update co
+            else 
+                allsequences{1,subI}{1,condition(indx)}{1,ct}       = sequence;
+                allchoicevectors{1,subI}{1,condition(indx)}{1,ct}   = t;
+                
+                ct                                                  = ct+1; % update co
+            end
+        clear t sequence    
         end % end of trial loop
-    end % end of block loop
+    end % end of block loop  
 end % end of subject loop
 
 % add data in one matrix
 all_data = [subj' block' trialno' urntype' draws' response' accuracy' rate' condition' balance'];
 
-clear accuracy balance block urntype trialno draws response accuracy rate condition balance indx subj
+clear accuracy balance block urntype trialno draws response accuracy rate condition balance indx subj subI co ct d trial
 
 % remove nans if any
 % block_data(any(isnan(block_data), 2), :)  = []; (let's not remove nan's yet)
@@ -149,75 +150,59 @@ clear accuracy balance block urntype trialno draws response accuracy rate condit
 % each condition
 for sub = 1:nsubs % loop over subjects 
     
+    % extract this subject data 
+    temp = find(all_data(:,1) == sub);
+    sub_data = all_data((temp),:);
+    
     for cond = 1:conditions % loop over conditions
         
-        tmp                         = find(all_data(:,9) == cond);
-        cond_data{sub}{cond}        = all_data((tmp),:);
+        tmp                         = find(sub_data(:,9) == cond);
+        cond_data{sub}{cond}        = sub_data((tmp),:);
         cond_data{sub}{cond}(:,11)  = 1:totaltrials/2; % just add row index number 
         clear tmp
     end % end of cond loop
 end % end of subject loop
 
-% split sequences and behvavioural responses into conditions 
-for subi = 1:nsubs
-    % extract subject data
-    tmp = find(all_data(:,1) == subi);
-    subdata = all_data((tmp),:);
-    
-    for block = 1:blocks
-        % extract block data
-        tmpblock = find(subdata(:,2) == block);
-        blockdata = subdata((tmpblock),:);
-        
-        for trial = 1:blocktrials
-            
-            index = ((block -1)*blocktrials) + trial;
-            if blockdata(trial,9) == 1 % if easy condition
-                
-                condsequence{1,subi}{1,1}{1,index} = sequences{subi, block, trial};
-                condresponse{1,subi}{1,1}{1,index} = response_batches{subi, block, trial};
-            else
-                condsequence{1,subi}{1,2}{1,index} = sequences{subi, block, trial};
-                condresponse{1,subi}{1,2}{1,index} = response_batches{subi, block, trial};
-                
-            end
-        end % end of trial loop
-    end % end of blocks loop   
-end % end of subject loop
+% define model parameters 
+alpha                   = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
+Cw                      = -10;          % cost for being wrong     
+cost_diff               = -20;          % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
+q                       = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
+Cs                      = -0.25;        % the cost to sample
+aqvec_switch            = 1;            % still not sure why exactly this is needed 
 
-% clear empty cell arrays
-for sub = 1:nsubs 
-    for cond = 1:conditions
-        condseq{1,sub}{1,cond} = condsequence{1,sub}{1,cond}(~cellfun('isempty',condsequence{1,sub}{1,cond}));
-        condresp{1,sub}{1,cond} = condresponse{1,sub}{1,cond}(~cellfun('isempty',condresponse{1,sub}{1,cond}));
-        
-    end
-    
-end
-
-clear tmp subdata tmpblock blockdata condsequence condresponse sub subi cond block trial
-
-% ok, now it's time to run model fitting!!
-% first add modelpath to the path
-addpath(genpath(modelfitpath));
-
-% define parameters of the model
-alpha           = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
-Cw              = -10;          % cost for being wrong     
-cost_diff       = -20;          % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
-q               = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
-Cs              = -0.25;        % the cost to sample
-aqvec_switch    = 1;            % still not sure why exactly this is needed 
-
-% loop over subjects and conditions and run the model for all sequences
-% within each condition
 for sub = 1:nsubs
     
+    % extract sub data, choices/responses, sequences 
+    thisub_data         = cond_data{1,sub};
+    thisub_choices      = allchoicevectors{1,sub};
+    thisub_seq          = allsequences{1,sub};
     
-    
-    
-    
-end
+    for cond = 1:conditions 
+        % extarct condition data. choices, sequences
+        cond_data       = thisub_data{1,cond};
+        cond_choices    = thisub_choices{1,cond};
+        cond_sequence   = thisub_seq{1,cond};
+        
+        % extract urn types form data matrix
+        info.urntypes   = cond_data(:,4);
+        info.condtrials = totaltrials/conditions;
+        
+        % is this cond 0.8 or 0.6 probability? 
+        if cond == 1
+            prob        = q(1);
+        else
+            prob        = q(2);
+        end
+        
+        info.p          = prob;
+        
+        
+        
+        
+    end
+ 
+end % end of subjects loop 
 
 
 
