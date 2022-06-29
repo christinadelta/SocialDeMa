@@ -32,7 +32,7 @@
 % The four next lines (paths) should be changed to your paths 
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
 modelfitpath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fitting');
-modelpath       = fullfile(startpath, 'analysis', 'beads', 'behav', 'ideal_observer');
+iobserverpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'ideal_observer');
 analysispath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'prepro_data');
 resultspath     = fullfile(startpath, 'experiments', 'results');
 
@@ -144,9 +144,10 @@ clear accuracy balance block urntype trialno draws response accuracy rate condit
 % save matrix in csv format in case we want to run analyses in r and/or python
 % csvwrite('beads_alldata.csv', all_data)
 
-%% RUN MODEL FITTING %%
+%% SPLIT DATA MATRIX INTO CONDITIONS %%
 
-% first split all_data into conditions the result should be a 26x10 matrix for
+% Before running the models (ideal observer, model fitting) first for each
+% participant, we split all_data into conditions the result should be a 26x10 matrix for
 % each condition
 for sub = 1:nsubs % loop over subjects 
     
@@ -159,9 +160,65 @@ for sub = 1:nsubs % loop over subjects
         tmp                         = find(sub_data(:,9) == cond);
         cond_data{sub}{cond}        = sub_data((tmp),:);
         cond_data{sub}{cond}(:,11)  = 1:totaltrials/2; % just add row index number 
-        clear tmp
+        clear tmp    
     end % end of cond loop
+    clear temp sub_data
 end % end of subject loop
+
+%% RUN IDEAL OBSERVER %%
+
+% first add modelpath to the path
+addpath(genpath(iobserverpath));
+
+% TODO:
+% INstead of looping over blocks, loop and run ideal observer over conditions  
+
+% define parameters of the model
+alpha       = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
+Cw          = -10;          % cost for being wrong
+Cd          = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+Cc          = 10;           % cost for being correct
+prob        = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
+Cs          = -0.25;        % the cost to sample
+
+% loop over subjects 
+for sub = 1:nsubs
+    
+    % extract this subject data matrix and sequences 
+    sub_data    = cond_data{1,sub};
+    sub_seq     = allsequences{1,sub};
+    
+    for cond = 1:conditions
+        
+        thiscond_data = sub_data{1,cond};
+        thiscond_seq = sub_seq{1,cond};
+        
+        % what is the probability of this cond? 
+        if cond == 1
+            thisq = prob(1);
+        else 
+            thisq = prob(2);
+        end
+        
+        % run ideal observer 
+        [ll, pickTrial, dQvec, ddec, aQvec choice]  = estimateLikelihoodf(alpha,Cw,thisq,Cs,thiscond_seq,1);
+        
+        cond_pickTrials{sub}{cond}                  = pickTrial;
+        cond_dQvec{sub}{cond}                       = dQvec;
+        cond_aQvec{sub}{cond}                       = aQvec;
+        cond_choices{sub}{cond}                     = choice;
+        cond_ddec{sub}{cond}                        = ddec;
+        
+        clear thiscond_data thiscond_seq thisq
+    end % end of conditions loop
+end % end of subjects loop
+
+
+%% RUN MODEL FITTING %%
+
+% first add modelpath to the path
+addpath(genpath(modelfitpath));
+
 
 % define model parameters 
 alpha                   = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
@@ -197,12 +254,13 @@ for sub = 1:nsubs
         
         info.p          = prob;
         
+        % aaand fit the model 
+        [mparams, lla, all_ll, aQvec] = bayesbeads(cond_sequence, cond_choices, info, alpha, Cw, cost_diff, Cs, cond, sub);
         
-        
+        model_output(cond).params   = mparams;
+        model_output(cond).lla      = lla;
+        model_output(cond).all_ll   = all_ll;
+        model_output(cond).aQvec    = aQvec;
         
     end
- 
 end % end of subjects loop 
-
-
-

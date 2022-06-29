@@ -1,86 +1,136 @@
-function [ll, picktrial, dQvec, ddec, aQvec] = estimateLikelihoodf(params, sequence, setdata, fixedparams, findpick)
+function [ll, all_ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(params, sequence, setData, fixedParams, findPick, urntype)
 
-% extract parameters from parameter vector
-Cw = params(1);
-% Cs = params(2);
-% alpha  = params(3);
-% q = fixedparams;
+%%% extract free parameters 
+% Cw = params(1);
+Cs = params(1);
+% comment this out when running through beads preprocessing script
+% setData = choiceVec;
 
-alpha   = fixedparams(1);
-q       = fixedparams(2);
-Cs      = fixedparams(3);
+% extract fixed parameters
+alpha = fixedParams(1);
+q = fixedParams(2);
+Cw = fixedParams(3);
+% Cs = fixedParams(3);
+cond = fixedParams(4);
 
-lseq    = size(sequence, 2);    % length of sequence
-ll      = 0;                    % init log likelihood to 0
+%%% number of sequences
+nblocks = size(setData, 2);
 
-% rename current sequence
-this_sequence       = sequence;
+%%% intialize log likelihood to zero
+ll = 0;
 
-% choices of subject for current sequence of draws 
-choiceVec           = setdata;
-
-% number of choices for this sequence (number of draws)
-nchoices            = size(choiceVec,1);
-
-% initialise number of draws and number green beads (zero)
-numDraws            = 0;
-numGreen            = 0;
-
-dQvec               = []; % values for each action (vector)
-ddec                = []; % corresponding probabilities generated with softmax and alpha
-
-% loop over draws for that sequence 
-for j = 1:nchoices
+for block = 1 : nblocks % blocks are the number of sequences per condition (26)
     
-    % green or blue bead? or majority beads colour in the urn? -- I think it is
-    % the majority colour 
-    if this_sequence(j) == 1
-        numGreen    = numGreen + 1; % update numGreen  
+    % extract this sequence
+    this_seq = sequence{block};
+    
+    %%% choices of subject for this sequence of draws
+    choiceVec = setData{block};
+    
+    %%% length of sequence
+    lseq    = size(this_seq, 2);
+
+    %%% number of choices for this sequence
+    nchoices = size(choiceVec, 1);
+    
+    %%% NEED TO ASK NICK ABOUT THIS
+    % now, i'm not sure if this part is needed but, if this is a green type
+    % sequence, swipe the codes (in the sequence)
+%     if urntype(block) == 0
+%         seq_ones            = find(this_seq == 1);
+%         seq_twos            = find(this_seq == 2);
+%         this_seq(seq_ones)  = 2;
+%         this_seq(seq_twos)  = 1;
+%     end
+
+    %%% initially nd (draws) == 0 and ng (green marbles) == 0
+    ng = 0;
+    nd = 0;
+    
+    %%% Qvec is values of each action
+    dQvec = [];
+    
+    %%% corresponding probabilities generated with softmax and alpha
+    ddec  = []; 
+        
+%     if isempty(find( mean( choiceVec') == 0 )) == 0; 
+%         disp(sprintf('missing response skipping sequence %d for this type', block)); continue; 
+%     end;
+
+    %%% loop over draws for this sequence of draws
+    for draw = 1 : nchoices
+
+        %%% check if we got a green or blue marble
+        if this_seq(draw) == 1
+            ng = ng + 1;
+        end
+
+        %%% alwasy increment draws
+        nd = nd + 1;
+
+        %%% compute values of each action
+        [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cs);
+        
+        %%% keep track of values across sequnce of draws
+        dQvec(draw, 1:length(Qvec)) = Qvec;
+        
+        %%% keep track of choice probabilities across sequence 
+        ddec (draw, 1:length(d))    = d;
+        
+        %%% Nick, add this line to your code and also return it.
+        aQvec{block}(draw, 1:length(Qvec)) = Qvec;
+        
+        %%% if trying to determine optimal stopping position (findpick ==
+        %%% 1) then see if we should stop
+        if findPick == 1 & draw < nchoices & (Qvec(1) > Qvec(3) | Qvec(2) > Qvec(3))
+            pickTrial(block) = draw;
+            break
+        elseif findPick == 1 & draw == nchoices
+            pickTrial(block) = draw;
+        end
+
+        %%% if at end of sequence d is two element and have to tack on for
+        %%% syntax purposes
+        if draw == lseq
+            d = [d; 0];
+        end
+        
+        if choiceVec(draw,:)*d == 0;
+            fprintf('missing data sequence %d   ', block);
+            choiceVec(draw,:) = [1/3 1/3 1/3];
+        end
+            
+
+        %%% update log likelihood
+        try
+            ll = ll - log(choiceVec(draw,:)*d);
+        catch
+            fprintf('');
+        end
+        
+        % fprintf( 'draw: %d ll: %.2f', nd, ll);
+        
+        % save all ll's to take a look at them 
+        all_ll{1,block}(draw,1) = ll;
+        
+
     end
     
-    % also increment draws 
-    numDraws        = numDraws + 1;
-    
-    % compute action values for each new draw (in current sequence)
-    % until action value for one of the two urns exceeds action value
-    % for drawing again. 
-    [v, d, Qvec]    = Val(q, numDraws, numGreen, alpha, lseq, Cw, Cs);
+%     subplot(2,2,block);
+%     plot(dQvec);
+%     legend('G', 'B', 'S');
 
-    aQvec(j, 1:length(Qvec)) = Qvec;
-    
-    % determine optimal stopping position 
-    if findpick == 1 & j < nchoices & (Qvec(1) > Qvec(3) | Qvec(2) > Qvec(3))
-        picktrial   = j; % number of draws
-        break
-
-    elseif findpick == 1 & j == nchoices
-        picktrial = j;
-    end
-
-    % 
-    if j == lseq
-        d = [d; 0];
-    end  
-    
-    % 
-    if choiceVec(j,:) * d == 0
-        fprintf('missing data of draw %d', j)
-        choiceVec(j,:) = [1/3 1/3 1/3];
-    end
-
-    % update log likelihood
-    try 
-        ll = ll - log(choiceVec(j,:) * d);
-    catch
-        fprintf('');
-    end
-
-    
-end % end of draws for loop
-
-if findpick == 0
-    fprintf('ll %.2f Cw %.1f Cs %.1f alpha %.2f\n', ll, Cw, Cs, alpha);
+%     subplot(6,4,block);
+%     h = plot(1:size(dQvec,1), dQvec);
+%     legend('B', 'G', 'D');
+%     set(gca, 'Fontname', 'Ariel', 'FontSize', 6);
+%     set(h, 'MarkerSize',6, 'marker', 'o');
+%     
 end
 
+if findPick == 0
+    pickTrial = [];
+    fprintf('ll %.2f Cw %.1f p %.2f Cs %.2f alpha %.2f\n', ll, Cw, q, Cs, alpha);
+end
 
 return

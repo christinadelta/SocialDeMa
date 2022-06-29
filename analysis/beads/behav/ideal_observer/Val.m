@@ -1,4 +1,4 @@
-function [v, d, Qvec] = Val(q, numDraws, numGreen, alpha, sequenceL, Cd, Cs)
+function [v, d, Qvec] = Val(q, numDraws, numGreen, alpha, lseq, Cw, Cs)
 
 % Computes action values Q for the 3 options (choose blue, choose
 % green, draw again). 
@@ -14,18 +14,18 @@ pb          = 1 - pg; % p(B|numDraws, numGreen) = 1 - p(G|numDraws, numGreen)
 % determine the value of each available option. Here, only the cost of
 % error is used. Cost of reward? Ok, Nick's 2011 paper explains why only Cw was
 % used!!!!
-QG          = Cd * pb; % cost of choosing green 
+QG          = Cw * pb; % cost of choosing green 
 
-QB          = Cd * pg; % cost of choosing blue
+QB          = Cw * pg; % cost of choosing blue
 
 % compute value for drawing again (QD)
-if numDraws + 1 <= sequenceL
+if numDraws + 1 <= lseq
     
     % compute value of next state given that we draw a green bead
-    val11   = vVal(q, numDraws+1, numGreen+1, alpha, sequenceL, Cd, Cs);
+    val11   = vVal(q, numDraws+1, numGreen+1, alpha, lseq, Cw, Cs);
     
     % compute value of next state given that we draw a blue bead
-    val10   = vVal(q, numDraws+1, numGreen, alpha, sequenceL, Cd, Cs);
+    val10   = vVal(q, numDraws+1, numGreen, alpha, lseq, Cw, Cs);
     
     % action value is cost to sample plus expected value of future state
     QS      = Cs + pg * (val11 * q + val10 * (1 - q)) + pb * (val11 * (1 - q) + val10 * q);

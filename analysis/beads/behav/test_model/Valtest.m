@@ -1,7 +1,7 @@
-function [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cs)
+function [v, d, Qvec] = Valtest(q, nd, ng, alpha, lseq, Cw, Cs)
 
 %%% computes probability that we are drawing from green urn
-pg = PG(q, nd, ng);
+pg = PGtest(q, nd, ng);
 %%% probability that we are drawing from predominantly blue urn
 pb = 1 - pg;
 
@@ -12,12 +12,12 @@ QB = Cw*pg;
 
 
 if nd + 1 <= lseq
-    try
+%     try
         
         %%% compute value of next state given that we draw a green
-        val11 = vVal(q, nd+1, ng+1, alpha, lseq, Cw, Cs);
+        val11 = vValtest(q, nd+1, ng+1, alpha, lseq, Cw, Cs);
         %%% compute value of next state given that we draw a blue
-        val10 = vVal(q, nd+1, ng, alpha, lseq, Cw, Cs);
+        val10 = vValtest(q, nd+1, ng, alpha, lseq, Cw, Cs);
         
         %%% redundant with above
 %         val00 = vVal(q, nd+1, ng+1, alpha, lseq, Cw, Cs);
@@ -30,23 +30,19 @@ if nd + 1 <= lseq
               
         %%% compile action values into vector
         Qvec = [QG; QB; QS]; 
-        if nd == 1
-           fprintf(''); 
-        end
-    catch
-        fprintf('');
-    end
+%         if nd == 1
+%            fprintf(''); 
+%         end
+%     catch
+%         fprintf('');
+%     end
 else
     Qvec = [QG; QB];
 end
 
-try sum(exp(alpha*Qvec));
-catch; fprintf('');
-end
-
-if sum(exp(alpha*Qvec)) == 0
-    fprintf('');
-end
+% if sum(exp(alpha*Qvec)) == 0
+%     fprintf('');
+% end
 
 %%% softmax function to convert values to action probabilities
 d = exp(alpha*Qvec)./sum(exp(alpha*Qvec));

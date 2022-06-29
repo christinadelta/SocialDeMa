@@ -1,51 +1,40 @@
-function [mparams, lla, aQvec] = bayesbeads(sequence, choiceVec, trialinfo, alpha, Cw, cost_diff, Cs, sub)
-
-% choice indecies (i don't think i need these)
-b               = 1;
-g               = 2;
-s               = 3;
+function [mparams, lla, all_ll, aQvec] = bayesbeads(sequence, choiceVec, info, alpha, Cw, cost_diff, Cs, cond, sub)
 
 % extract trialinfo
-q               = trialinfo.q;
-urn             = trialinfo.urn;
-cond            = trialinfo.cond;
-accurate        = trialinfo.accurate;
+q               = info.p;
 
-% when running the func through prepro_beads.m comment this part 
-% sequence        = this_sequence;
-% choiceVec       = this_response;
+% % % when running the func through prepro_beads.m comment this part 
+% sequence        = cond_sequence;
+% choiceVec       = cond_choices;
 
 % params          = Cw;
-params          = cost_diff; 
-fixedparams     = [alpha; q; Cs];
-% findpick        = 0;
-findpick        = 1;
+% params          = cost_diff; 
+params          = Cs;
+fixedParams     = [alpha; q; cost_diff; cond];
+findPick        = 1;
 
-% optimizing parameters for invidual subjects
+urntype         = info.urntypes;
+
 options         = optimset('MaxFunEvals', 5000, 'TolFun', 0.001);
-initialjitter   = [ 5; -5; 5; -5];
+initialJitter   = [ 5; -5; 5; -5];
 
-llamin          = Inf;
+llaMin          = Inf;
+startParam      = params;
 
-startparam      = params;
-
-% run fminsearch
-% lla = @(params) estimateLikelihood(params, sequence, choiceVec, fixedparams, findpick);
-% mparams = fminsearch(lla, startparam, options);
-
-[mparams, lla]  = fminsearch(@(params) estimateLikelihood(params, sequence, choiceVec, fixedparams, findpick),startparam, options);
-
-if lla < llamin
+[mparams, lla] = fminsearch(@(params) estimateLikelihood(params, sequence, choiceVec, fixedParams, findPick, urntype),startParam, options);
     
-    llamin      = lla;
-    minparams   = mparams;
-    
+if lla < llaMin
+    llaMin = lla;
+    minParams = mparams;
 end
 
 fprintf('ll %.3f\n', lla);
 
-[ll, picktrial, dQvec, ddec, aQvec] = estimateLikelihoodf(minparams, sequence, choiceVec, fixedparams, findpick);
+% ftxt = sprintf('subjectParams_%d_%d.mat', subject,types);
+% save(ftxt, 'minParams', 'llaMin');
 
+% [ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(minParams, sequence, choiceVec, fixedParams, findPick);
+[ll, all_ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(minParams, sequence, choiceVec, fixedParams, findPick, urntype);
 
 
 return

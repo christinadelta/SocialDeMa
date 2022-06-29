@@ -1,67 +1,72 @@
-function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf(alpha,Cd,q,Cs, sequence, aqvec_switch)
+function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf(alpha,Cw,q,Cs, sequence, aqvec_switch)
 
 % this will be used for stopping at optimal draws (position)
-findPick            = 1;
-lseq                = size(sequence, 2);    % length of sequence 
-ntrials             = size(sequence, 1);    % number of trials/sequences
+findPick            = 1; 
+ntrials             = size(sequence, 2);    % number of trials/sequences
+logLikelihood       = 0;                    % initialise likelihood log to zero  
 
-logLikelihood       = 0;                    % initialise likelihood log to zero 
+% loop over condition sequences (26)
+for trl = 1:ntrials
+    
+    % extract this trial's sequence
+    thisequence = sequence{1,trl};
+    
+    % number of choices for this sequence
+    lseq                = length(thisequence);
+    nchoices            = lseq;
+    
+    % initialise number of draws and number green beads (zero)
+    numDraws            = 0;
+    numGreen            = 0;
 
-% rename sequence
-this_sequence        = sequence;
+    dQvec               = []; % values for each action (vector)
+    ddec                = []; % corresponding probabilities generated with softmax and alpha 
+    
+    for draw = 1:nchoices 
+        
+        % green or blue bead? or majority beads colour in the urn? -- I think it is
+        % the majority colour 
+        if thisequence(draw) == 1
+            numGreen    = numGreen + 1; % update numGreen  
+        end
 
-% number of choices for this sequence
-nchoices            = lseq;
+        % also increment draws 
+        numDraws        = numDraws + 1;
 
-% initialise number of draws and number green beads (zero)
-numDraws            = 0;
-numGreen            = 0;
+        % compute action values for each new draw (in current sequence)
+        % until action value for one of the two urns exceeds action value
+        % for drawing again. 
+        [v, d, Qvec]    = Val(q, numDraws, numGreen, alpha, lseq, Cw, Cs);
+        
+        % append action values of the current sequence to dQvec
+        dQvec(draw, 1:length(Qvec))         = Qvec;
 
-dQvec               = []; % values for each action (vector)
-ddec                = []; % corresponding probabilities generated with softmax and alpha 
+        % append choice probabilities 
+        ddec(draw, 1:length(d))             = d;
+        aQvec{trl}(draw, 1:length(Qvec))    = Qvec;
+        
+        % determine optimal stopping position 
+        if findPick == 1 & draw < nchoices & (Qvec(1) > Qvec(3) | Qvec(2) > Qvec(3))
+            pickTrial(trl)  = draw; % number of draws
+            break
 
-% loop over draws for that sequence 
-for j = 1:nchoices
+        elseif findPick == 1 & draw == nchoices
+            pickTrial(trl)  = draw;
+        end
 
-    % green or blue bead? or majority beads colour in the urn? -- I think it is
-    % the majority colour 
-    if this_sequence(j) == 1
-        numGreen    = numGreen + 1; % update numGreen  
-    end
+        % 
+        if draw == lseq
+            d = [d; 0];
+        end   
+  
+    end % end of draw loop
+    
+    % accumulate chosen urns
+    [biggest_value choice(trl)] = max(Qvec);
 
-    % also increment draws 
-    numDraws        = numDraws + 1;
 
-    % compute action values for each new draw (in current sequence)
-    % until action value for one of the two urns exceeds action value
-    % for drawing again. 
-    [v, d, Qvec]    = Val(q, numDraws, numGreen, alpha, lseq, Cd, Cs);
+end % end of condition trials
 
-    % append action values of the current sequence to dQvec
-    dQvec(j,:)      = Qvec;
 
-    % append choice probabilities 
-    ddec(j,:)       = d;
-
-    aQvec(j,:)      = Qvec;
-
-    % determine optimal stopping position 
-    if findPick == 1 & j < nchoices & (Qvec(1) > Qvec(3) | Qvec(2) > Qvec(3))
-        pickTrial   = j; % number of draws
-        break
-
-    elseif findPick == 1 & j == nchoices
-        pickTrial = j;
-    end
-
-    % 
-    if j == lseq
-        d = [d; 0];
-    end   
-
-end % end of draws loop
-
-% accumulate chosen urns
-[biggest_value choice] = max(Qvec);
 
 end
