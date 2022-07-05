@@ -1,7 +1,7 @@
-function [mparams, lla, all_ll, aQvec] = bayesbeads(sequence, choiceVec, info, alpha, Cw, cost_diff, Cs, cond, sub)
+function [mparams, lla, all_ll, aQvec] = bayesbeads(sequence, choiceVec, info, alpha, Cw, Cc, cost_diff, Cs, cond, sub)
 
 % extract trialinfo
-q               = info.p;
+thisq           = info.p;
 
 % % % when running the func through prepro_beads.m comment this part 
 % sequence        = cond_sequence;
@@ -9,8 +9,9 @@ q               = info.p;
 
 % params          = Cw;
 % params          = cost_diff; 
+% fixedParams     = [alpha; thisq; cost_diff; cond];
+fixedParams     = [alpha; thisq; Cw; Cc; cond];
 params          = Cs;
-fixedParams     = [alpha; q; cost_diff; cond];
 findPick        = 1;
 
 urntype         = info.urntypes;

@@ -177,7 +177,7 @@ addpath(genpath(iobserverpath));
 alpha       = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
 Cw          = -10;          % cost for being wrong
 Cd          = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
-Cc          = 10;           % cost for being correct
+Cc          = 10;           % reward for being correct
 prob        = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
 Cs          = -0.25;        % the cost to sample
 
@@ -223,6 +223,7 @@ addpath(genpath(modelfitpath));
 % define model parameters 
 alpha                   = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
 Cw                      = -10;          % cost for being wrong     
+Cc                      = 10;           % reward for being correct 
 cost_diff               = -20;          % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
 q                       = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
 Cs                      = -0.25;        % the cost to sample
@@ -244,6 +245,7 @@ for sub = 1:nsubs
         % extract urn types form data matrix
         info.urntypes   = cond_data(:,4);
         info.condtrials = totaltrials/conditions;
+        info.numdraws   = cond_data(:,5);
         
         % is this cond 0.8 or 0.6 probability? 
         if cond == 1
@@ -255,7 +257,7 @@ for sub = 1:nsubs
         info.p          = prob;
         
         % aaand fit the model 
-        [mparams, lla, all_ll, aQvec] = bayesbeads(cond_sequence, cond_choices, info, alpha, Cw, cost_diff, Cs, cond, sub);
+        [mparams, lla, all_ll, aQvec] = bayesbeads(cond_sequence, cond_choices, info, alpha, Cw, Cc, cost_diff, Cs, cond, sub);
         
         model_output(cond).params   = mparams;
         model_output(cond).lla      = lla;

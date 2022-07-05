@@ -2,16 +2,17 @@ function [ll, all_ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(param
 
 %%% extract free parameters 
 % Cw = params(1);
-Cs = params(1);
+Cs      = params(1);
 % comment this out when running through beads preprocessing script
 % setData = choiceVec;
 
 % extract fixed parameters
-alpha = fixedParams(1);
-q = fixedParams(2);
-Cw = fixedParams(3);
+alpha   = fixedParams(1);
+q       = fixedParams(2);
+Cw      = fixedParams(3);
+Cc      = fixedParams(4);
+cond    = fixedParams(5);
 % Cs = fixedParams(3);
-cond = fixedParams(4);
 
 %%% number of sequences
 nblocks = size(setData, 2);
@@ -36,12 +37,12 @@ for block = 1 : nblocks % blocks are the number of sequences per condition (26)
     %%% NEED TO ASK NICK ABOUT THIS
     % now, i'm not sure if this part is needed but, if this is a green type
     % sequence, swipe the codes (in the sequence)
-%     if urntype(block) == 0
-%         seq_ones            = find(this_seq == 1);
-%         seq_twos            = find(this_seq == 2);
-%         this_seq(seq_ones)  = 2;
-%         this_seq(seq_twos)  = 1;
-%     end
+    if urntype(block) == 0
+        seq_ones            = find(this_seq == 1);
+        seq_twos            = find(this_seq == 2);
+        this_seq(seq_ones)  = 2;
+        this_seq(seq_twos)  = 1;
+    end
 
     %%% initially nd (draws) == 0 and ng (green marbles) == 0
     ng = 0;
@@ -69,7 +70,7 @@ for block = 1 : nblocks % blocks are the number of sequences per condition (26)
         nd = nd + 1;
 
         %%% compute values of each action
-        [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cs);
+        [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cc, Cs);
         
         %%% keep track of values across sequnce of draws
         dQvec(draw, 1:length(Qvec)) = Qvec;
@@ -130,7 +131,7 @@ end
 
 if findPick == 0
     pickTrial = [];
-    fprintf('ll %.2f Cw %.1f p %.2f Cs %.2f alpha %.2f\n', ll, Cw, q, Cs, alpha);
+    fprintf('ll %.2f Cw %.1f p %.2f Cs %.2f alpha %.2f\n', ll, Cw, Cc, q, Cs, alpha);
 end
 
 return

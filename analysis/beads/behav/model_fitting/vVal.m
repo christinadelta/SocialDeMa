@@ -1,5 +1,5 @@
-function [v] = vVal(q, nd, ng, alpha, lseq, Cw, Cs)
+function [v] = vVal(q, nd, ng, alpha, lseq, Cw, Cc, Cs)
 
-[v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cs);
+[v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cc, Cs);
 
 return
