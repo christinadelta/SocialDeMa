@@ -75,12 +75,45 @@ for subI = 1:nsubs
 end % end of subjects loop
 
 % add data in one matrix
-phase1_data = [subj' blockno' trialno' thisitem' thisprice' rate' rt'];
+rating_data = [subj' blockno' trialno' thisitem' thisprice' rate' rt'];
 
 % % save matrix in csv format for r and python
-csvwrite('economic_phase1_data.csv', phase1_data)
+% csvwrite('economic_phase1_data.csv', phase1_data)
 
 clear subj trialno blockno thisitem thisprice rate rt session phase indx
+
+
+%%  GET AVERAGE OF EACH RATING %% 
+
+% loop over subjects 
+for sub = 1:nsubs 
+    
+    tmpsub                  = find(rating_data(:,1) == sub);
+    subratings              = rating_data((tmpsub),:);
+    
+    % how many unique prices where there to rate?
+    uprice                  = length(unique(subratings(:,4)));
+    
+    % init averaged ratings array
+    subrate                 = nan(uprice,1);
+    
+    % loop over unique prices
+    for i = 1:uprice
+        
+        tmpitem             = find(subratings(:,4) == i);
+        tmprate             = subratings((tmpitem),6);
+        
+        % average prices for item i and store
+        subrate(i,1)        = mean(tmprate);
+        
+    end % end of unique prices loop
+    
+    % save this subject averaged ratings in cell
+    allsubs_ratings{1,sub}  = subrate;
+    
+    % clear subrate tmpitem tmprate uprice tmpsub subratings
+end % end of subjects loop
+
 
 %% EXTRACT AND SAVE PHASE 2 BLOCK DATA %%
 
