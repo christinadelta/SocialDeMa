@@ -2,7 +2,7 @@
 
 % Part of the Optimal Stopping Problems Project
 
-%% %% IMPORTANT NOTE %%
+%% IMPORTANT NOTE %%
 
 % I save 3 different types of mat files. 
 % First type: mat files with phase 1 data (trial, block, item, rate, rt)
@@ -136,17 +136,20 @@ for subI = 1:nsubs
         
         for trial = 1:phase2_blocktrials
             
-            indx                = ((blockI -1)*phase2_blocktrials) + trial; 
+            indx                        = ((blockI -1)*phase2_blocktrials) + trial; 
             
-            subj(indx)          = subI;
-            blockno(indx)       = blockI;
-            trialno(indx)       = logs.blocktrials(trial).trialnumber;
-            numsamples(indx)    = logs.blocktrials(trial).numsamples;
-            thisitem(indx)      = logs.blocktrials(trial).chosenitem;
-            thisprice(indx)     = logs.blocktrials(trial).chosenprice;
-            thisrank(indx)      = logs.blocktrials(trial).rank;
-            reward(indx)        = logs.blocktrials(trial).reward;
-            balance(indx)       = logs.blocktrials(trial).balance;
+            subj(indx)                  = subI;
+            blockno(indx)               = blockI;
+            trialno(indx)               = logs.blocktrials(trial).trialnumber;
+            numsamples(indx)            = logs.blocktrials(trial).numsamples;
+            thisitem(indx)              = logs.blocktrials(trial).chosenitem;
+            thisprice(indx)             = logs.blocktrials(trial).chosenprice;
+            thisrank(indx)              = logs.blocktrials(trial).rank;
+            reward(indx)                = logs.blocktrials(trial).reward;
+            balance(indx)               = logs.blocktrials(trial).balance;
+            
+            sequences{1,subI}{1,indx}   = logs.blocktrials(trial).sequence;
+            
              
         end % end of trials loop
 
@@ -158,7 +161,7 @@ end % end of subjects loop
 phase2_blockdata = [subj' blockno' trialno' numsamples' thisitem' thisprice' thisrank' reward' balance'];
 
 % % save matrix in csv format for r and python
-csvwrite('economic_phase2_blockdata.csv', phase2_blockdata)
+% csvwrite('economic_phase2_blockdata.csv', phase2_blockdata)
 
 clear subj trialno blockno thisitem thisprice numsamples thisrank indx
 
