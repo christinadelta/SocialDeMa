@@ -4,7 +4,7 @@ K = 3;
 
 reward = zeros(Ntrials, 1); % empty array 
 
-Qsat = zeros(Ntrials, maxDraws, K);
+Qsat = zeros(Ntrials, maxDraws, K); % Qsat 
 
 parfor trial = 1 : Ntrials
     

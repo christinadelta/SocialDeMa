@@ -1,6 +1,6 @@
-function utility_t = stateUtilityBeads(utility, drawi, draw, maxDraws, ng, R)
+function utility_t = stateUtilityBeads(utility, drawi, draw, maxdraws, ng, Cc, Cw, Cs, thisq)
 
-utility_t = zeros(maxDraws, maxDraws+1);
+utility_t = zeros(maxdraws, maxdraws+1);
 
 futureDraws = drawi - draw;
 
@@ -10,7 +10,7 @@ for greenDraws = 0 : futureDraws
     
     ngf = ng + greenDraws;
 
-    Qsa = actionValueBeads(utility, R, ndf, ngf, drawi, maxDraws);
+    Qsa = actionValueBeads(utility, Cc, Cw, Cs, thisq, ndf, ngf, drawi, maxdraws);
 
     utility_t(ndf, ngf+1) = max(Qsa);        
     

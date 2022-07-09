@@ -34,7 +34,7 @@ tic
 
 %The idea was to save data in files along the way as needed. But as
 %implemented now, later sections are dependent on previous ones.
-% simulate_stimuli = 1;  %If 1, randomly generates phase 1 distributions and sequences from them and saves info in Generate_params
+simulate_stimuli = 1;  %If 1, randomly generates phase 1 distributions and sequences from them and saves info in Generate_params
 check_params = 0;       %fit the same model that created the data and output estimated parameters
 make_est_model_data = 0;
 use_file_for_plots = 1; %Set the above to zero and this to 1 and it'll read in a file you specify (See filename_for_plots variable below) and make plots of whatever analyses are in the Generate_params structure in that file;

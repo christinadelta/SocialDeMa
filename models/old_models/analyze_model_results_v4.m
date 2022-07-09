@@ -184,6 +184,7 @@ fprintf('ll %.3f\n', lla);
 % ftxt = sprintf('subjectParams_%d_%d.mat', subject,types);
 % save(ftxt, 'minParams', 'llaMin');
 
+% [ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(minParams, sequence, choiceVec, fixedParams, findPick);
 [ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(minParams, sequence, choiceVec, fixedParams, findPick);
 
     
@@ -212,11 +213,13 @@ for q = 0.6 : 0.2 : 0.8
         sCtr = 1;
         for Cs = -6 : 1 : 0
             
-            params = [Cw, Cs, alpha];
+            fixedParams = [alpha; q; Cs];
+            params = Cw;
+            % params = [Cw, Cs, alpha];
 
             %%% run for 50 different sets of sequences, because sequences
             %%% are stochastic themselves
-            for boot_sequence = 1 : 50
+            for boot_sequence = 1 : 10
 
                 %%% generate a set of random sequences, given q
                 sequence = (rand(Ntrials, maxDraws) > q) + 1;
@@ -224,19 +227,20 @@ for q = 0.6 : 0.2 : 0.8
                 %%% setup choicevec so analysis runs to end of draws
                 for set = 1 : Ntrials
                 %     draw = ceil((maxDraws-4)*rand(1,1));
-                    draw = maxDraws;
-                    choiceVec{set} = zeros(draw, 3);
-                    choiceVec{set}((1:(end-1)),3) = 1;
+                    draw = maxDraws; % number of draws
+                    choicevec{set} = zeros(draw, 3); % set the matrix 
+                    choicevec{set}((1:(end-1)),3) = 1; % choices for drawing again up to last bead 
+                    
                     if mean(sequence(set, 1:draw)) > 1.5
-                        choiceVec{set}(end, 2) = 1;
+                        choicevec{set}(end, 2) = 1;
                     else
-                        choiceVec{set}(end, 1) = 1;
+                        choicevec{set}(end, 1) = 1;
                     end
                 end
                 
                 %%% determine where in sequence of draws optimal subject
                 %%% would stop
-                [ll, pickTrial] = estimateLikelihoodf(params, sequence, choiceVec, fixedParams, findPick);
+                [ll, pickTrial] = estimateLikelihoodf(params, sequence, choicevec, fixedParams, findPick);
                 
                 %%% keep track of point in sequence where subject stopped
                 bootPick(boot_sequence) = pickTrial;

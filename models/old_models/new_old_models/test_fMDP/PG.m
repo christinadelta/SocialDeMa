@@ -1,5 +1,5 @@
-function p = PG(q, nd, ng)
+function p = PG(thisq, nd, ng)
 
-p = 1/(1 + (q/(1-q))^(nd-2*ng));
+p = 1/(1 + (thisq/(1-thisq))^(nd-2*ng));
 
 return

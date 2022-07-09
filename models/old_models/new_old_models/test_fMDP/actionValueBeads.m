@@ -1,16 +1,16 @@
-function Qsa = actionValueBeads(utility, R, nd, ng, drawi, maxDraws)
+function Qsa = actionValueBeads(utility, Cc, Cw, Cs, thisq, nd, ng, drawi, maxdraws)
 
-pg = PG(R.q, nd, ng);
+pg = PG(thisq, nd, ng);
 
 pb = 1 - pg;
 
-QG = R.correct*pg + R.error*pb;
-QB = R.correct*pb + R.error*pg;
+QG = Cc*pg + Cw*pb;
+QB = Cc*pb + Cw*pg;
 
-if drawi < maxDraws
+if drawi < maxdraws
 
-    QD = R.sample + pb*((1-R.q)*utility(nd+1, ng+1+1) +   (R.q)*(utility(nd+1, ng+1))) + ...
-                    pg*(  (R.q)*utility(nd+1, ng+1+1) + (1-R.q)*(utility(nd+1, ng+1)));
+    QD = Cs + pb*((1-thisq)*utility(nd+1, ng+1+1) +   (thisq)*(utility(nd+1, ng+1))) + ...
+                    pg*(  (thisq)*utility(nd+1, ng+1+1) + (1-thisq)*(utility(nd+1, ng+1)));
                 
 else
     
