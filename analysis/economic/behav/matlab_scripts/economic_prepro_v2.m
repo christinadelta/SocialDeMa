@@ -85,33 +85,43 @@ clear subj trialno blockno thisitem thisprice rate rt session phase indx
 
 %%  GET AVERAGE OF EACH RATING %% 
 
+% Here for each participant we will store in s cell mean ratings
 % loop over subjects 
 for sub = 1:nsubs 
     
     tmpsub                  = find(rating_data(:,1) == sub);
-    subratings              = rating_data((tmpsub),:);
+    sub_ph1_data            = rating_data((tmpsub),:);
     
     % how many unique prices where there to rate?
-    uprice                  = length(unique(subratings(:,4)));
+    uitems                  = length(unique(sub_ph1_data(:,4)));
     
     % init averaged ratings array
-    subrate                 = nan(uprice,1);
-    
+    subrate                 = nan(uitems,1);
+    subitems                = [1:uitems]'; % array [1:400]
     % loop over unique prices
-    for i = 1:uprice
+    for i = 1:uitems
         
-        tmpitem             = find(subratings(:,4) == i);
-        tmprate             = subratings((tmpitem),6);
+        tmpitem             = find(sub_ph1_data(:,4) == i);
+        tmprate             = sub_ph1_data((tmpitem),6);
+        tmpprice            = sub_ph1_data((tmpitem),5);
         
         % average prices for item i and store
         subrate(i,1)        = mean(tmprate);
         
+        % each price is shown twise, so the tmpprice placeholder contains
+        % the same price twise, just pick the first one
+        subitems(i,2)       = tmpprice(1);
+        
     end % end of unique prices loop
+    
+    % extract raw prices for each item
+    
     
     % save this subject averaged ratings in cell
     allsubs_ratings{1,sub}  = subrate;
+    allsubs_prices{1,sub}   = subitems;
     
-    % clear subrate tmpitem tmprate uprice tmpsub subratings
+    clear subrate tmpitem tmprate uprice tmpsub subratings subitems
 end % end of subjects loop
 
 
@@ -164,6 +174,25 @@ phase2_blockdata = [subj' blockno' trialno' numsamples' thisitem' thisprice' thi
 % csvwrite('economic_phase2_blockdata.csv', phase2_blockdata)
 
 clear subj trialno blockno thisitem thisprice numsamples thisrank indx
+
+%% EXTRACT ITEMS/PRICES AND RANKS %%
+
+% loop over subjects
+for subI = 1:nsubs
+    
+    tmpsub                  = find(phase2_blockdata(:,1) == subI);
+    sub_blockdata           = phase2_blockdata((tmpsub),:);
+    
+    substruct.samples       = sub_blockdata(:,4);
+    substruct.item          = sub_blockdata(:,5);
+    substruct.price         = sub_blockdata(:,6);
+    substruct.rank          = sub_blockdata(:,7);
+    
+    % store sub struct in cell
+    allsubs_data{1,subI}    = substruct;
+    clear tmpsub sub_blockdata
+     
+end % end of subject loop
 
 %% EXTRACT AND SAVE PHASE 2 SEQUENCE DATA %%
 
