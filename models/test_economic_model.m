@@ -27,7 +27,7 @@ num_model_identifiers   = size(model_names,2);
 subjects                = 1;
 IC                      = 2; % either AIC (1) or BIC (2)
 analyze_value_positions = 1;
-
+outpath                 = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/models';
 counter                 = 0; % this is used in Nick's code, in the subject's loop (may not use it, but will leave it for now)
 
 % loop over subjects
@@ -38,13 +38,14 @@ for sub = 1: subjects
     subrates        = allsubs_ratings{1,sub};
     subsequences    = allsubs_sequences{1,sub};
     subsamples      = allsubs_data{1,sub}.samples;
+    subranks        = allsubs_data{1,sub}.rank;
 
     % 1. get ranks? this seems a bit confusing, because I already have the
     % rank of options that each subject chose in allsubs_data.rank struct
     % field. Also I don't get the code in line 93 in Nick's code
-    for i = 1:length(subsequences)
-        sequenceranks{1,i} = tiedrank(subsequences{1,i})';
-    end
+%     for i = 1:length(subsequences)
+%         sequenceranks{1,i} = tiedrank(subsequences{1,i})';
+%     end
     
     % 2 log_or_not 
     if log_or_not == 1
@@ -64,6 +65,7 @@ for sub = 1: subjects
     Generate_params.num_samples(:,sub)          = subsamples;
     % how do I save ranks here? Is it the rank of the option that the
     % participant chose? 
+    Generate_params.ranks(:,sub)                = subranks;
     
     % load the params struct with all the info needed
     Generate_params.analyze_value_positions     = analyze_value_positions;  % make psychometric plots if set to 1
@@ -131,6 +133,60 @@ for sub = 1: subjects
         % That means fix them manually if you want them to be logged
     end
     
+    % Repmat the template to create a column for each model. For now, we are
+    % doing all possible models, not the ones specified in do_models. We'll
+    % reduce this matrix to just those below.
+    identifiers                 = 1:num_model_identifiers;
+    num_cols                    = num_model_identifiers;
+    param_config_default        = [ ...
+        identifiers;                                    % row 1: identifiers,  1:CO 2:IO 3:Cs 4:BV 5:BR 6:BP 7:optimism 8:BPV
+        repmat(model_template.kappa,1,num_cols);        % row 2: kappa
+        repmat(model_template.nu,1,num_cols);           % row 3: nu
+        repmat(model_template.cutoff,1,num_cols)        % row 4: cutoff
+        repmat(model_template.Cs,1,num_cols);           % row 5: Cs
+        repmat(model_template.BVslope,1,num_cols);      % row 6: BV slope
+        repmat(model_template.BVmid,1,num_cols);        % row 7: BV mid
+        repmat(model_template.BRslope,1,num_cols);      % row 8: BR slope
+        repmat(model_template.BRmid,1,num_cols);        % row 9: BR mid
+        repmat(model_template.BP,1,num_cols);           % row 10: prior mean offset (BP)
+        repmat(model_template.optimism,1,num_cols);     % row 11: optimism
+        repmat(model_template.BPV,1,num_cols);          % row 12: prior variance offset (BPV)
+        % repmat(model_template.log_or_not,1,num_cols); % row 13: log or not (at the moment not to be trusted)
+        repmat(model_template.all_draws,1,num_cols);    % row 14: all draws
+        repmat(model_template.beta,1,num_cols);         % row 15: beta
+        ];
+    
+    % Mark which are free/to be estimated
+    free_parameters         = zeros(size(param_config_default));
+    free_parameters(4,1)    = 1;    % Model indicator 1, parameter 4: Cut off
+    free_parameters(5,2)    = 1;    % Model indicator 2, parameter 5: Cs
+    free_parameters(7,4)    = 1;    % Model indicator 4, parameter 7: BV
+    free_parameters(9,5)    = 1;    % Model indicator 5, parameter 9: BR
+    free_parameters(10,6)   = 1;    % Model indicator 6, parameter 10: BPM
+    free_parameters(11,7)   = 1;    % Model indicator 7, parameter 11: Opt
+    free_parameters(12,8)   = 1;    % Model indicator 8, parameter 12: BPV
+    
+    % Now reduce matrices to just those in do_models
+    % In Param_recover*.m we had distrinctions between model instantiations
+    % and
+    param_config_default                    = param_config_default(:,do_models);
+    free_parameters                         = free_parameters(:,do_models);
+    
+    % Save your work into struct
+    Generate_params.num_models              = numel(do_models);
+    Generate_params.param_config_default    = param_config_default;
+    Generate_params.free_parameters_matrix  = free_parameters;
+    Generate_params.comment                 = comment;
+    Generate_params.outpath                 = outpath;
+    analysis_name                           = sprintf(...
+        'out_new_ll%d_%s_'...
+        , Generate_params.all_draws_set ...
+        , Generate_params.comment ...
+        );
+    Generate_params.analysis_name           = analysis_name;
+    outname                                 = [analysis_name char(datetime('now','format','yyyyddMM')) '.mat'];
+    Generate_params.outname                 = outname;
+    
     
 
 
@@ -139,5 +195,4 @@ for sub = 1: subjects
 
 
 
-
-end
+end % 
