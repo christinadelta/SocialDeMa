@@ -27,7 +27,8 @@ num_model_identifiers   = size(model_names,2);
 subjects                = 1;
 IC                      = 2; % either AIC (1) or BIC (2)
 analyze_value_positions = 1;
-outpath                 = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/models';
+outpath                 = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/models/test_output';
+filename_for_plots      = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/models/test_output/out_new_ll1_facesonlineSubsLog0_20212807.mat';
 counter                 = 0; % this is used in Nick's code, in the subject's loop (may not use it, but will leave it for now)
 
 % loop over subjects
@@ -187,7 +188,29 @@ for sub = 1: subjects
     outname                                 = [analysis_name char(datetime('now','format','yyyyddMM')) '.mat'];
     Generate_params.outname                 = outname;
     
+    disp( sprintf('Running %s', outname) );
     
+    for model = 1:Generate_params.num_models   %How many models are we implementing (do_models)?
+        
+        % Generate_params.current_model = Generate_params.do_models_identifiers(model);  %So now model 1 will be the first model implementation in the param_config array after it has been reduced by do_models
+        
+        it                                                  = 1;
+        fields                                              = fieldnames(model_template);
+        for field = 1:size(fields,1)-1 %exclude name, the last one
+            Generate_params.model(model).(fields{field})    = param_config_default(field,model);
+            it                                              = it+1;
+        end
+        Generate_params.model(model).name                   = ...
+            model_names{...
+            Generate_params.model(model).identifier...
+            }; % I think this is the only matrix here that hasn't already been reduced to do_models in the preceding step
+        
+        % Fill in this model's free parameters to be estimated later, if you
+        % get to the parameter estimatioin this run
+        Generate_params.model(model).this_models_free_parameters                = find(free_parameters(:,model)==1);
+        Generate_params.model(model).this_models_free_parameter_default_vals    = param_config_default(find(free_parameters(:,model)==1),model)';
+        
+    end;    %loop through models
 
 
 
