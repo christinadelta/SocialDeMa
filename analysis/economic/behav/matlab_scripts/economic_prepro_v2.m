@@ -146,19 +146,19 @@ for subI = 1:nsubs
         
         for trial = 1:phase2_blocktrials
             
-            indx                        = ((blockI -1)*phase2_blocktrials) + trial; 
+            indx                                = ((blockI -1)*phase2_blocktrials) + trial; 
             
-            subj(indx)                  = subI;
-            blockno(indx)               = blockI;
-            trialno(indx)               = logs.blocktrials(trial).trialnumber;
-            numsamples(indx)            = logs.blocktrials(trial).numsamples;
-            thisitem(indx)              = logs.blocktrials(trial).chosenitem;
-            thisprice(indx)             = logs.blocktrials(trial).chosenprice;
-            thisrank(indx)              = logs.blocktrials(trial).rank;
-            reward(indx)                = logs.blocktrials(trial).reward;
-            balance(indx)               = logs.blocktrials(trial).balance;
+            subj(indx)                          = subI;
+            blockno(indx)                       = blockI;
+            trialno(indx)                       = logs.blocktrials(trial).trialnumber;
+            numsamples(indx)                    = logs.blocktrials(trial).numsamples;
+            thisitem(indx)                      = logs.blocktrials(trial).chosenitem;
+            thisprice(indx)                     = logs.blocktrials(trial).chosenprice;
+            thisrank(indx)                      = logs.blocktrials(trial).rank;
+            reward(indx)                        = logs.blocktrials(trial).reward;
+            balance(indx)                       = logs.blocktrials(trial).balance;
             
-            sequences{1,subI}{1,indx}   = logs.blocktrials(trial).sequence;
+            allsubs_sequences{1,subI}{1,indx}   = logs.blocktrials(trial).sequence;
             
              
         end % end of trials loop
