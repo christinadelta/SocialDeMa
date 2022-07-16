@@ -43,9 +43,50 @@ for num_subs_found = Generate_params.num_subs_to_run
         list.vals                   =  list.allVals;
         %         list.length       = Generate_params.seq_length;
         
+        % Do cutoff model, if needed
+        if Generate_params.model(Generate_params.current_model).identifier == 1
+            
+            % get seq vals to process
+            this_seq_vals   = list.allVals;
+            % initialise all sequence positions to zero/continue (value of stopping zero)
+            choiceStop      = zeros(1,Generate_params.seq_length);
+            % What's the cutoff?
+            estimated_cutoff = round(Generate_params.model(Generate_params.current_model).cutoff);
+            if estimated_cutoff < 1; estimated_cutoff = 1; end
+            if estimated_cutoff > Generate_params.seq_length; estimated_cutoff = Generate_params.seq_length; end
+            
+            % find seq vals greater than the max in the period
+            % before cutoff and give these candidates a maximal stopping value of 1
+            choiceStop(1,find( this_seq_vals > max(this_seq_vals(1:estimated_cutoff)) ) ) = 1;
+            % set the last position to 1, whether it's greater than
+            % the best in the learning period or not
+            choiceStop(1,Generate_params.seq_length) = 1;
+            % find first index that is a candidate ....
+            num_samples(sequence,this_sub) = find(choiceStop == 1,1,'first');   %assign output num samples for cut off model
+            
+            % Reverse 0s and 1's for ChoiceCont
+            choiceCont = double(~choiceStop);
+            
+        else % if any of the Bayesian models
+            
+            % run Nick's model
+            [choiceStop, choiceCont, difVal]  = ...
+                analyzeSecretaryNick_2021(Generate_params,list);
+            
+            num_samples(sequence,this_sub) = find(difVal<0,1,'first');  % assign output num samples for Bruno model
+            
+            
+        end % end of if statement
+        
+        % ...and its rank
+        ranks(sequence,this_sub) = dataList( num_samples(sequence,this_sub) );
+        % Accumulate action values too so you can compute ll outside this function if needed
+        choiceStop_all(sequence, :, this_sub) = choiceStop;
+        choiceCont_all(sequence, :, this_sub) = choiceCont;
         
     end % end of sequences loop
     
+    this_sub = this_sub + 1;
     
 end % end of subjects_found loop
 

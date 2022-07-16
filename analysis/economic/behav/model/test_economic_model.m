@@ -39,7 +39,7 @@ for sub = 1: subjects
     % for now we need to extract this_subject phase 1 ratings [400x1], sequences
     % [1x40x10] and number of samples [40x1]. Here 1=number of subjects 
     subrates        = allsubs_ratings{1,sub};
-    subsequences    = allsubs_sequences{1,sub};
+    subsequences    = allsubs_price_sequences{1,sub};
     subsamples      = allsubs_data{1,sub}.samples;
     subranks        = allsubs_data{1,sub}.rank;
 

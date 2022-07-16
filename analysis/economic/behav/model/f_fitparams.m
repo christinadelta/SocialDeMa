@@ -21,6 +21,7 @@ b = params(end);
 % field of Generate_params
 [num_samples ranks choiceStop_all choiceCont_all] = generate_a_models_data(Generate_params);
 
+ll = 0;
 
 
 
