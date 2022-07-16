@@ -194,6 +194,46 @@ for subI = 1:nsubs
      
 end % end of subject loop
 
+%% DEAL WITH SEQUENCES %%
+
+% During the experiment I have been saving the index/items in the sequences
+% but not the prices themselves. Below I create a new cell with sequences, only
+% I store the prices (based on their index). This may be needed for model
+% fitting/running ideal observer.
+
+% loop over subjects
+for sub = 1:nsubs
+    
+    % extract this_sub sequences
+    sub_seq         = allsubs_sequences{1,sub};
+    
+    % extract this_sub indexes and prices
+    sub_prices      = allsubs_prices{1,sub};
+    
+    % loop over sequences
+    for seq = 1:size(sub_seq,2)
+        
+        % extract this_sequence
+        this_seq            = sub_seq{1,seq}';
+        tmp_vec             = zeros(1,length(this_seq));
+        
+        % loop over itemns in this_seq
+        for i = 1:length(this_seq)
+            
+            tmp_item        = this_seq(1,i);
+            tmp_vec(1,i)    = sub_prices(tmp_item,2); % link this_seq items to their corresponding prices
+            
+        end % end of items loop
+        
+        % store new sequences 
+        allsubs_price_sequences{1,sub}{1,seq} = tmp_vec;
+        
+        % clear vars
+        clear i tmp_item tmp_vec this_seq
+        
+    end % end of sequence loop
+end % end of subjects loop
+
 %% EXTRACT AND SAVE PHASE 2 SEQUENCE DATA %%
 
 % load subject
