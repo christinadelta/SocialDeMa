@@ -205,28 +205,28 @@ end % end of subject loop
 for sub = 1:nsubs
     
     % extract this_sub sequences
-    sub_seq         = allsubs_sequences{1,sub};
+    sub_seq                                     = allsubs_sequences{1,sub};
     
     % extract this_sub indexes and prices
-    sub_prices      = allsubs_prices{1,sub};
+    sub_prices                                  = allsubs_prices{1,sub};
     
     % loop over sequences
     for seq = 1:size(sub_seq,2)
         
         % extract this_sequence
-        this_seq            = sub_seq{1,seq}';
-        tmp_vec             = zeros(1,length(this_seq));
+        this_seq                                = sub_seq{1,seq}';
+        tmp_vec                                 = zeros(1,length(this_seq));
         
         % loop over itemns in this_seq
         for i = 1:length(this_seq)
             
-            tmp_item        = this_seq(1,i);
-            tmp_vec(1,i)    = sub_prices(tmp_item,2); % link this_seq items to their corresponding prices
+            tmp_item                            = this_seq(1,i);
+            tmp_vec(1,i)                        = sub_prices(tmp_item,2); % link this_seq items to their corresponding prices
             
         end % end of items loop
         
         % store new sequences 
-        allsubs_price_sequences{1,sub}{1,seq} = tmp_vec;
+        allsubs_price_sequences{1,sub}{1,seq}   = tmp_vec;
         
         % clear vars
         clear i tmp_item tmp_vec this_seq
