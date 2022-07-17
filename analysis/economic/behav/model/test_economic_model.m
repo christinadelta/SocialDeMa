@@ -82,7 +82,7 @@ Generate_params.num_subs                    = size(Generate_params.seq_vals,3);
 Generate_params.num_seqs                    = size(Generate_params.seq_vals,1);
 Generate_params.seq_length                  = size(Generate_params.seq_vals,2);
 Generate_params.num_vals                    = size(Generate_params.ratings,1);
-Generate_params.rating_bounds               = [1 100]; % What is min and max of rating scale? (Works for big trust anyway)
+Generate_params.rating_bounds               = [0 100]; % What is min and max of rating scale? (Works for big trust anyway)
 if log_or_not == 1
     Generate_params.rating_bounds           = log(Generate_params.rating_bounds);
 end
@@ -231,7 +231,7 @@ for model = 1:numel(Generate_params.do_models_identifiers)
 
         % You want to fit one model for one subject at a time
         Generate_params.current_model       = model;
-        Generate_params.num_subs_to_run     = sub;
+        Generate_params.num_subs_to_run     = subI;
 
         % Use default params as initial values
         params = [ ...

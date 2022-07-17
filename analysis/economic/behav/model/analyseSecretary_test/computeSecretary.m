@@ -37,7 +37,4 @@ for ts = 1 : Nconsider
 end % end of backward induction loop
 
 
-
-
-
 retrun

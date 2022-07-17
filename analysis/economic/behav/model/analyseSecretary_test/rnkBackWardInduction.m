@@ -81,6 +81,7 @@ rnkv = [Inf*ones(1,1); rnkvl(1:mxv); -Inf*ones(20, 1)];
 
 [postProb] = normInvChi(prior, data);
 
+% for ideal observer - this is not needed
 postProb.mu ...
         = postProb.mu ...
         + Generate_params.model(Generate_params.current_model).optimism; %...Then add constant to the posterior mean (will be zero if not optimism model)
@@ -94,9 +95,9 @@ cFpx = 1 - Fpx;
 
 for ti = N : -1 : ts
     
-    if ti == N
+    if ti == N % if this is the last draw
         utCont = -Inf*ones(Nx, 1);
-    elseif ti == ts
+    elseif ti == ts % if this is the first draw
         utCont = ones(Nx, 1)*sum(px.*utility(:, ti+1));
     else
         utCont = computeContinue(utility(:, ti+1), postProb, x, ti);

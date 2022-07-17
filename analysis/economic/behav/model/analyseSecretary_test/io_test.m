@@ -38,6 +38,19 @@ list.vals = list.allVals';
 sampleSeries = list.vals;
 N = Generate_params.seq_length;
 
+[choiceStop, choiceCont, difVal, currentRnk] = computeSecretary(Generate_params, sampleSeries, prior, N, list, Cs,minValue);
+% 
+% if list.optimize == 1
+%     z = find(difVal < 0);
+%     [~, rnki] = sort(sampleSeries, 'descend');
+%     rnkValue = find(rnki == z(1));
+%     
+%     winnings = (rnkValue == 1)*5 + (rnkValue == 2)*2 + (rnkValue == 3)*1;
+% else
+%     winnings = 0;
+%     rnkValue = -1*ones(length(list.vals), 1);
+% end
+
 
 
 

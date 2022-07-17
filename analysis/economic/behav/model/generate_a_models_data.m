@@ -30,7 +30,7 @@ for num_subs_found = Generate_params.num_subs_to_run
         
         %             Generate_params.BVrange = Generate_params.rating_bounds;    %Used for normalising BV
         
-        list.allVals                = squeeze(Generate_params.seq_vals(sequence,:,num_subs_found));
+        list.allVals                = squeeze(Generate_params.seq_vals(sequence,:,num_subs_found)); % squeezing may not be needed
         Generate_params.PriorMean   = mean(Generate_params.ratings(:,num_subs_found));
         Generate_params.PriorVar    = var(Generate_params.ratings(:,num_subs_found));
         %         end;
