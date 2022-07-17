@@ -34,6 +34,7 @@ phase1_totaltrials      = phase1_blocks*phase1_blocktrials;
 phase2_totaltrials      = 40; 
 phase2_blocktrials      = 20;
 phase2_blocks           = 2;
+respoptions             = 2; % accept vs decline
 thisequence             = nan(1,phase2_blocktrials); % every sequence has different number of draws
 temp                    = 0;
 
@@ -160,11 +161,29 @@ for subI = 1:nsubs
             
             allsubs_sequences{1,subI}{1,indx}   = logs.blocktrials(trial).sequence;
             
-             
+            % create a vector of sequence responses at this point. This
+            % will be based on the number of samples on every
+            % trial/sequence
+            t                                   = nan(numsamples(indx), respoptions); % init empty vec
+            
+            for s = 1:numsamples(indx) 
+                
+                if s < numsamples(indx) % if this is a decline response
+                    t(s,1)                      = 1;
+                    t(s,2)                      = 0;
+                else                    % if participant accepted an option
+                    t(s,1)                      = 0;
+                    t(s,2)                      = 1;
+                end
+                           
+            end % end of samples loop
+            
+            % store temporal vec (t) in cell
+            allsubs_choicevec{1,subI}{1,indx}   = t;
+            
+            clear t s 
         end % end of trials loop
-
-    end % end of blocks loop
-    
+    end % end of blocks loop 
 end % end of subjects loop
 
 % add data in one matrix
