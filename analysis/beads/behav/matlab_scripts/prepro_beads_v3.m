@@ -203,16 +203,40 @@ for sub = 1:nsubs
         % run ideal observer 
         [ll, pickTrial, dQvec, ddec, aQvec choice]  = estimateLikelihoodf(alpha,Cw,thisq,Cs,thiscond_seq,1);
         
-        cond_pickTrials{sub}{cond}                  = pickTrial;
-        cond_dQvec{sub}{cond}                       = dQvec;
-        cond_aQvec{sub}{cond}                       = aQvec;
-        cond_choices{sub}{cond}                     = choice;
-        cond_ddec{sub}{cond}                        = ddec;
+        model_outpout(cond).pickTrials              = pickTrial;
+        model_outpout(cond).dQvec                   = dQvec;
+        model_outpout(cond).aQvec                   = aQvec;
+        model_outpout(cond).choices                 = choice;
+        model_outpout(cond).ddec                    = ddec;
         
         clear thiscond_data thiscond_seq thisq
     end % end of conditions loop
+    
+    allsubs_model{1,sub}                            = model_outpout;
 end % end of subjects loop
 
+%% COMPUTE MEAN ACCURACY, DRAWS & POINTS %%
+
+% loop over subjects and conditions
+for i = 1:nsubs
+    
+    % extract this subject output struct
+    sub_output                      = allsubs_model{1,i};
+    
+    for j = 1:conditions
+        
+        tmp_acc                     = sub_output(j).choices;
+        allsub_modelacc{i}{j}       = mean(tmp_acc == 1);
+        
+        % compute number of draws
+        tmp_draws                   = sub_output(j).pickTrials;
+        allsubs_modeldraws{i}{j}    = mean(tmp_draws);
+        
+        % compute points 
+        allsubs_modelpoints{i}{j}   = (sum(tmp_acc == 1) * Cc) + (sum(tmp_acc == 2) * Cw) - (sum(tmp_draws) * Cs);
+        
+    end % end of condition loop   
+end % end of subject loop
 
 %% RUN MODEL FITTING %%
 
