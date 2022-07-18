@@ -9,18 +9,18 @@
 % extraction of in-sequences info -- last analysis part) 
 
 % initiate a few parameters
-log_or_not      = 0; % log or not?
-subjects        = 1; % one subject at a time
-subI            = 1; % test subject
+log_or_not                  = 0; % log or not?
+subjects                    = 1; % one subject at a time
+subI                        = 1; % test subject
 
 %% EXTRACT SUBJECT DATA AND SAVE IN PARAMS %%
 
 % for now we need to extract this_subject phase 1 ratings [400x1], sequences
 % [1x40x10] and number of samples [40x1].  
-subrates        = allsubs_ratings{1,subI};
-subsequences    = allsubs_price_sequences{1,subI};
-subsamples      = allsubs_data{1,subI}.samples;
-subranks        = allsubs_data{1,subI}.rank;
+subrates                    = allsubs_ratings{1,subI};
+subsequences                = allsubs_price_sequences{1,subI};
+subsamples                  = allsubs_data{1,subI}.samples;
+subranks                    = allsubs_data{1,subI}.rank;
 
 % 1. get ranks? this seems a bit confusing, because I already have the
 % rank of options that each subject chose in allsubs_data.rank struct
@@ -73,18 +73,54 @@ Generate_params.kappa                       = 2;
 Generate_params.nu                          = 1;
 Generate_params.Cs                          = 0;
 
-%% Generate model data %%
+%% Generate model data %% 
+
+% I think I will add this to a function when formally coding the io model 
 
 % model operates one one sequence at a time
 for sequence = 1:Generate_params.num_seqs
     
     % squeezing here if more than one subjects
     list.allVals                = squeeze(Generate_params.seq_vals(sequence,:,subI)); % squeezing may not be needed
+    
+    % should get mean and variance of sequence or whole dataset?
     Generate_params.PriorMean   = mean(Generate_params.ratings(:,subI));
     Generate_params.PriorVar    = var(Generate_params.ratings(:,subI));
     
+    % ranks for this sequence
+    dataList                    = tiedrank(squeeze(Generate_params.seq_vals(sequence,:,subI))');
+    list.vals                   =  list.allVals;
     
+    % here Nick runs the analzeSecretary2021 function. 
+    % I am trying to adapt to our best-choice tasks
+    % [choiceStop, choiceCont, difVal]  = analyzeSecretaryNick_2021(Generate_params,list);
     
+    % Extract params. Hopefully everything about model is now pre-specified
+    % (I would update mean and variance directly from Generate_params 
+    prior.mu                    = Generate_params.PriorMean + 0;    % prior mean offset is zero unless biased prior model
+    prior.sig                   = Generate_params.PriorVar + 0;     % Would a biased variance model be a distinct model?
+    if prior.sig < 1; prior.sig = 1; end                            % It can happen randomly that a subject has a low variance and subtracting the bias gives a negative variance. Here, variance is set to minimal possible value.
+    prior.kappa                 = Generate_params.kappa;            % prior mean update parameter
+    prior.nu                    = Generate_params.nu;
+    
+    Cs                          = Generate_params.Cs;               % cost-to-sample is set to zero
+    
+    % bin edges
+    minValue                    = Generate_params.binEdges_reward;
+    
+    list.vals = list.allVals';
+    sampleSeries = list.vals;
+    N = Generate_params.seq_length;
+
+    [choiceStop, choiceCont, difVal, currentRnk] = computeSecretary(Generate_params, sampleSeries, prior, N, list, Cs,minValue);
+    
+    num_samples(sequence,subI) = find(difVal<0,1,'first');  % assign output num samples for Bruno model
+    
+    % assign rank
+    ranks(sequence,subI) = dataList(num_samples(sequence,subI));
+    % Accumulate action values too so you can compute ll outside this function if needed
+    choiceStop_all(sequence, :, subI) = choiceStop;
+    choiceCont_all(sequence, :, subI) = choiceCont;
     
 end
 
