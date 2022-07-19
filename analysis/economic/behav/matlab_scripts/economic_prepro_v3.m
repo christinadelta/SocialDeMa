@@ -1,20 +1,28 @@
 % PRE-PROCESSING SCRIPT FOR BEST-CHOICE ECONOMIC TASK
 
-% Version 2 (updated July 2022)
+% VERSION 3 (updated July 2022)
 
 % Part of the Optimal Stopping Problems Project
 
-%% IMPORTANT NOTE %%
+%% IMPORTANT NOTES %%
 
 % I save 3 different types of mat files. 
 % First type: mat files with phase 1 data (trial, block, item, rate, rt)
 % Second type: mat files with phase 2 block data (trial, block, number of samples, chosen price/item, rank, reward and balance)
 % Third type: mat files with phase 2 sequence data (trial, block, every sample, every item/price, rts for each sequence)
 
+
 % TOTAL MAT FILES for each subject: 62
 % PHASE 1 MAT FILES: 20
 % PHASE 2 BLOCK MAT FILES: 2
 % PHASE 2 SEQUENCE MAT FILES: 40
+
+% The script also deals with sequences, choiceVectors, prices, ratings to run
+% the ideal observer model, also for model fitting and model comparison 
+
+% TODO:
+% 1. Adapt the ideal observer model to run it through this script 
+% 2. adapt model fitting to run it through this script 
 
 %% INIT LOAD DATA %%
 
@@ -110,6 +118,7 @@ for sub = 1:nsubs
         
         % average prices for item i and store
         subrate(i,1)        = mean(tmprate);
+        subrate(i,2)        = i;
         
         % each price is shown twise, so the tmpprice placeholder contains
         % the same price twise, just pick the first one
@@ -184,6 +193,7 @@ for subI = 1:nsubs
             allsubs_choicevec{1,subI}{1,indx}   = t;
             
             clear t s 
+            
         end % end of trials loop
     end % end of blocks loop 
 end % end of subjects loop
@@ -211,16 +221,21 @@ for subI = 1:nsubs
     
     % store sub struct in cell
     allsubs_data{1,subI}    = substruct;
+    
     clear tmpsub sub_blockdata
-     
+    
 end % end of subject loop
 
 %% DEAL WITH SEQUENCES %%
 
 % During the experiment I have been saving the index/items in the sequences
 % but not the prices themselves. Below I create a new cell with sequences, only
-% I store the prices (based on their index). This may be needed for model
+% I store the prices (based on their index). This will be needed for model
 % fitting/running ideal observer.
+
+% further, create sequences with the ratings for prices/items in every
+% sequence (i.e., link ratings with corresponding prices in every squence) 
+% this will also be required for running the model
 
 % loop over subjects
 for sub = 1:nsubs
@@ -231,26 +246,32 @@ for sub = 1:nsubs
     % extract this_sub indexes and prices
     sub_prices                                  = allsubs_prices{1,sub};
     
+    % extract this_sub averaged ratings
+    sub_rate                                    = allsubs_ratings{1,sub};
+    
     % loop over sequences
     for seq = 1:size(sub_seq,2)
         
         % extract this_sequence
         this_seq                                = sub_seq{1,seq}';
         tmp_vec                                 = zeros(1,length(this_seq));
+        tmp_rate                                = zeros(1,length(this_seq));
         
         % loop over itemns in this_seq
         for i = 1:length(this_seq)
             
             tmp_item                            = this_seq(1,i);
             tmp_vec(1,i)                        = sub_prices(tmp_item,2); % link this_seq items to their corresponding prices
-            
+            tmp_rate(1,i)                       = sub_rate(tmp_item,1); % link this_seq items to their corresponding ratings
+        
         end % end of items loop
         
         % store new sequences 
         allsubs_price_sequences{1,sub}{1,seq}   = tmp_vec;
+        allsubs_rate_sequences{1,sub}{1,seq}    = tmp_rate;
         
         % clear vars
-        clear i tmp_item tmp_vec this_seq
+        clear i tmp_item tmp_vec this_seq tmp_rate
         
     end % end of sequence loop
 end % end of subjects loop
