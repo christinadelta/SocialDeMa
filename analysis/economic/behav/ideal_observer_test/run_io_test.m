@@ -22,6 +22,7 @@ subsequences                = allsubs_price_sequences{1,subI};
 subsamples                  = allsubs_data{1,subI}.samples;
 subranks                    = allsubs_data{1,subI}.rank;
 subratesequences            = allsubs_rate_sequences{1,subI};
+subprices                   = allsubs_prices{1,subI};
 
 % 1. get ranks? this seems a bit confusing, because I already have the
 % rank of options that each subject chose in allsubs_data.rank struct
@@ -33,14 +34,16 @@ subratesequences            = allsubs_rate_sequences{1,subI};
 % 2 log_or_not 
 if log_or_not == 1
     
-    Generate_params.ratings(:,subI)             = log(subrates(:,1));
+    % Generate_params.ratings(:,subI)             = log(subrates(:,1));
+    Generate_params.prices(:,subI)              = log(subprices(:,2)); % for computing prior mean & variance
 
     for i = 1:length(subsequences)
         Generate_params.seq_vals(i,:,subI)      = log(subsequences{1,i})';
-        Generate_params.rateseq_vals(i,:,subI)  = log(subratesequences{1,i})';
+        % Generate_params.rateseq_vals(i,:,subI)  = log(subratesequences{1,i})';
     end
 else
-    Generate_params.ratings(:,subI)             = subrates;
+    % Generate_params.ratings(:,subI)             = subrates;
+    Generate_params.prices(:,subI)              = (subprices(:,2));
 
     for i = 1:length(subsequences)
         Generate_params.seq_vals(i,:,subI)      = subsequences{1,i}';
@@ -57,7 +60,8 @@ Generate_params.ranks(:,sub)                    = subranks; % ranks may not be n
 Generate_params.num_subs                    = size(Generate_params.seq_vals,3);
 Generate_params.num_seqs                    = size(Generate_params.seq_vals,1);
 Generate_params.seq_length                  = size(Generate_params.seq_vals,2);
-Generate_params.num_vals                    = size(Generate_params.ratings,1);
+% Generate_params.num_vals                    = size(Generate_params.ratings,1);
+Generate_params.num_vals                    = size(Generate_params.prices,1);
 Generate_params.rating_bounds               = [1 100]; % What is min and max of rating scale? (Works for big trust anyway)
 if log_or_not == 1
     Generate_params.rating_bounds           = log(Generate_params.rating_bounds);
@@ -87,14 +91,18 @@ for sequence = 1:Generate_params.num_seqs
     list.allVals                = squeeze(Generate_params.seq_vals(sequence,:,subI)); % squeezing may not be needed
     
     % should get mean and variance of sequence or whole dataset?
-    Generate_params.PriorMean   = mean(Generate_params.ratings(:,subI));
-    Generate_params.PriorVar    = var(Generate_params.ratings(:,subI));
+%     Generate_params.PriorMean   = mean(Generate_params.prices(:,subI));
+%     Generate_params.PriorVar    = var(Generate_params.prices(:,subI));
+%     Generate_params.PriorMean   = mean(Generate_params.ratings(:,subI));
+%     Generate_params.PriorVar    = var(Generate_params.ratings(:,subI));
     
-    % compute prior mean and variance using this_sequence ratings instead
+    % compute prior mean and variance using this_sequence ratings (or prices) instead
     % of whole dataset ratings
+    Generate_params.PriorMean   = mean(Generate_params.seq_vals(sequence,:,subI));
+    Generate_params.PriorVar    = var(Generate_params.seq_vals(sequence,:,subI));
 %     Generate_params.PriorMean   = mean(Generate_params.rateseq_vals(sequence,:,subI));
 %     Generate_params.PriorVar    = var(Generate_params.rateseq_vals(sequence,:,subI));
-    
+%     
     % ranks for this sequence
     dataList                    = tiedrank(squeeze(Generate_params.seq_vals(sequence,:,subI))');
     list.vals                   =  list.allVals;
@@ -122,7 +130,7 @@ for sequence = 1:Generate_params.num_seqs
 
     [choiceStop, choiceCont, difVal, currentRnk] = computeSecretary(Generate_params, sampleSeries, prior, N, list, Cs,minValue);
     
-    num_samples(sequence,subI) = find(difVal<0,1,'first');  % assign output num samples for Bruno model
+    num_samples(sequence,subI) = find(difVal<0,1,'first')  % assign output num samples for Bruno model
     
     % assign rank
     ranks(sequence,subI) = dataList(num_samples(sequence,subI));

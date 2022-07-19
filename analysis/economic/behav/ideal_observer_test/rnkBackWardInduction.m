@@ -10,16 +10,16 @@ function [expectedStop, expectedCont, expectedUtility] = rnkBackWardInduction(sa
 % N = listLength;
 Nx = length(x);
 
-payoff = sort(sampleSeries,'descend')';
-payoff = [N:-1:1];
-payoff = (payoff-1)/(N-1);
+% payoff = sort(sampleSeries,'descend')';
+% payoff = [N:-1:1];
+% payoff = (payoff-1)/(N-1);
 
-% % %bins
-% temp = sort(sampleSeries,'descend')';   % sort the sample values
-% [dummy,payoff] = histc(temp, [minValue(1:end-1) Inf]); % Slot the sequence values into the 6 (or howevermany) bins
-% nbins = size(minValue,2)-1; % recover number of bins if I didn't pass it through
-% payoff = (payoff-1)/(nbins-1); % normalises bin values to 0 to 1 scale (for some reason, presumable so I can compare models with different reward functions by placing them on same scale, although I'm not ure scale matters. Will keep for now)
-% 
+% %bins
+temp = sort(sampleSeries,'descend')';   % sort the sample values
+[dummy,payoff] = histc(temp, [minValue(1:end-1) Inf]); % Slot the sequence values into the 6 (or howevermany) bins
+nbins = size(minValue,2)-1; % recover number of bins if I didn't pass it through
+payoff = (payoff-1)/(nbins-1); % normalises bin values to 0 to 1 scale (for some reason, presumable so I can compare models with different reward functions by placing them on same scale, although I'm not ure scale matters. Will keep for now)
+
 
 % %normalised rating value
 % payoff = sort(sampleSeries,'descend')'; %assign actual values to payoff
