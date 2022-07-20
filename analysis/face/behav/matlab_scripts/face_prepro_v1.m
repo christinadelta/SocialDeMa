@@ -37,7 +37,6 @@ phase1_blocks           = 20;
 % phase1_blocktrials      = 40;
 phase1_totaltrials      = phase1_blocks*phase1_blocktrials;
 
-phase2_totaltrials      = 40; 
 phase2_blocktrials      = 20;
 phase2_blocks           = 2;
 respoptions             = 2; % accept vs decline
@@ -123,6 +122,130 @@ for sub = 1:nsubs
     
     clear subrate tmpitem tmprate tmpsub subratings subitems
  
+end % end of subjects loop
+
+%% EXTRACT AND SAVE PHASE 2 BLOCK DATA %%
+
+session     = 2;
+phase       = 2;
+
+% loop over subs
+for subI = 1:nsubs
+    
+    fprintf('loading economic phase 2 block data\n')  
+    subject = subs(subI).name;
+    subdir  = fullfile(resultspath, task,subject);
+    fprintf('\t reading data from subject %d\n',subI); 
+    
+    for blockI = 1:phase2_blocks
+        
+        fprintf('\t\t loading block %d\n\n',blockI);
+        subFile = fullfile(subdir, sprintf('subject_%02d_task_%s_block_%02d_ses_%02d_phase_%02d_blocktrials_logs.mat',subI,task,blockI,session,phase));
+        load(subFile)
+        
+        for trial = 1:phase2_blocktrials
+            
+            indx                                = ((blockI -1)*phase2_blocktrials) + trial; 
+            
+            subj(indx)                          = subI;
+            blockno(indx)                       = blockI;
+            trialno(indx)                       = logs.blocktrials(trial).trialnumber;
+            numsamples(indx)                    = logs.blocktrials(trial).numsamples;
+            thisitem(indx)                      = logs.blocktrials(trial).chosenitem;
+            
+            allsubs_sequences{1,subI}{1,indx}   = logs.blocktrials(trial).sequence;
+            
+            % create a vector of sequence responses at this point. It will
+            % consist of two columns [decline, accept]. The first column of the vector
+            % will consist of ones for each item/face that a participant
+            % declines, once an item is chosen, index 1 is assigned to the
+            % second column (accept). 
+            
+            t                                   = nan(numsamples(indx), respoptions); % init empty vec
+            
+            for s = 1:numsamples(indx) 
+                
+                if s < numsamples(indx) % if this is a decline response
+                    t(s,1)                      = 1;
+                    t(s,2)                      = 0;
+                else                    % if participant accepted an option
+                    t(s,1)                      = 0;
+                    t(s,2)                      = 1;
+                end
+                           
+            end % end of samples loop
+            
+            % store temporal vec (t) in cell
+            allsubs_choicevec{1,subI}{1,indx}   = t;
+            
+            clear t s 
+            
+        end % end of trials loop
+    end % end of blocks loop    
+end % end of subjects loop
+
+% add data in one matrix
+phase2_blockdata = [subj' blockno' trialno' numsamples' thisitem'];
+
+% % save matrix in csv format for r and python
+% csvwrite('economic_phase2_blockdata.csv', phase2_blockdata)
+
+clear subj trialno blockno thisitem tnumsamples indx
+
+%% EXTRACT ITEMS/PRICES AND RANKS %%
+
+% loop over subjects
+for subI = 1:nsubs
+    
+    tmpsub                  = find(phase2_blockdata(:,1) == subI);
+    sub_blockdata           = phase2_blockdata((tmpsub),:);
+    
+    substruct.samples       = sub_blockdata(:,4);
+    substruct.item          = sub_blockdata(:,5);
+    
+    % store sub struct in cell
+    allsubs_data{1,subI}    = substruct;
+    
+    clear tmpsub sub_blockdata
+    
+end % end of subject loop
+
+%% DEAL WITH SEQUENCES %%
+
+% create sequences with the ratings for faces/items in every
+% sequence (i.e., link ratings with corresponding face in every squence) 
+% this will also be required for running the model
+
+for sub = 1:nsubs
+    
+    % extract this_sub sequences
+    sub_seq                                     = allsubs_sequences{1,sub};
+    
+    % extract this_sub averaged ratings
+    sub_rate                                    = allsubs_ratings{1,sub};
+    
+    % loop over sequences
+    for seq = 1:size(sub_seq,2)
+        
+        % extract this_sequence
+        this_seq                                = sub_seq{1,seq}';
+        tmp_rate                                = zeros(1,length(this_seq));
+        
+        % loop over itemns in this_seq
+        for i = 1:length(this_seq)
+            
+            tmp_item                            = this_seq(i);
+            tmp_rate(1,i)                       = sub_rate(tmp_item,1); % link this_seq items to their corresponding ratings
+            
+        end % end of items loop
+        
+        % store new sequences
+        allsubs_rate_sequences{1,sub}{1,seq}    = tmp_rate;
+        
+        % clear vars
+        clear i tmp_item this_seq tmp_rate
+        
+    end % end of sequence loop
 end % end of subjects loop
 
 
