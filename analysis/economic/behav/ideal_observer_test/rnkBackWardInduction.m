@@ -5,6 +5,9 @@ function [expectedStop, expectedCont, expectedUtility] = rnkBackWardInduction(sa
 % payoff = [5 3 1 0 0 0 0 0 0 0 0 0 0 0 0 0 ];
 % % payoff = [1 0 0 0 0 0];
 
+% add payoff of economic task
+maxPayRank  = 3;
+payoff      = [1 0.5 0.25 0 0 0 0 0 0 0];
 
 
 % N = listLength;
@@ -15,10 +18,10 @@ Nx = length(x);
 % payoff = (payoff-1)/(N-1);
 
 % %bins
-temp = sort(sampleSeries,'descend')';   % sort the sample values
-[dummy,payoff] = histc(temp, [minValue(1:end-1) Inf]); % Slot the sequence values into the 6 (or howevermany) bins
-nbins = size(minValue,2)-1; % recover number of bins if I didn't pass it through
-payoff = (payoff-1)/(nbins-1); % normalises bin values to 0 to 1 scale (for some reason, presumable so I can compare models with different reward functions by placing them on same scale, although I'm not ure scale matters. Will keep for now)
+% temp = sort(sampleSeries,'descend')';   % sort the sample values
+% [dummy,payoff] = histc(temp, [minValue(1:end-1) Inf]); % Slot the sequence values into the 6 (or howevermany) bins
+% nbins = size(minValue,2)-1; % recover number of bins if I didn't pass it through
+% payoff = (payoff-1)/(nbins-1) % normalises bin values to 0 to 1 scale (for some reason, presumable so I can compare models with different reward functions by placing them on same scale, although I'm not ure scale matters. Will keep for now)
 
 
 % %normalised rating value
@@ -34,12 +37,10 @@ payoff = (payoff-1)/(nbins-1); % normalises bin values to 0 to 1 scale (for some
 % end;
 % payoff = payoff.^40;
 
-maxPayRank  = numel(payoff);
-payoff      = [payoff zeros(1, 20)];
+% maxPayRank  = numel(payoff);
+% payoff      = [payoff zeros(1, 20)];
 data.n      = ts;
 
-% this part takes the mean and variance of raw prices in a sequence and not
-% of all raw prices 
 data.sig    = var(sampleSeries(1:ts));
 data.mu     = mean(sampleSeries(1:ts));
 
@@ -147,7 +148,6 @@ for ti = N : -1 : ts
     
     
 end % end of ti loop
-
     
     
 return 

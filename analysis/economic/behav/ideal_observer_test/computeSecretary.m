@@ -19,7 +19,7 @@ currentRnk  = zeros(1, Nconsider);
 
 for ts = 1 : Nconsider
     
-    [expectedStop, expectedCont] = rnkBackWardInduction(sampleSeries, ts, prior, N, x, Cs,  minValue,Generate_params,list)
+    [expectedStop, expectedCont] = rnkBackWardInduction(sampleSeries, ts, prior, N, x, Cs,  minValue,Generate_params,list);
     % [expectedStop, expectedCont] = backWardInduction(sampleSeries, ts, priorProb, x, Cs);
     
     [rnkv, rnki] = sort(sampleSeries(1:ts), 'descend');
@@ -27,7 +27,7 @@ for ts = 1 : Nconsider
     
     %     fprintf('sample %d rnk %d %.2f %.4f %.2f\n', ts, z, sampleSeries(ts), expectedStop(ts), expectedCont(ts));
     
-    difVal(ts) = expectedCont(ts) - expectedStop(ts)
+    difVal(ts) = expectedCont(ts) - expectedStop(ts);
     
     choiceCont(ts) = expectedCont(ts);
     choiceStop(ts) = expectedStop(ts);
