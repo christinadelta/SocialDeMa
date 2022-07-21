@@ -1,4 +1,4 @@
-##Beads-task EEG preprocessing/analysis pipeline
+# Beads-task EEG preprocessing/analysis pipeline
 
 Formal preprocessing and analyses of the EEG data (Beads task). 
 
