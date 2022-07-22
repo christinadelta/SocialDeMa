@@ -40,6 +40,9 @@
 % more info on how this is accomplished, see the documentation of the 
 % beadsTrialdef.m file. 
 
+%%%% TODO:
+% 1. FIX MONTAGE SPECIFICATION
+
 %% Create required directories and define paths %%
 
 % Add SPM12 to the matlab path if needed:
@@ -149,6 +152,8 @@ for sub = 1:nsubs
         % create S struct for 
         S                   = [];
         S.D                 = fullfile(suberps, sprintf('spmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.jobpath           = subjobs;
+        S.block             = block;
         
         % Run createMontage.m function.
         % This function re-references by averaging across all electrodes. However,
@@ -158,7 +163,22 @@ for sub = 1:nsubs
         % 25]. This needs to be removed from averaging when re-referencing.
         % The createMontage.m file is in basedir/utilities; the function
         % needs to be modified manually 
+        S                   = createMontage(S);
         
+        S.mode              = 'write';
+        S.blocksize         = 655360;
+        S.prefix            = 'M';
+        S.montage           = fullfile(S.jobpath, 'montage.mat');
+        S.keepothers        = 0;
+        S.keepsensors       = 1;
+        S.updatehistory     = 1;
+        D                   = spm_eeg_montage(S);
+        
+        %% high-pass filter 
+        
+        
+
+
         
         
     end % end of blocks loop    
