@@ -53,14 +53,20 @@
 % created automatically during conversion of the MEEG objects to .nii
 % files.
 
+% clear workspace
+clear all
+clc
+
 basedir     = pwd;
-spmdir      = fullfile(basedir, 'spmDir');
-addpath(genpath(spmdir));
+% spmdir      = fullfile(basedir, 'spmDir');
+% addpath(genpath(basedir));
+addpath(genpath(fullfile(basedir, 'jobs')));
+addpath(genpath(fullfile(basedir, 'scripts')));
 
 % if output and jobs directories do not exist, create them:
-erpDir      = fullfile(spmdir, 'outerps');
-tfrDir      = fullfile(spmdir, 'outtfrs');
-jobsDir     = fullfile(spmdir, 'jobs');
+erpDir      = fullfile(basedir, 'outerps');
+tfrDir      = fullfile(basedir, 'outtfrs');
+jobsDir     = fullfile(basedir, 'jobs');
 
 if ~exist(erpDir, 'dir') && ~exist(tfrDir, 'dir') && ~exist(jobsDir, 'dir')
     mkdir(erpDir)
@@ -87,18 +93,73 @@ choices     = 2;
 % up until merging, however, only the ERPs MEEG object will undergo
 % artefact rejection (the last step of preprocessing).
 
+% init spm 
+spm('defaults', 'eeg');
+
 % loop over subjects 
 for sub = 1:nsubs
     
     fprintf('loading beads block data\n')  
-    subject = subs(sub).name;
-    subdir  = fullfile(datadir,subject);
+    subject         = subs(sub).name;
+    subdir          = fullfile(datadir,subject);
     fprintf('\t reading data from subject %d\n',sub); 
+    
+    % create a subject sub-directory in outerps & outtfrs to store
+    % subjected specific MEEG objects
+    suberps = fullfile(erpDir, sprintf('sub-%02d', sub));
+    subtfrs = fullfile(tfrDir, sprintf('sub-%02d', sub));
+    subjobs = fullfile(jobsDir, sprintf('sub-%02d', sub));
+    
+    if ~exist(suberps, 'dir') && ~exist(subtfrs, 'dir') && ~exist(subjobs, 'dir')
+        mkdir(suberps)
+        mkdir(subtfrs)
+        mkdir(subjobs)
+    end
     
     % loop over blocks 
     for block = 1:blocks
         
         fprintf('\t\t loading block %d\n\n',block);
+        blockfile   = fullfile(subdir, sprintf('sub_%02d_%s_block_%02d.bdf', sub, taskname, block));
+        
+        %% STEP 1. convert the bdf file to MEEG object
+        % create S struct for conversion
+        S               = [];
+        S.dataset       = blockfile;
+        S.mode          = 'continuous';
+        S.channels      = {'Fp1', 'AF7', 'AF3', 'F1', 'F3', 'F5', 'F7', 'FT7', 'FC5', 'FC3', 'FC1', 'C1', 'C3', 'C5', 'T7',...
+            'TP7', 'CP5', 'CP3', 'CP1', 'P1', 'P3', 'P5', 'P7', 'P9', 'PO7', 'PO3', 'O1', 'Iz', 'Oz', 'POz', 'Pz', 'CPz',...
+            'Fpz', 'Fp2', 'AF8', 'AF4', 'AFz', 'Fz', 'F2', 'F4', 'F6', 'F8', 'FT8', 'FC6', 'FC4', 'FC2', 'FCz','Cz', 'C2',...
+            'C4', 'C6', 'T8', 'TP8', 'CP6', 'CP4', 'CP2', 'P2', 'P4', 'P6', 'P8', 'P10', 'PO8',  'PO4', 'O2', 'EXG1',...
+            'EXG2', 'EXG3', 'EXG4', 'EXG5', 'EXG6', 'EXG7', 'EXG8'};
+
+        % convert bdf file to spm object and D struct
+        S.eventpadding      = 0;
+        S.blocksize         = 3276800;
+        S.checkboundary     = 1;
+        S.saveorigheader    = 0;
+        S.outpath           = fullfile(suberps, sprintf('spmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.outfile           = S.outpath;
+        S.timewin           = [];
+        S.conditionlabels   = {'Undefined'};
+        S.inputformat       = [];
+        D                   = spm_eeg_convert(S); % convert raw data
+        
+        %% STEP 2. Create montage & re-reference 
+        % create S struct for 
+        S                   = [];
+        S.D                 = fullfile(suberps, sprintf('spmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        
+        % Run createMontage.m function.
+        % This function re-references by averaging across all electrodes. However,
+        % an initial step requires knowing in advance if there is a noisy channel
+        % and exclude it from averaging. Montage creation thus, need to be done
+        % individually for every subject (e.g. pilot sub has one noisy channel [channel
+        % 25]. This needs to be removed from averaging when re-referencing.
+        % The createMontage.m file is in basedir/utilities; the function
+        % needs to be modified manually 
+        
+        
         
     end % end of blocks loop    
  
