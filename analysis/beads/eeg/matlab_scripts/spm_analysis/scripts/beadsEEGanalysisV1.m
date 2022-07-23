@@ -65,15 +65,13 @@ basedir     = pwd;
 % addpath(genpath(basedir));
 addpath(genpath(fullfile(basedir, 'jobs')));
 addpath(genpath(fullfile(basedir, 'scripts')));
-
+addpath(genpath(fullfile(basedir, 'utilities')));
 % if output and jobs directories do not exist, create them:
-erpDir      = fullfile(basedir, 'outerps');
-tfrDir      = fullfile(basedir, 'outtfrs');
+outDir      = fullfile(basedir, 'output');
 jobsDir     = fullfile(basedir, 'jobs');
 
-if ~exist(erpDir, 'dir') && ~exist(tfrDir, 'dir') && ~exist(jobsDir, 'dir')
-    mkdir(erpDir)
-    mkdir(tfrDir)
+if ~exist(outDir, 'dir') && ~exist(jobsDir, 'dir')
+    mkdir(outDir)
     mkdir(jobsDir)
 end
 
@@ -86,6 +84,7 @@ taskname    = 'beads';
 blocks      = 4;
 conditions  = 2;
 choices     = 2;
+analysest   = 2; % analyses types (erp & tf)
 
 %% Preprocessing steps 1 - 8 %%
 
@@ -109,13 +108,11 @@ for sub = 1:nsubs
     
     % create a subject sub-directory in outerps & outtfrs to store
     % subjected specific MEEG objects
-    suberps = fullfile(erpDir, sprintf('sub-%02d', sub));
-    subtfrs = fullfile(tfrDir, sprintf('sub-%02d', sub));
+    subout  = fullfile(outDir, sprintf('sub-%02d', sub));
     subjobs = fullfile(jobsDir, sprintf('sub-%02d', sub));
     
-    if ~exist(suberps, 'dir') && ~exist(subtfrs, 'dir') && ~exist(subjobs, 'dir')
-        mkdir(suberps)
-        mkdir(subtfrs)
+    if ~exist(subout, 'dir') && ~exist(subjobs, 'dir')
+        mkdir(subout)
         mkdir(subjobs)
     end
     
@@ -141,7 +138,7 @@ for sub = 1:nsubs
         S.blocksize         = 3276800;
         S.checkboundary     = 1;
         S.saveorigheader    = 0;
-        S.outpath           = fullfile(suberps, sprintf('spmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.outpath           = fullfile(subout, sprintf('spmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
         S.outfile           = S.outpath;
         S.timewin           = [];
         S.conditionlabels   = {'Undefined'};
@@ -151,7 +148,7 @@ for sub = 1:nsubs
         %% STEP 2. Create montage & re-reference 
         % create S struct for 
         S                   = [];
-        S.D                 = fullfile(suberps, sprintf('spmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.D                 = fullfile(subout, sprintf('spmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
         S.jobpath           = subjobs;
         S.block             = block;
         
@@ -174,11 +171,53 @@ for sub = 1:nsubs
         S.updatehistory     = 1;
         D                   = spm_eeg_montage(S);
         
-        %% high-pass filter 
+        %% STEP 3. High-pass filter 
+        % Init S struct
+        S                   = [];
+        S.D                 = fullfile(subout, sprintf('Mspmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.type              = 'butterworth';
+        S.band              = 'high';
+        S.freq              = 0.1;
+        S.dir               = 'twopass';
+        S.order             = 5;
+        S.prefix            = 'f';
+        D                   = spm_eeg_filter(S);
         
+        %% STEP 4. Downsample
+        % Init S struct
+        S                   = [];
+        S.D                 = fullfile(subout, sprintf('fMspmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.fsample_new       = 256;
+        S.method            = 'resample';
+        S.prefix            = 'd';
+        D                   = spm_eeg_downsample(S);
         
-
-
+        %% STEP 5. Low-pass filter 
+        
+        % at this stage we will low-pass filter the downsampled file twice:
+        % 1. for ERP analysis with frequency cutoff: 30Hz
+        % 2. for TF analysis with frequency cutoff: 110Hz
+        
+        for i = 1:analysest
+            S               = [];
+            S.D             = fullfile(subout, sprintf('dfMspmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+            S.type          = 'butterworth';
+            S.band          = 'low';
+            S.dir           = 'twopass';
+            S.order         = 5;
+            
+            if i == 1 % if it's for ERP analysis
+                S.freq      = 30;
+                S.prefix    = 'erpf';
+                
+            else % if it's tf analysis
+                S.freq      = 110;
+                S.prefix    = 'tfrf';
+            end
+            
+            D               = spm_eeg_filter(S);
+        end % end of analysis types loop
+        
         
         
     end % end of blocks loop    
