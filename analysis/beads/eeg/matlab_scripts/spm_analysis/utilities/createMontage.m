@@ -24,7 +24,7 @@ montage.labelnew    = [montage.labelorg(1:64), 'HEOG', 'VEOG']; % new labels
 tra                 = eye(obj.nchannels);
 tra(65:end, :)      = []; % remove the last two EXG channels (EXG7, EXG8)
 
-% To exclude a channel from re-referencing zero it out: E.g., let's say
+% To exclude a channel from re-referencing just zero it out: E.g., let's say
 % that we want to exclude channel P07 (row 25). The row should NOT be
 % removed, just add zeros to all columns of row 25 (but its diagonal
 % should be 1). I will add an example code here:

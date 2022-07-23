@@ -77,17 +77,19 @@ if ~exist(outDir, 'dir') && ~exist(jobsDir, 'dir')
 end
 
 % set data path
-datadir     = '/Users/christinadelta/Desktop/os_data/beads/subs/';  % change to your own data path 
-subs        = dir(fullfile(datadir, '*sub*'));                      % how many subject folders?
-nsubs       = length(subs);                                         % how many subjects?
+datadir         = '/Users/christinadelta/Desktop/os_data/beads/subs/';  % change to your own data path 
+subs            = dir(fullfile(datadir, '*sub*'));                      % how many subject folders?
+nsubs           = length(subs);                                         % how many subjects?
 
-taskname    = 'beads';
-blocks      = 4;
-conditions  = 2;
-choices     = 2;
-analysest   = 2; % analyses types (erp & tf)
+taskname        = 'beads';
+blocks          = 4;
+conditions      = 2;
+choices         = 2;
+analysest       = 2; % analyses types (erp & tf)
+nconstrasts     = 5;
+contrastpref    = {'wud_' 'wde_' 'wi' 'wu_' 'wd_'};
 
-%% Preprocessing steps 1 - 8 %%
+%% Preprocessing steps [ERPs: 1 - 12, TFRs: 1 - 12] %%
 
 % these steps are used to preprocess the raw .bdf files, for each
 % participant. Given that we will run evoked analysis and time-frequency
@@ -286,32 +288,257 @@ for sub = 1:nsubs
     
     %% STEP 7. Merge all block objects 
     
-    for i = analysest
+    for i = 1:analysest
         
         % init S struct
-        S = [];
-        S.recode.file = '.*';
-        S.recode.labelorg = '.*';
-        S.recode.labelnew = '#labelorg#';
-        S.prefix = 'c';
+        S                   = [];
+        S.recode.file       = '.*';
+        S.recode.labelorg   = '.*';
+        S.recode.labelnew   = '#labelorg#';
+        S.prefix            = 'c';
+%         S.save              = 1;
         
         if i == 1 % if this is the ERP object
-            S.D = [fullfile(subout, sprintf('eerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub))
+            S.D             = [fullfile(subout, sprintf('eerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub))
                 fullfile(subout, sprintf('eerpfdfMspmeeg_sub_%02d_beads_block_02.mat', sub))
                 fullfile(subout, sprintf('eerpfdfMspmeeg_sub_%02d_beads_block_03.mat', sub))
                 fullfile(subout, sprintf('eerpfdfMspmeeg_sub_%02d_beads_block_04.mat', sub))
                 ];
         else
-            S.D = [fullfile(subout, sprintf('etfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub))
+            S.D             = [fullfile(subout, sprintf('etfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub))
                 fullfile(subout, sprintf('etfrfdfMspmeeg_sub_%02d_beads_block_02.mat', sub))
                 fullfile(subout, sprintf('etfrfdfMspmeeg_sub_%02d_beads_block_03.mat', sub))
                 fullfile(subout, sprintf('etfrfdfMspmeeg_sub_%02d_beads_block_04.mat', sub))
                 ];
         end
         
-        D = spm_eeg_merge(S);
+        D                   = spm_eeg_merge(S);
         
     end % end of analysis type loop
+    
+    %% STEP 8. Define cordinates/channel locations 
+    
+    % this step is not 100% necessary as default biosemi cordinates are
+    % used during montage creation. I include it just to be sure..
+    % but it can be commented-out
+    for i = 1:analysest
+        
+        % prepare defauld spm cordinates/locations
+        S               = [];
+        S.task          = 'defaulteegsens';
+        S.save          = 1;
+        
+        if i == 1 % if this is the ERP object
+            
+            S.D         = fullfile(subout, sprintf('ceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+ 
+        else
+            S.D         = fullfile(subout, sprintf('cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+
+        end
+        
+        D               = spm_eeg_prep(S); % run eeg prep function
+        
+        % set coordinates 
+        S               = [];
+        S.task          = 'setcoor2d';
+        
+        if i == 1 % if this is the ERP object
+            
+            S.D         = fullfile(subout, sprintf('ceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+ 
+        else
+            S.D         = fullfile(subout, sprintf('cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+
+        end
+        
+        S.xy            = [0.358127431070432 0.230361291206221 0.364687127498288 0.412094935710624 0.319499558310764 0.220586712887751 0.121753409066311 0.0551811363296929 0.178452330461275 0.296722753529597 0.402418214252759 0.402232139889891 0.295640676509763 0.176774133670791 0.05 0.0952050213281216 0.204129030986282 0.31059947251063 0.407784984615512 0.419107072168501 0.337261391153001 0.255936320417754 0.176983444035271 0.0990531376307864 0.274933610032685 0.374805341575767 0.381476047145341 0.485128199634413 0.490099574981175 0.493654015274171 0.496027125746896 0.497486874012439 0.494127551616874 0.63115333565553 0.764761267196509 0.633966624967236 0.497096812715531 0.498387742743428 0.590119958154716 0.684446454131226 0.784927979314371 0.878951869887076 0.947194362550941 0.826079267890216 0.706962412478808 0.597352645199803 0.498716216854912 0.498366895939448 0.598675341202977 0.70801035314695 0.826759976212305 0.95 0.898334363412286 0.795911344188124 0.69078343536388 0.593172800977718 0.57877084537302 0.658765804468392 0.735389719899426 0.810437806844084 0.879007062596769 0.708438648401535 0.611863922610018 0.599476237529535
+        0.94291962707719 0.889006557470294 0.844625065001036 0.711929958683174 0.727189162575643 0.752686038230401 0.785972668551047 0.638824390760336 0.622237843107835 0.612055755800727 0.604719623778926 0.504717514961853 0.499865625106497 0.489925660632489 0.477921883184179 0.346661648796377 0.375837233637139 0.399737181066574 0.41403150193654 0.321035174889695 0.30567474167612 0.277954382109169 0.241048698933626 0.191392522403548 0.173810943732217 0.218490107582391 0.139058031510229 0.05 0.134825637229592 0.229144765608567 0.325406282673219 0.415924315197709 0.95 0.947839059007246 0.895554940224051 0.844643723365574 0.824931733550042 0.708258571334129 0.714599145507353 0.73251653002839 0.754709519350322 0.7891126332849 0.637244898999659 0.620328254919284 0.610930378565758 0.604973846888264 0.602533725218943 0.506171957423089 0.501865455408111 0.495100231864275 0.484556343615868 0.468273841263323 0.33147104080173 0.369228471090915 0.394026914867007 0.410294741704492 0.320570318800589 0.301276182177249 0.266698929482614 0.226857688879681 0.170533558640877 0.16331740311369 0.210477257752421 0.133428670630485];
+        
+        S.label = {'Fp1', 'AF7', 'AF3', 'F1', 'F3', 'F5', 'F7', 'FT7', 'FC5', 'FC3', 'FC1', 'C1', 'C3', 'C5', 'T7',...
+            'TP7', 'CP5', 'CP3', 'CP1', 'P1', 'P3', 'P5', 'P7', 'P9', 'PO7', 'PO3', 'O1', 'Iz', 'Oz', 'POz', 'Pz', 'CPz',...
+            'Fpz', 'Fp2', 'AF8', 'AF4', 'AFz', 'Fz', 'F2', 'F4', 'F6', 'F8', 'FT8', 'FC6', 'FC4', 'FC2', 'FCz','Cz', 'C2',...
+            'C4', 'C6', 'T8', 'TP8', 'CP6', 'CP4', 'CP2', 'P2', 'P4', 'P6', 'P8', 'P10', 'PO8',  'PO4', 'O2'};
+        
+        %save the file 
+        S.save          = 1;
+        D               = spm_eeg_prep(S);
+        
+    end
+    
+    %% STEP 9: Artefact rejection
+    
+    % artefact rejection is performed only on the ERP-specific MEEG object.
+    % 
+    S                               = [];
+    S.D                             = fullfile(subout, sprintf('ceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.mode                          = 'reject';
+    S.badchanthresh                 = 0.2;
+    S.prefix                        = 'a';
+    S.append                        = true;
+    S.methods.channels              = {'EEG'};
+    S.methods.fun                   = 'threshchan';
+    S.methods.settings.threshold    = 100;
+    S.methods.settings.excwin       = 1000;
+    D                               = spm_eeg_artefact(S);
+    
+    %% STEP 10: Average conditions (Averaged ERPs)
+    
+    % condition averageing is performed only on the ERP-specific MEEG object.
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('aceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.robust.ks             = 3;
+    S.robust.bycondition    = true;
+    S.robust.savew          = false;
+    S.robust.removebad      = false;
+    S.circularise           = false;
+    S.prefix                = 'm';
+    D                       = spm_eeg_average(S);
+    
+    %% STEP 11: contrast ERP averaged conditions
+    
+    % We will first contrast averaged ERPs. We will create 5 contrast objects:
+    % 1. Urn vs Draw 
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [-1 1 -1 1];
+    S.label                 = {'urnVSdraw'};
+    S.weighted              = 1;
+    S.prefix                = 'wud_';
+    D                       = spm_eeg_contrast(S);
+
+    % 2. Difficult vs Easy
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [1 1 -1 -1];
+    S.label                 = {'DiffVsEasy'};
+    S.weighted              = 1;
+    S.prefix                = 'wde_';
+    D                       = spm_eeg_contrast(S);
+
+    % 3. Interaction of the 2 contrasts
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [-1 1 1 -1];
+    S.label                 = {'interaction'};
+    S.weighted              = 1;
+    S.prefix                = 'wi_';
+    D                       = spm_eeg_contrast(S);
+
+    % 4. Only urn contrast
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [0 1 0 1];
+    S.label                 = {'onlyurn'};
+    S.weighted              = 1;
+    S.prefix                = 'wu_';
+    D                       = spm_eeg_contrast(S);
+
+    % 5. Only draws contrast
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [1 0 1 0];
+    S.label                 = {'onlydraw'};
+    S.weighted              = 1;
+    S.prefix                = 'wd_';
+    D                       = spm_eeg_contrast(S);
+    
+    %% STEP 12: Convert to 3D volumes 
+
+    % convert the 5 contrast MEEG objects into .nii files
+    for c = 1:nconstrasts
+        
+        S               = [];
+        S.D             = fullfile(subout, sprintf('%smaceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', contrastpref{c}, sub));
+        S.mode          = 'scalp x time';
+        S.conditions    = {};
+        S.channels      = 'EEG';
+        S.timewin       = [-Inf Inf];
+        S.freqwin       = [-Inf Inf];
+        S.prefix        = '';
+
+        D               = spm_eeg_convert2images(S);
+        
+        %% RUN TIME-FREQUENCY ANALYSIS %%
+        
+        % at this step we will start using the TF-specific MEEG file that
+        % hasn't been used after the merging step. A lot of the
+        % preprocessing steps for TF representations will be similar to ERPs
+        % (e.g., condition averaging, contrast creation and convertion to
+        % 3D images), however, the first 3 TF-specific steps will be
+        % different.
+        % Here we continue with step 9, since definition of channel locations was step 8.
+        
+        %% STEP 9: Time-Frequency Morlet Decomposition
+        
+        % at this step SPM12 creates 2 objects, one for power (tf) and one
+        % for phase (ph). At the remaining of the TF preprocessing steps we will only use
+        % the tf file. The ph file can be deleted.
+        
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.channels              = {'all'};
+        S.frequencies           = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55];
+        S.timewin               = [-Inf Inf];
+        S.phase                 = 1;
+        S.method                = 'morlet';
+        S.settings.ncycles      = 7;
+        S.settings.timeres      = 0;
+        S.settings.subsample    = 5;
+        S.prefix                = '';
+        D                       = spm_eeg_tf(S);
+        
+        %% STEP 10: Baseline rescaling (only power file) 
+        
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('tf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.method                = 'LogR';
+        S.prefix                = 'r';
+        S.timewin               = [-500 -50];
+        S.pooledbaseline        = 0;
+        D                       = spm_eeg_tf_rescale(S);
+        
+        %% STEP 11: Average power over frequency
+        
+        % before averaging conditions, we will need to average the TF
+        % object over beta frequency (as this is the focus of the analysis)
+        
+        S           = [];
+        S.D         = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.freqwin   = 1:55;
+        S.prefix    = 'P';
+        D           = spm_eeg_avgfreq(S);
+        
+        %% STEP 12: Average power over time
+        
+        % before averaging conditions, we will need to average the TF
+        % object over the entire peristimulus time (-500 to 800)
+        S           = [];
+        S.D         = fullfile(subout, sprintf('Prtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.timewin   = [-500 800];
+        S.prefix    = 'S';
+        D           = spm_eeg_avgtime(S);
+        
+        %% STEP 13: Average conditions
+        
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('SPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.robust.ks             = 3;
+        S.robust.bycondition    = true;
+        S.robust.savew          = false;
+        S.robust.removebad      = false;
+        S.circularise           = false;
+        S.prefix                = 'm';
+        D                       = spm_eeg_average(S);
+        
+        %% STEP 14: Compute contrasts of averaged power file
+        
+
+
+        
+        
+  
+    end
  
 end % end of subjects loop
 
