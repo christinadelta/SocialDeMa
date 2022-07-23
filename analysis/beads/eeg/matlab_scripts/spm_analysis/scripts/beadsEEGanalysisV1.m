@@ -3,7 +3,7 @@
 % preprocessing/analysis script was created in July 2022.
 % VERSION 1 of formal analysis plan of the beads EEG data with SPM12 
 
-% Details of Preprocessing steps can be found in the PDF file:
+% Details of Preprocessing steps can be found in the doc file:
 % https://docs.google.com/document/d/1xLbgGW23Dk4S0rfzSJbUMTxc2_srCTFf77gUFijCR5Y/edit#heading=h.3ewqtkwgw38n
 % 
 % The EEG data for beads task were recorded in four .bdf files -- one file
@@ -17,7 +17,7 @@
 
 % all preprocessing steps and analyses are done using this script. Meaning that we call all
 % the SPM functions using this script.
-% There shouldn't be a need to run any of the functions using the SMP eeg
+% There shouldn't be a need to run any of the functions using the SPM eeg
 % GUI. 
 
 % The are two functions that are modified or created specifically for the
@@ -458,87 +458,148 @@ for sub = 1:nsubs
         S.prefix        = '';
 
         D               = spm_eeg_convert2images(S);
-        
-        %% RUN TIME-FREQUENCY ANALYSIS %%
-        
-        % at this step we will start using the TF-specific MEEG file that
-        % hasn't been used after the merging step. A lot of the
-        % preprocessing steps for TF representations will be similar to ERPs
-        % (e.g., condition averaging, contrast creation and convertion to
-        % 3D images), however, the first 3 TF-specific steps will be
-        % different.
-        % Here we continue with step 9, since definition of channel locations was step 8.
-        
-        %% STEP 9: Time-Frequency Morlet Decomposition
-        
-        % at this step SPM12 creates 2 objects, one for power (tf) and one
-        % for phase (ph). At the remaining of the TF preprocessing steps we will only use
-        % the tf file. The ph file can be deleted.
-        
-        S                       = [];
-        S.D                     = fullfile(subout, sprintf('cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-        S.channels              = {'all'};
-        S.frequencies           = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55];
-        S.timewin               = [-Inf Inf];
-        S.phase                 = 1;
-        S.method                = 'morlet';
-        S.settings.ncycles      = 7;
-        S.settings.timeres      = 0;
-        S.settings.subsample    = 5;
-        S.prefix                = '';
-        D                       = spm_eeg_tf(S);
-        
-        %% STEP 10: Baseline rescaling (only power file) 
-        
-        S                       = [];
-        S.D                     = fullfile(subout, sprintf('tf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-        S.method                = 'LogR';
-        S.prefix                = 'r';
-        S.timewin               = [-500 -50];
-        S.pooledbaseline        = 0;
-        D                       = spm_eeg_tf_rescale(S);
-        
-        %% STEP 11: Average power over frequency
-        
-        % before averaging conditions, we will need to average the TF
-        % object over beta frequency (as this is the focus of the analysis)
-        
-        S           = [];
-        S.D         = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-        S.freqwin   = 1:55;
-        S.prefix    = 'P';
-        D           = spm_eeg_avgfreq(S);
-        
-        %% STEP 12: Average power over time
-        
-        % before averaging conditions, we will need to average the TF
-        % object over the entire peristimulus time (-500 to 800)
-        S           = [];
-        S.D         = fullfile(subout, sprintf('Prtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-        S.timewin   = [-500 800];
-        S.prefix    = 'S';
-        D           = spm_eeg_avgtime(S);
-        
-        %% STEP 13: Average conditions
-        
-        S                       = [];
-        S.D                     = fullfile(subout, sprintf('SPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-        S.robust.ks             = 3;
-        S.robust.bycondition    = true;
-        S.robust.savew          = false;
-        S.robust.removebad      = false;
-        S.circularise           = false;
-        S.prefix                = 'm';
-        D                       = spm_eeg_average(S);
-        
-        %% STEP 14: Compute contrasts of averaged power file
-        
+    end
+    
+    %% RUN TIME-FREQUENCY ANALYSIS %%
 
+    % at this step we will start using the TF-specific MEEG file that
+    % hasn't been used after the merging step. A lot of the
+    % preprocessing steps for TF representations will be similar to ERPs
+    % (e.g., condition averaging, contrast creation and convertion to
+    % 3D images), however, the first 3 TF-specific steps will be
+    % different.
+    % Here we continue with step 9, since definition of channel locations was step 8.
 
-        
-        
-  
+    %% STEP 9: Time-Frequency Morlet Decomposition
+
+    % at this step SPM12 creates 2 objects, one for power (tf) and one
+    % for phase (ph). At the remaining of the TF preprocessing steps we will only use
+    % the tf file. The ph file can be deleted.
+
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.channels              = {'all'};
+    S.frequencies           = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55];
+    S.timewin               = [-Inf Inf];
+    S.phase                 = 1;
+    S.method                = 'morlet';
+    S.settings.ncycles      = 7;
+    S.settings.timeres      = 0;
+    S.settings.subsample    = 5;
+    S.prefix                = '';
+    D                       = spm_eeg_tf(S);
+
+    %% STEP 10: Baseline rescaling (only power file) 
+
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('tf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.method                = 'LogR';
+    S.prefix                = 'r';
+    S.timewin               = [-500 -50];
+    S.pooledbaseline        = 0;
+    D                       = spm_eeg_tf_rescale(S);
+
+    %% STEP 11: Average power over frequency
+
+    % before averaging conditions, we will need to average the TF
+    % object over beta frequency (as this is the focus of the analysis)
+
+    S           = [];
+    S.D         = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.freqwin   = 13:30;
+    S.prefix    = 'P';
+    D           = spm_eeg_avgfreq(S);
+
+    %% STEP 12: Average power over time
+
+    % before averaging conditions, we will need to average the TF
+    % object over the entire peristimulus time (-500 to 800)
+    S           = [];
+    S.D         = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.timewin   = [0 800];
+    S.prefix    = 'S';
+    D           = spm_eeg_avgtime(S);
+
+    %% STEP 13: Average conditions
+
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('Prtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.robust.ks             = 3;
+    S.robust.bycondition    = true;
+    S.robust.savew          = false;
+    S.robust.removebad      = false;
+    S.circularise           = false;
+    S.prefix                = 'm';
+    D                       = spm_eeg_average(S);
+
+    %% STEP 14: Compute contrasts of averaged power file
+
+    % As with evoked responses, TFRs also will be contrasted in 5 ways:
+    % 1. Urn vs Draw 
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [-1 1 -1 1];
+    S.label                 = {'urnVSdraw'};
+    S.weighted              = 1;
+    S.prefix                = 'wud_';
+    D                       = spm_eeg_contrast(S);
+
+    % 2. Difficult vs Easy
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [1 1 -1 -1];
+    S.label                 = {'DiffVsEasy'};
+    S.weighted              = 1;
+    S.prefix                = 'wde_';
+    D                       = spm_eeg_contrast(S);
+
+    % 3. Interaction of the 2 contrasts
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [-1 1 1 -1];
+    S.label                 = {'interaction'};
+    S.weighted              = 1;
+    S.prefix                = 'wi_';
+    D                       = spm_eeg_contrast(S);
+
+    % 4. Only urn contrast
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [0 1 0 1];
+    S.label                 = {'onlyurn'};
+    S.weighted              = 1;
+    S.prefix                = 'wu_';
+    D                       = spm_eeg_contrast(S);
+
+    % 5. Only draws contrast
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.c                     = [1 0 1 0];
+    S.label                 = {'onlydraw'};
+    S.weighted              = 1;
+    S.prefix                = 'wd_';
+    D                       = spm_eeg_contrast(S);
+    
+    %% STEP 15: Convert TFR contrasts into 3D volumes
+    
+    % convert the 5 contrast MEEG objects into .nii files
+    for c = 1:nconstrasts
+
+        S               = [];
+        S.D             = fullfile(subout, sprintf('%smPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', contrastpref{c}, sub));
+        S.mode          = 'scalp x time';
+        S.conditions    = {};
+        S.channels      = 'EEG';
+        S.timewin       = [-Inf Inf];
+        S.freqwin       = [-Inf Inf];
+        S.prefix        = '';
+
+        D               = spm_eeg_convert2images(S);
+
     end
  
 end % end of subjects loop
+
+% THIS IS IT WITH PREPROCESSING!!!
+
 
