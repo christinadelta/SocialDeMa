@@ -9,7 +9,10 @@ function S = createMontage(S)
 % has a noisy electrode (e.g. pilot sub has one noisy channel [channel
 % 25]). This will be excluded.
 
-%%% Run the function
+% TODO:
+% 1. re-referencing needs fixing
+
+%%% -------------------- Run the function
 % load the object 
 D                   = S.D;
 obj                 = spm_eeg_load(D);
@@ -21,8 +24,8 @@ montage.labelnew    = [montage.labelorg(1:64), 'HEOG', 'VEOG']; % new labels
 tra                 = eye(obj.nchannels);
 tra(65:end, :)      = []; % remove the last two EXG channels (EXG7, EXG8)
 
-% also remove channel 25 (PO7) only for this subject. If a subject doesn't have a noisy channel, comment this line
-tra(25, :)          = []; 
+% also exclude channel 25 (PO7) only for this subject. If a subject doesn't have a noisy channel, comment this line
+% tra(25, :)          = []; 
 tra                 = detrend(tra, 'constant'); % re-reference
 
 % HEOG
