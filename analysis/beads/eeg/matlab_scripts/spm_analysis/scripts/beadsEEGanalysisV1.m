@@ -66,6 +66,7 @@ basedir     = pwd;
 addpath(genpath(fullfile(basedir, 'jobs')));
 addpath(genpath(fullfile(basedir, 'scripts')));
 addpath(genpath(fullfile(basedir, 'utilities')));
+
 % if output and jobs directories do not exist, create them:
 outDir      = fullfile(basedir, 'output');
 jobsDir     = fullfile(basedir, 'jobs');
@@ -108,8 +109,8 @@ for sub = 1:nsubs
     
     % create a subject sub-directory in outerps & outtfrs to store
     % subjected specific MEEG objects
-    subout  = fullfile(outDir, sprintf('sub-%02d', sub));
-    subjobs = fullfile(jobsDir, sprintf('sub-%02d', sub));
+    subout          = fullfile(outDir, sprintf('sub-%02d', sub));
+    subjobs         = fullfile(jobsDir, sprintf('sub-%02d', sub));
     
     if ~exist(subout, 'dir') && ~exist(subjobs, 'dir')
         mkdir(subout)
@@ -120,7 +121,7 @@ for sub = 1:nsubs
     for block = 1:blocks
         
         fprintf('\t\t loading block %d\n\n',block);
-        blockfile   = fullfile(subdir, sprintf('sub_%02d_%s_block_%02d.bdf', sub, taskname, block));
+        blockfile       = fullfile(subdir, sprintf('sub_%02d_%s_block_%02d.bdf', sub, taskname, block));
         
         %% STEP 1. convert the bdf file to MEEG object
         % create S struct for conversion
@@ -138,7 +139,7 @@ for sub = 1:nsubs
         S.blocksize         = 3276800;
         S.checkboundary     = 1;
         S.saveorigheader    = 0;
-        S.outpath           = fullfile(subout, sprintf('spmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.outpath           = fullfile(subout, sprintf('spmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
         S.outfile           = S.outpath;
         S.timewin           = [];
         S.conditionlabels   = {'Undefined'};
@@ -148,7 +149,7 @@ for sub = 1:nsubs
         %% STEP 2. Create montage & re-reference 
         % create S struct for 
         S                   = [];
-        S.D                 = fullfile(subout, sprintf('spmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.D                 = fullfile(subout, sprintf('spmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
         S.jobpath           = subjobs;
         S.block             = block;
         
@@ -174,7 +175,7 @@ for sub = 1:nsubs
         %% STEP 3. High-pass filter 
         % Init S struct
         S                   = [];
-        S.D                 = fullfile(subout, sprintf('Mspmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.D                 = fullfile(subout, sprintf('Mspmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
         S.type              = 'butterworth';
         S.band              = 'high';
         S.freq              = 0.1;
@@ -186,7 +187,7 @@ for sub = 1:nsubs
         %% STEP 4. Downsample
         % Init S struct
         S                   = [];
-        S.D                 = fullfile(subout, sprintf('fMspmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+        S.D                 = fullfile(subout, sprintf('fMspmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
         S.fsample_new       = 256;
         S.method            = 'resample';
         S.prefix            = 'd';
@@ -200,7 +201,7 @@ for sub = 1:nsubs
         
         for i = 1:analysest
             S               = [];
-            S.D             = fullfile(subout, sprintf('dfMspmeeg_sub_%02d_%s_block%02d.mat', sub, taskname, block));
+            S.D             = fullfile(subout, sprintf('dfMspmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
             S.type          = 'butterworth';
             S.band          = 'low';
             S.dir           = 'twopass';
@@ -216,11 +217,101 @@ for sub = 1:nsubs
             end
             
             D               = spm_eeg_filter(S);
+            
         end % end of analysis types loop
         
+        %% STEP 6. Epoch data 
+       
+        % FIRST SPECIFY TRIALS -- CREATE TRIAL DEFINITION MAT FILE
+        % this part creates a mat file (trial definition) using the the previously
+        % saved MEEG object (low-pass filtered). This mat file should contain:
+        % 1. source of data
+        % 2. time window
+        % 3. trialdef (condition labels, event types, event values, trl shift)
+        % 4. condition labels (cell with conditions/strings)
+        % 5. trl (trial start, trial end, offset)
         
+        % In the previous step we create two MEEG objects (one for ERP and
+        % one for TF analysis). Epoching will be performed to each of the
+        % two objects seperately as the tf-specific object does not require
+        % baseline-correction. 
         
-    end % end of blocks loop    
+        for i = 1:analysest
+            
+            % init S struct
+            S                               = [];
+            S.trialdef(1).conditionlabel    = 'easydraw';
+            S.trialdef(1).eventtype         = 'STATUS';
+            S.trialdef(1).eventvalue        = 1;
+            S.trialdef(1).trlshift          = 0;
+            S.trialdef(2).conditionlabel    = 'easyurn';
+            S.trialdef(2).eventtype         = 'STATUS';
+            S.trialdef(2).eventvalue        = 2;
+            S.trialdef(2).trlshift          = 0;
+            S.trialdef(3).conditionlabel    = 'diffdraw';
+            S.trialdef(3).eventtype         = 'STATUS';
+            S.trialdef(3).eventvalue        = 3;
+            S.trialdef(3).trlshift          = 0;
+            S.trialdef(4).conditionlabel    = 'diffurn';
+            S.trialdef(4).eventtype         = 'STATUS';
+            S.trialdef(4).eventvalue        = 4;
+            S.trialdef(4).trlshift          = 0;
+            S.timewin                       = [-500 800];
+            S.eventpadding                  = 0;
+            S. prefix                       = 'e';
+            if i == 1 % if this is the ERP object
+                
+                S.D                         = fullfile(subout, sprintf('erpfdfMspmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
+                S.bc                        = 1;
+                
+            else % if this is the TFR object
+                
+                S.D                         = fullfile(subout, sprintf('tfrfdfMspmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
+                S.bc                        = 0;
+            end
+            
+            % run the trial definition function here to get the trl matrix and
+            % condition labels
+            [trl, conditionlabels, S]       = beadsTrialdef(S);
+            
+            D                               = spm_eeg_epochs(S);
+
+        end % end of analysis types loop
+        
+        % This is the last preprocessing step at the block level. Now the
+        % files need to be merged and block files can be deleted since they
+        % are not going to be used again. 
+        
+    end % end of blocks loop 
+    
+    %% STEP 7. Merge all block objects 
+    
+    for i = analysest
+        
+        % init S struct
+        S = [];
+        S.recode.file = '.*';
+        S.recode.labelorg = '.*';
+        S.recode.labelnew = '#labelorg#';
+        S.prefix = 'c';
+        
+        if i == 1 % if this is the ERP object
+            S.D = [fullfile(subout, sprintf('eerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub))
+                fullfile(subout, sprintf('eerpfdfMspmeeg_sub_%02d_beads_block_02.mat', sub))
+                fullfile(subout, sprintf('eerpfdfMspmeeg_sub_%02d_beads_block_03.mat', sub))
+                fullfile(subout, sprintf('eerpfdfMspmeeg_sub_%02d_beads_block_04.mat', sub))
+                ];
+        else
+            S.D = [fullfile(subout, sprintf('etfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub))
+                fullfile(subout, sprintf('etfrfdfMspmeeg_sub_%02d_beads_block_02.mat', sub))
+                fullfile(subout, sprintf('etfrfdfMspmeeg_sub_%02d_beads_block_03.mat', sub))
+                fullfile(subout, sprintf('etfrfdfMspmeeg_sub_%02d_beads_block_04.mat', sub))
+                ];
+        end
+        
+        D = spm_eeg_merge(S);
+        
+    end % end of analysis type loop
  
 end % end of subjects loop
 
