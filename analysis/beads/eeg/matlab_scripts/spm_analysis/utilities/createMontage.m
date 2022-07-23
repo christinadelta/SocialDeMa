@@ -12,7 +12,7 @@ function S = createMontage(S)
 % TODO:
 % 1. re-referencing needs fixing
 
-%%% -------------------- Run the function
+%%% ---------------------- Run the function -------------------------- %%%
 % load the object 
 D                   = S.D;
 obj                 = spm_eeg_load(D);
@@ -24,15 +24,18 @@ montage.labelnew    = [montage.labelorg(1:64), 'HEOG', 'VEOG']; % new labels
 tra                 = eye(obj.nchannels);
 tra(65:end, :)      = []; % remove the last two EXG channels (EXG7, EXG8)
 
-% also exclude channel 25 (PO7) only for this subject. If a subject doesn't have a noisy channel, comment this line
-% tra(25, :)          = []; 
+% To exclude a channel from re-referencing zero it out: E.g., let's say
+% that we want to exclude channel P07 (row 25). The row should NOT be
+% removed, just add zeros to all columns of row 25 (but its diagonal
+% should be 1). I will add an example code here:
+
 tra                 = detrend(tra, 'constant'); % re-reference
 
 % HEOG
-tra(64, [67 68])    = [1 -1];
+tra(65, [67 68])    = [1 -1];
 
 % VEOG
-tra(65, [69 70])    = [1 -1];
+tra(66, [69 70])    = [1 -1];
 
 montage.tra         = tra;
 
