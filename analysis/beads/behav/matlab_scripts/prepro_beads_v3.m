@@ -203,16 +203,16 @@ for sub = 1:nsubs
         % run ideal observer 
         [ll, pickTrial, dQvec, ddec, aQvec choice]  = estimateLikelihoodf(alpha,Cw,thisq,Cs,thiscond_seq,1);
         
-        model_outpout(cond).pickTrials              = pickTrial;
-        model_outpout(cond).dQvec                   = dQvec;
-        model_outpout(cond).aQvec                   = aQvec;
-        model_outpout(cond).choices                 = choice;
-        model_outpout(cond).ddec                    = ddec;
+        io_output(cond).pickTrials                  = pickTrial;
+        io_output(cond).dQvec                       = dQvec;
+        io_output(cond).aQvec                       = aQvec;
+        io_output(cond).choices                     = choice;
+        io_output(cond).ddec                        = ddec;
         
         clear thiscond_data thiscond_seq thisq
     end % end of conditions loop
     
-    allsubs_model{1,sub}                            = model_outpout;
+    allsubs_io{1,sub}                               = io_output;
 end % end of subjects loop
 
 %% COMPUTE MEAN ACCURACY, DRAWS & POINTS %%
@@ -221,7 +221,7 @@ end % end of subjects loop
 for i = 1:nsubs
     
     % extract this subject output struct
-    sub_output                      = allsubs_model{1,i};
+    sub_output                      = allsubs_io{1,i};
     
     for j = 1:conditions
         
@@ -289,7 +289,34 @@ for sub = 1:nsubs
         model_output(cond).aQvec    = aQvec;
         
     end
+    
+    allsubs_model{1,sub}                            = model_output;
+    
 end % end of subjects loop 
+
+%% COMPUTE DIFFERENCE OF AQ VALUES FOR DRAWING AGAIN AND FOR CHOOSING AN URN
+
+% This vector will be used for the regression analysis with the EEG epochs 
+for sub = 1:nsubs
+    
+    sub_out = allsubs_model{1,sub};
+    
+    % loop over conditions
+    for cond = 1:conditions
+        
+        % extract AQ values for each condition
+        sub_aQ  = sub_out(cond).aQvec;
+        
+        % extract AQ values for each sequence 
+        for trial = 1:length(sub_aQ)
+            
+            trial_aQ = sub_aQ{1,trial};
+            
+        end % end of trials loop
+        
+    end % end of conditions loop
+   
+end % end of subjects loop
 
 %% AVERAGE PARTICIPANT DRAWS %%
 
@@ -311,5 +338,4 @@ for sub = 1:nsubs
     
     clear temp sub_draws
 end % end of subject loop
-
 
