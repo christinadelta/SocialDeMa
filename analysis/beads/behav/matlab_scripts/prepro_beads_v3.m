@@ -290,3 +290,24 @@ for sub = 1:nsubs
         
     end
 end % end of subjects loop 
+
+%% AVERAGE PARTICIPANT DRAWS %%
+
+% create a nx1 vector (n=number of participants) with the averaged number
+% of draws for each participant
+
+avdraws = nan(nsubs,1);
+
+% loop over subjects
+for sub = 1:nsubs
+    
+    % extract this subject data 
+    temp            = find(all_data(:,1) == sub);
+    sub_draws       = all_data((temp),5);
+    
+    avdraws(sub,1)  = mean(sub_draws);
+    
+    clear temp sub_draws
+end % end of subject loop
+
+
