@@ -294,7 +294,9 @@ end % end of subjects loop
 %% AVERAGE PARTICIPANT DRAWS %%
 
 % create a nx1 vector (n=number of participants) with the averaged number
-% of draws for each participant
+% of draws for each participant.
+% This vector will be used as a covariate for the individual differences
+% analysis in SPM12.
 
 avdraws = nan(nsubs,1);
 
