@@ -504,21 +504,21 @@ for sub = 1:nsubs
     % before averaging conditions, we will need to average the TF
     % object over beta frequency (as this is the focus of the analysis)
 
-    S           = [];
-    S.D         = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-    S.freqwin   = 13:30;
-    S.prefix    = 'P';
-    D           = spm_eeg_avgfreq(S);
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.freqwin               = 13:30;
+    S.prefix                = 'P';
+    D                       = spm_eeg_avgfreq(S);
 
     %% STEP 12: Average power over time
 
     % before averaging conditions, we will need to average the TF
     % object over the entire peristimulus time (-500 to 800)
-    S           = [];
-    S.D         = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-    S.timewin   = [0 800];
-    S.prefix    = 'S';
-    D           = spm_eeg_avgtime(S);
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.timewin               = [0 800];
+    S.prefix                = 'S';
+    D                       = spm_eeg_avgtime(S);
 
     %% STEP 13: Average conditions
 
@@ -601,5 +601,26 @@ for sub = 1:nsubs
 end % end of subjects loop
 
 % THIS IS IT WITH PREPROCESSING!!!
+
+%% Run Mass Univariate (second-level) analysis
+
+% 1. Run mass univariate (one-sample t-tests) using the ERPs 
+% 2. Run mass univariate (one-sample t-tests) using the TFPs 
+% The code for this part will be writen when we will start formally analysing the data. 
+% See google doc beads pre-reg or .md file for more info on this analysis
+% 
+
+%% Run individual differences analysis
+
+% For this analysis we will use the urn-choice contrast images obtained in
+% step 12 (ERPs preprocessing) for the ERPs analysis and in step 15 (TF
+% preprocessing) for the TF analysis. 
+% This analysis requires averaged number of draws for each participant.
+% This is an nx1 vec created in the prepro_beads_v3.m script in: 
+% analysis/beads/behav/matlab_scripts. The vector created with this script
+% is called "avdraws" (last section of the script). 
+
+%% Crop and extract data for association with AQ (action values)
+
 
 
