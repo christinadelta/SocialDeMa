@@ -35,7 +35,7 @@ subs                    = dir(fullfile(resultspath, task, '*sub*'));
 nsubs                   = 1;
 phase1_blocks           = 20;
 % phase1_blocktrials      = 40;
-phase1_totaltrials      = phase1_blocks*phase1_blocktrials;
+% phase1_totaltrials      = phase1_blocks*40;
 
 phase2_blocktrials      = 20;
 phase2_blocks           = 2;
@@ -51,7 +51,7 @@ subname                 = {subs.name};
 % loop over subs
 for subI = 1:nsubs
     
-    fprintf('loading economic phase 1 data\n')  
+    fprintf('loading face phase 1 data\n')  
     subject = subs(subI).name;
     subdir  = fullfile(resultspath, task,subject);
     fprintf('\t reading data from subject %d\n',subI); 
@@ -82,6 +82,10 @@ for subI = 1:nsubs
     end % end of block loop
      
 end % end of subjects loop
+
+% add (+1) to all ratings to ensure that we don't have any zeros. Makes
+% running the model harder
+rate = rate + 1;
 
 % add data in one matrix
 rating_data = [subj' blockno' trialno' thisitem' rate' rt'];
@@ -132,7 +136,7 @@ phase       = 2;
 % loop over subs
 for subI = 1:nsubs
     
-    fprintf('loading economic phase 2 block data\n')  
+    fprintf('loading face phase 2 block data\n')  
     subject = subs(subI).name;
     subdir  = fullfile(resultspath, task,subject);
     fprintf('\t reading data from subject %d\n',subI); 
