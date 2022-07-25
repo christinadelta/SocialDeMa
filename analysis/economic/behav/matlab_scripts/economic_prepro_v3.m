@@ -35,7 +35,8 @@ phase                   = 1; % change this when extracting phase 2 data
 session                 = 1; % change this when extracting phase 2 data
 
 subs                    = dir(fullfile(resultspath, task, '*sub*'));
-nsubs                   = length(subs);
+% nsubs                   = length(subs);
+nsubs                   = 1;
 
 phase1_blocks           = 20;
 phase1_blocktrials      = 40;
@@ -109,6 +110,7 @@ for sub = 1:nsubs
     % init averaged ratings array
     subrate                 = nan(uitems,1);
     subitems                = [1:uitems]'; % array [1:400]
+    
     % loop over unique prices
     for i = 1:uitems
         
