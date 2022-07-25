@@ -5,19 +5,20 @@ function [expectedStop, expectedCont, expectedUtility] = rnkBackWardInduction(sa
 % payoff = [5 3 1 0 0 0 0 0 0 0 0 0 0 0 0 0 ];
 % % payoff = [1 0 0 0 0 0];
 
-% add payoff of economic task
-maxPayRank  = 3;
-payoff      = [1 0.5 0.25 0 0 0 0 0 0 0];
+%%%% add payoff of economic task
+% maxPayRank  = 3;
+% payoff      = [1 0.5 0.25 0 0 0 0 0 0 0];
 
 
 % N = listLength;
 Nx = length(x);
 
-% payoff = sort(sampleSeries,'descend')';
-% payoff = [N:-1:1];
-% payoff = (payoff-1)/(N-1);
+% TRY THIS:
+payoff = sort(sampleSeries,'descend')';
+payoff = [N:-1:1];
+payoff = (payoff-1)/(N-1);
 
-% %bins
+%bins
 % temp = sort(sampleSeries,'descend')';   % sort the sample values
 % [dummy,payoff] = histc(temp, [minValue(1:end-1) Inf]); % Slot the sequence values into the 6 (or howevermany) bins
 % nbins = size(minValue,2)-1; % recover number of bins if I didn't pass it through
@@ -37,8 +38,8 @@ Nx = length(x);
 % end;
 % payoff = payoff.^40;
 
-% maxPayRank  = numel(payoff);
-% payoff      = [payoff zeros(1, 20)];
+maxPayRank  = numel(payoff);
+payoff      = [payoff zeros(1, 20)];
 data.n      = ts;
 
 data.sig    = var(sampleSeries(1:ts));
