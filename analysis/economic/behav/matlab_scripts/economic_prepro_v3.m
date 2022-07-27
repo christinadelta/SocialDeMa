@@ -36,7 +36,7 @@ session                 = 1; % change this when extracting phase 2 data
 
 subs                    = dir(fullfile(resultspath, task, '*sub*'));
 % nsubs                   = length(subs);
-nsubs                   = 1;
+nsubs                   = 5;
 
 phase1_blocks           = 20;
 phase1_blocktrials      = 40;
@@ -49,6 +49,7 @@ respoptions             = 2; % accept vs decline
 thisequence             = nan(1,phase2_blocktrials); % every sequence has different number of draws
 temp                    = 0;
 
+counter                 = 0; 
 % only keep subnames (not sure if this will be used)
 subname                 = {subs.name};
 
@@ -70,7 +71,7 @@ for subI = 1:nsubs
         
         for trial = 1:phase1_blocktrials
             
-            indx            = ((blockI -1)*phase1_blocktrials) + trial;  
+            indx            = counter + ((blockI -1)*phase1_blocktrials) + trial;  
             
             subj(indx)      = subI;
             trialno(indx)   = logs.trials(trial).trialNb;
@@ -83,11 +84,14 @@ for subI = 1:nsubs
         end % end of trials loop
         
     end % end of blocks loop
- 
+    
+    % update indx var so that it carries on after each participant
+    counter                 = counter + (indx/subI); 
+    
 end % end of subjects loop
 
 % add data in one matrix
-rating_data = [subj' blockno' trialno' thisitem' thisprice' rate' rt'];
+rating_data                 = [subj' blockno' trialno' thisitem' thisprice' rate' rt'];
 
 % % save matrix in csv format for r and python
 % csvwrite('economic_phase1_data.csv', phase1_data)
@@ -143,6 +147,7 @@ end % end of subjects loop
 
 session     = 2;
 phase       = 2;
+counter     = 0; % init counter var
 
 % loop over subs
 for subI = 1:nsubs
@@ -160,7 +165,8 @@ for subI = 1:nsubs
         
         for trial = 1:phase2_blocktrials
             
-            indx                                = ((blockI -1)*phase2_blocktrials) + trial; 
+            indx                                = counter + ((blockI -1)*phase2_blocktrials) + trial; 
+            id                                  = ((blockI -1)*phase2_blocktrials) + trial;
             
             subj(indx)                          = subI;
             blockno(indx)                       = blockI;
@@ -172,7 +178,7 @@ for subI = 1:nsubs
             reward(indx)                        = logs.blocktrials(trial).reward;
             balance(indx)                       = logs.blocktrials(trial).balance;
             
-            allsubs_sequences{1,subI}{1,indx}   = logs.blocktrials(trial).sequence;
+            allsubs_sequences{1,subI}{1,id}   = logs.blocktrials(trial).sequence;
             
             % create a vector of sequence responses at this point. This
             % will be based on the number of samples on every
@@ -192,12 +198,16 @@ for subI = 1:nsubs
             end % end of samples loop
             
             % store temporal vec (t) in cell
-            allsubs_choicevec{1,subI}{1,indx}   = t;
+            allsubs_choicevec{1,subI}{1,id}   = t;
             
             clear t s 
             
         end % end of trials loop
     end % end of blocks loop 
+    
+    % update indx var so that it carries on after each participant
+    counter                                     = counter + (indx/subI); 
+    
 end % end of subjects loop
 
 % add data in one matrix
