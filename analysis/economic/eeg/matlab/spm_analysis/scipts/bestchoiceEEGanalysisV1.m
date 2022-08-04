@@ -163,6 +163,82 @@ for sub = 1:nsubs
         S.inputformat       = [];
         D                   = spm_eeg_convert(S); % convert raw data
         
+        %% STEP 2. Create montage & re-reference 
+        % create S struct for 
+        S                   = [];
+        S.D                 = fullfile(subout, sprintf('spmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
+        S.jobpath           = subjobs;
+        S.block             = block;
+        
+        % Run createMontage.m function.
+        % This function re-references by averaging across all electrodes. However,
+        % an initial step requires knowing in advance if there is a noisy channel
+        % and exclude it from averaging. Montage creation thus, need to be done
+        % individually for every subject (e.g. pilot sub has one noisy channel [channel
+        % 25]. This needs to be removed from averaging when re-referencing.
+        % The createMontage.m file is in basedir/utilities; the function
+        % needs to be modified manually 
+        S                   = createMontageBestChoice(S);
+        
+        S.mode              = 'write';
+        S.blocksize         = 655360;
+        S.prefix            = 'M';
+        S.montage           = fullfile(S.jobpath, 'montage.mat');
+        S.keepothers        = 0;
+        S.keepsensors       = 1;
+        S.updatehistory     = 1;
+        D                   = spm_eeg_montage(S);
+        
+        %% STEP 3. High-pass filter 
+        % Init S struct
+        S                   = [];
+        S.D                 = fullfile(subout, sprintf('Mspmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
+        S.type              = 'butterworth';
+        S.band              = 'high';
+        S.freq              = 0.1;
+        S.dir               = 'twopass';
+        S.order             = 5;
+        S.prefix            = 'f';
+        D                   = spm_eeg_filter(S);
+        
+        %% STEP 4. Downsample
+        % Init S struct
+        S                   = [];
+        S.D                 = fullfile(subout, sprintf('fMspmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
+        S.fsample_new       = 256;
+        S.method            = 'resample';
+        S.prefix            = 'd';
+        D                   = spm_eeg_downsample(S);
+        
+        %% STEP 5. Low-pass filter 
+        
+        % at this stage we will low-pass filter the downsampled file twice:
+        % 1. for ERP analysis with frequency cutoff: 30Hz
+        % 2. for TF analysis with frequency cutoff: 110Hz
+        
+        for i = 1:analysest
+            S               = [];
+            S.D             = fullfile(subout, sprintf('dfMspmeeg_sub_%02d_%s_block_%02d.mat', sub, taskname, block));
+            S.type          = 'butterworth';
+            S.band          = 'low';
+            S.dir           = 'twopass';
+            S.order         = 5;
+            
+            if i == 1 % if it's for ERP analysis
+                S.freq      = 30;
+                S.prefix    = 'erpf';
+                
+            else % if it's tf analysis
+                S.freq      = 110;
+                S.prefix    = 'tfrf';
+            end
+            
+            D               = spm_eeg_filter(S);
+            
+        end % end of analysis types loop
+        
+        
+        
     
     end % end of blocks loop
     
