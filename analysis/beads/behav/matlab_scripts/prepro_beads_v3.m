@@ -2,6 +2,8 @@
 
 % Part of the Optimal Stopping Problems Project
 
+% Last update: 04/08/2022
+
 %% IMPORTANT NOTE %%
 
 % I save two different types of mat files. In 4 mat files I save the block
@@ -50,8 +52,8 @@ conditions      = 2;
 thisequence     = nan(1,blocktrials); % every sequence has different number of draws
 temp            = 0;
 respoptions     = 3; % b,g,s
-co              = 1; % this will be used for spliting sequences and choice vectors in conditions one and two
-ct              = 1; % this will be used for spliting sequences and choice vectors in conditions one and two
+counter         = 0; 
+
 % only keep subnames
 subname         = {subs.name};
 
@@ -65,6 +67,9 @@ for subI = 1:nsubs
     subdir  = fullfile(resultspath, task,subject);
     fprintf('\t reading data from subject %d\n',subI); 
     
+    co              = 1; % this will be used for spliting sequences and choice vectors in conditions one and two for each sub
+    ct              = 1; % this will be used for spliting sequences and choice vectors in conditions one and two for rach sub
+    
     for blockI = 1:blocks
         
         fprintf('\t\t loading block %d\n\n',blockI);
@@ -72,7 +77,9 @@ for subI = 1:nsubs
         load(subFile)
         
         for trial = 1:blocktrials
-            indx                            = ((blockI -1)*blocktrials) + trial;  
+            
+            id                              = ((blockI -1)*blocktrials) + trial;  
+            indx                            = counter + ((blockI -1)*blocktrials) + trial;
             
             block(indx)                     = blockI;
             trialno(indx)                   = logs.blocktrials(trial).trialnumber;
@@ -84,7 +91,7 @@ for subI = 1:nsubs
             condition(indx)                 = logs.blocktrials(trial).condition;
             balance(indx)                   = logs.blocktrials(trial).balance;
             subj(indx)                      = subI;
-            generaltrial(indx)              = indx;
+            generaltrial(indx)              = id;
             
             sequence                        = logs.blocktrials(trial).sequence; % extract tish trial sequence of draws
             
@@ -128,9 +135,15 @@ for subI = 1:nsubs
                 
                 ct                                                  = ct+1; % update co
             end
+            
         clear t sequence    
         end % end of trial loop
-    end % end of block loop  
+        
+    end % end of block loop 
+    
+    counter = counter + (indx/subI);
+    
+    clear ct co
 end % end of subject loop
 
 % add data in one matrix
@@ -160,8 +173,10 @@ for sub = 1:nsubs % loop over subjects
         tmp                         = find(sub_data(:,9) == cond);
         cond_data{sub}{cond}        = sub_data((tmp),:);
         cond_data{sub}{cond}(:,11)  = 1:totaltrials/2; % just add row index number 
-        clear tmp    
+        clear tmp
+        
     end % end of cond loop
+    
     clear temp sub_data
 end % end of subject loop
 
