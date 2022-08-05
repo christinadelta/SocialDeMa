@@ -1,15 +1,15 @@
-function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf(alpha,Cw,q,Cs, sequence, aqvec_switch)
+function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf(alpha,Cw, Cc, thisq,Cs, thiscond_seq, aqvec_switch)
 
 % this will be used for stopping at optimal draws (position)
 findPick            = 1; 
-ntrials             = size(sequence, 2);    % number of trials/sequences
-logLikelihood       = 0;                    % initialise likelihood log to zero  
+ntrials             = size(thiscond_seq, 2);    % number of trials/sequences
+logLikelihood       = 0;                        % initialise likelihood log to zero  
 
 % loop over condition sequences (26)
 for trl = 1:ntrials
     
     % extract this trial's sequence
-    thisequence = sequence{1,trl};
+    thisequence = thiscond_seq{1,trl};
     
     % number of choices for this sequence
     lseq                = length(thisequence);
@@ -24,8 +24,7 @@ for trl = 1:ntrials
     
     for draw = 1:nchoices 
         
-        % green or blue bead? or majority beads colour in the urn? -- I think it is
-        % the majority colour 
+        % if this_bead is of the majority colour: 
         if thisequence(draw) == 1
             numGreen    = numGreen + 1; % update numGreen  
         end
@@ -36,7 +35,7 @@ for trl = 1:ntrials
         % compute action values for each new draw (in current sequence)
         % until action value for one of the two urns exceeds action value
         % for drawing again. 
-        [v, d, Qvec]    = Val(q, numDraws, numGreen, alpha, lseq, Cw, Cs);
+        [v, d, Qvec]    = Val(thisq, numDraws, numGreen, alpha, lseq, Cw, Cc, Cs);
         
         % append action values of the current sequence to dQvec
         dQvec(draw, 1:length(Qvec))         = Qvec;
@@ -69,4 +68,4 @@ end % end of condition trials
 
 
 
-end
+return

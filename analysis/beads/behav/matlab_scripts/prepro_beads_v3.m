@@ -2,7 +2,7 @@
 
 % Part of the Optimal Stopping Problems Project
 
-% Last update: 04/08/2022
+% Last update: 05/08/2022
 
 %% IMPORTANT NOTE %%
 
@@ -43,7 +43,8 @@ subpath         = fullfile(resultspath, task);
 session         = 1;
 
 subs            = dir(fullfile(resultspath, task, '*sub*'));
-nsubs           = length(subs);
+% nsubs           = length(subs);
+nsubs           = 2;
 
 totaltrials     = 52; 
 blocktrials     = 13;
@@ -216,7 +217,7 @@ for sub = 1:nsubs
         end
         
         % run ideal observer 
-        [ll, pickTrial, dQvec, ddec, aQvec choice]  = estimateLikelihoodf(alpha,Cw,thisq,Cs,thiscond_seq,1);
+        [ll, pickTrial, dQvec, ddec, aQvec choice]  = estimateLikelihoodf(alpha,Cw,Cc,thisq,Cs,thiscond_seq,1);
         
         io_output(cond).pickTrials                  = pickTrial;
         io_output(cond).dQvec                       = dQvec;
@@ -277,14 +278,14 @@ for sub = 1:nsubs
     
     for cond = 1:conditions 
         % extarct condition data. choices, sequences
-        cond_data       = thisub_data{1,cond};
+        cond_matrix       = thisub_data{1,cond};
         cond_choices    = thisub_choices{1,cond};
         cond_sequence   = thisub_seq{1,cond};
         
         % extract urn types form data matrix
-        info.urntypes   = cond_data(:,4);
+        info.urntypes   = cond_matrix(:,4);
         info.condtrials = totaltrials/conditions;
-        info.numdraws   = cond_data(:,5);
+        info.numdraws   = cond_matrix(:,5);
         
         % is this cond 0.8 or 0.6 probability? 
         if cond == 1
@@ -305,6 +306,8 @@ for sub = 1:nsubs
         
     end
     
+    clear thisub_choices thisub_data thisub_seq
+    
     allsubs_model{1,sub}                            = model_output;
     
 end % end of subjects loop 
@@ -314,24 +317,40 @@ end % end of subjects loop
 % This vector will be used for the regression analysis with the EEG epochs 
 for sub = 1:nsubs
     
-    sub_out = allsubs_model{1,sub};
+    sub_out     = allsubs_model{1,sub};
     
     % loop over conditions
     for cond = 1:conditions
         
         % extract AQ values for each condition
-        sub_aQ  = sub_out(cond).aQvec;
+        sub_aQ          = sub_out(cond).aQvec;
         
         % extract AQ values for each sequence 
         for trial = 1:length(sub_aQ)
             
-            trial_aQ = sub_aQ{1,trial};
+            trial_aQ    = sub_aQ{1,trial};
+            
+            % loop over draws (AQs for that trial) 
+            for draw = 1:size(trial_aQ,1)
+                
+                thisAQ                  = trial_aQ(draw,:);
+                
+                dAQ{cond,trial}(draw)   = (thisAQ(1) - thisAQ(2)) - thisAQ(3);
+                
+            end % end of draw loop
             
         end % end of trials loop
         
     end % end of conditions loop
+    
+    allsubs_dAQ{1,sub} = dAQ;
+    
+    clear thisAQ dAQ sub_aQ
    
 end % end of subjects loop
+
+% save dAQ mat file
+save 'allsubs_dAQ'
 
 %% AVERAGE PARTICIPANT DRAWS %%
 
@@ -353,4 +372,10 @@ for sub = 1:nsubs
     
     clear temp sub_draws
 end % end of subject loop
+
+% save mat file to use with SPM12
+save sub_draws
+
+%% Visualise behavioural data and model output %%
+
 
