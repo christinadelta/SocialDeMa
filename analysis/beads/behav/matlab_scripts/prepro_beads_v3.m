@@ -2,7 +2,7 @@
 
 % Part of the Optimal Stopping Problems Project
 
-% Last update: 05/08/2022
+% Last update: 07/08/2022
 
 %% IMPORTANT NOTE %%
 
@@ -43,8 +43,8 @@ subpath         = fullfile(resultspath, task);
 session         = 1;
 
 subs            = dir(fullfile(resultspath, task, '*sub*'));
-% nsubs           = length(subs);
-nsubs           = 2;
+nsubs           = length(subs);
+% nsubs           = 2;
 
 totaltrials     = 52; 
 blocktrials     = 13;
@@ -53,7 +53,7 @@ conditions      = 2;
 thisequence     = nan(1,blocktrials); % every sequence has different number of draws
 temp            = 0;
 respoptions     = 3; % b,g,s
-counter         = 0; 
+counter         = 1; 
 
 % only keep subnames
 subname         = {subs.name};
@@ -63,6 +63,10 @@ subname         = {subs.name};
 
 for subI = 1:nsubs
     
+    if subI == 9
+        continue
+    end
+       
     fprintf('loading beads block data\n')  
     subject = subs(subI).name;
     subdir  = fullfile(resultspath, task,subject);
@@ -77,10 +81,12 @@ for subI = 1:nsubs
         subFile = fullfile(subdir, sprintf('subject_%02d_task_%s_block_%02d_ses_%02d_logs.mat',subI, task, blockI,session));
         load(subFile)
         
+        
+        
         for trial = 1:blocktrials
             
             id                              = ((blockI -1)*blocktrials) + trial;  
-            indx                            = counter + ((blockI -1)*blocktrials) + trial;
+            indx                            = counter;
             
             block(indx)                     = blockI;
             trialno(indx)                   = logs.blocktrials(trial).trialnumber;
@@ -137,12 +143,14 @@ for subI = 1:nsubs
                 ct                                                  = ct+1; % update co
             end
             
-        clear t sequence    
+            counter = counter + 1;
+           
+            clear t sequence    
         end % end of trial loop
         
     end % end of block loop 
     
-    counter = counter + (indx/subI);
+    % counter = counter + (indx/subI);
     
     clear ct co
 end % end of subject loop
@@ -164,6 +172,12 @@ clear accuracy balance block urntype trialno draws response accuracy rate condit
 % participant, we split all_data into conditions the result should be a 26x10 matrix for
 % each condition
 for sub = 1:nsubs % loop over subjects 
+    
+     % for now sub 9 is measing (I don't have access to the cluster), once
+     % I have the data of this sub I will comment this part out
+     if sub == 9
+        continue
+    end
     
     % extract this subject data 
     temp = find(all_data(:,1) == sub);
@@ -200,6 +214,12 @@ Cs          = -0.25;        % the cost to sample
 % loop over subjects 
 for sub = 1:nsubs
     
+    % for now sub 9 is measing (I don't have access to the cluster), once
+    % I have the data of this sub I will comment this part out
+    if sub == 9
+       continue
+    end
+    
     % extract this subject data matrix and sequences 
     sub_data    = cond_data{1,sub};
     sub_seq     = allsequences{1,sub};
@@ -231,10 +251,18 @@ for sub = 1:nsubs
     allsubs_io{1,sub}                               = io_output;
 end % end of subjects loop
 
+save allsubs_io
+
 %% COMPUTE MEAN ACCURACY, DRAWS & POINTS %%
 
 % loop over subjects and conditions
 for i = 1:nsubs
+    
+    % for now sub 9 is measing (I don't have access to the cluster), once
+    % I have the data of this sub I will comment this part out
+    if i == 9
+       continue
+    end
     
     % extract this subject output struct
     sub_output                      = allsubs_io{1,i};
@@ -254,6 +282,33 @@ for i = 1:nsubs
     end % end of condition loop   
 end % end of subject loop
 
+% average model draws (one point for each model instantiation), for
+% comparisons with human agents
+avdraws_io = nan(nsubs,1);
+
+for sub = 1:nsubs
+    
+    % for now sub 9 is measing (I don't have access to the cluster), once
+    % I have the data of this sub I will comment this part out
+    if sub == 9
+       continue
+    end
+    
+    thisub_io           = allsubs_modeldraws{1,sub};
+    io_draws(1)         = thisub_io{1,1};
+    io_draws(2)         = thisub_io{1,2};
+    
+    % compute mean of picktrials across conditions
+    avdraws_io(sub,1)   = mean(io_draws);
+   
+end
+
+% save stuff
+save allsub_modelacc 
+save allsubs_modeldraws 
+save allsubs_modelpoints
+save avdraws_io
+
 %% RUN MODEL FITTING %%
 
 % first add modelpath to the path
@@ -270,6 +325,12 @@ Cs                      = -0.25;        % the cost to sample
 aqvec_switch            = 1;            % still not sure why exactly this is needed 
 
 for sub = 1:nsubs
+    
+    % for now sub 9 is measing (I don't have access to the cluster), once
+    % I have the data of this sub I will comment this part out
+    if sub == 9
+       continue
+    end
     
     % extract sub data, choices/responses, sequences 
     thisub_data         = cond_data{1,sub};
@@ -312,10 +373,18 @@ for sub = 1:nsubs
     
 end % end of subjects loop 
 
+save allsubs_model 
+
 %% COMPUTE DIFFERENCE OF AQ VALUES FOR DRAWING AGAIN AND FOR CHOOSING AN URN
 
 % This vector will be used for the regression analysis with the EEG epochs 
 for sub = 1:nsubs
+    
+    % for now sub 9 is measing (I don't have access to the cluster), once
+    % I have the data of this sub I will comment this part out
+    if sub == 9
+       continue
+    end
     
     sub_out     = allsubs_model{1,sub};
     
@@ -364,6 +433,12 @@ avdraws = nan(nsubs,1);
 % loop over subjects
 for sub = 1:nsubs
     
+    % for now sub 9 is measing (I don't have access to the cluster), once
+    % I have the data of this sub I will comment this part out
+    if sub == 9
+       continue
+    end
+    
     % extract this subject data 
     temp            = find(all_data(:,1) == sub);
     sub_draws       = all_data((temp),5);
@@ -374,8 +449,27 @@ for sub = 1:nsubs
 end % end of subject loop
 
 % save mat file to use with SPM12
-save sub_draws
+save avdraws
 
 %% Visualise behavioural data and model output %%
 
+% visualise average number of draws for human participants (histogram)
+nbins = 10;
+h = histogram(avdraws, nbins);
+
+% visualise average number of draws for ideal observer (histogram)
+nbins = 10;
+h2 = histogram(avdraws_io, nbins);
+
+% plot both agents together
+h = histogram(avdraws);
+hold on
+h2 = histogram(avdraws_io); 
+
+% box plots/violins for human participants and ideal observer
+figure
+boxplot([avdraws,avdraws_io],'Notch','on','Labels',{'humans','ideal observer'}, 'Whisker',1)
+title('averaged number of draws')
+
+% comparisons between model fitiing AQs and participant number of draws 
 
