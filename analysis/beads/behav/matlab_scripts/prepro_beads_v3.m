@@ -451,6 +451,41 @@ end % end of subject loop
 % save mat file to use with SPM12
 save avdraws
 
+% average participant draws for each condition seperately 
+easy_avdraws = nan(nsubs,1);
+diff_avdraws = nan(nsubs,1);
+
+for sub = 1:nsubs 
+    
+    % for now sub 9 is measing (I don't have access to the cluster), once
+    % I have the data of this sub I will comment this part out
+    if sub == 9
+       continue
+    end
+    
+    % extract this subject data 
+    temp            = find(all_data(:,1) == sub);
+    sub_draws       = all_data((temp),:);
+    
+    for cond = 1:conditions
+        
+        tmp_cond            = find(sub_draws(:,9) == cond);
+        cond_draws          = sub_draws((tmp_cond),5);
+        
+        if cond == 1
+            
+            easy_avdraws(sub,1) = mean(cond_draws);
+        else
+            diff_avdraws(sub,1) = mean(cond_draws);
+        end
+      
+    end
+    
+end
+
+save easy_avdraws
+save diff_avdraws
+
 %% Visualise behavioural data and model output %%
 
 % visualise average number of draws for human participants (histogram)
@@ -471,5 +506,11 @@ figure
 boxplot([avdraws,avdraws_io],'Notch','on','Labels',{'humans','ideal observer'}, 'Whisker',1)
 title('averaged number of draws')
 
-% comparisons between model fitiing AQs and participant number of draws 
+% box plots for condition comparisons
+figure
+boxplot([easy_avdraws,diff_avdraws],'Notch','on','Labels',{'easy','difficult'}, 'Whisker',1)
+title('averaged number of draws')
+
+
+
 
