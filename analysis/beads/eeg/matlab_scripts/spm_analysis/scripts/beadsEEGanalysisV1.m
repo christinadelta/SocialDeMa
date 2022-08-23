@@ -3,6 +3,13 @@
 % preprocessing/analysis script was created in July 2022.
 % VERSION 1 of formal analysis plan of the beads EEG data with SPM12 
 
+%%% UPDATES: %%%
+% Update 1 (08/08/2022): fixed issue with event values in beadsTrialdef.m
+% Update 2 (09/08/2022): fixed issue with the order of the conditions (in
+% contrast calculation).
+% -------------------------------------------------------------------------
+
+
 % Details of Preprocessing steps can be found in the doc file:
 % https://docs.google.com/document/d/1xLbgGW23Dk4S0rfzSJbUMTxc2_srCTFf77gUFijCR5Y/edit#heading=h.3ewqtkwgw38n
 % 
@@ -87,9 +94,10 @@ conditions      = 2;
 choices         = 2;
 analysest       = 2; % analyses types (erp & tf)
 nconstrasts     = 5;
-contrastpref    = {'wud_' 'wde_' 'wi' 'wu_' 'wd_'};
+contrastpref    = {'wud_' 'wde_' 'wi_' 'wu_' 'wd_'};
+condtypes       = {'easydraw' 'easyurn' 'diffdraw' 'diffurn'};
 
-%% Preprocessing steps [ERPs: 1 - 12, TFRs: 1 - 12] %%
+%% Preprocessing steps [ERPs: 1 - 12, TFRs: 1 - 15] %%
 
 % these steps are used to preprocess the raw .bdf files, for each
 % participant. Given that we will run evoked analysis and time-frequency
@@ -395,6 +403,18 @@ for sub = 1:nsubs
     S.prefix                = 'm';
     D                       = spm_eeg_average(S);
     
+    %% Step 10 Optional: Re-apply low pass filter (optional)
+    
+    S               = [];
+    S.D             = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.type          = 'butterworth';
+    S.band          = 'low';
+    S.dir           = 'twopass';
+    S.order         = 5;
+    S.freq          = 30;
+    S.prefix        = '';
+    D               = spm_eeg_filter(S);
+     
     %% STEP 11: contrast ERP averaged conditions
     
     % We will first contrast averaged ERPs. We will create 5 contrast objects:
@@ -402,33 +422,68 @@ for sub = 1:nsubs
     S                       = [];
     S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
     S.c                     = [-1 1 -1 1];
+    %S.c                     = [1 -1 1 -1];
+    %S.c                     = [1 -1 -1 1];
     S.label                 = {'urnVSdraw'};
     S.weighted              = 1;
     S.prefix                = 'wud_';
     D                       = spm_eeg_contrast(S);
-
-    % 2. Difficult vs Easy
+    
+   % check the order of the conditions. Is it easy and diff or diff and
+   % easy?
     S                       = [];
     S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-    S.c                     = [1 1 -1 -1];
-    S.label                 = {'DiffVsEasy'};
-    S.weighted              = 1;
-    S.prefix                = 'wde_';
-    D                       = spm_eeg_contrast(S);
+    S.object                = spm_eeg_load(S.D);
+    tmp                     = S.object.conditions;
+    
+    if tmp{1} == condtypes{1} % if the order is easy and diff
+        
+        % 2. Difficult vs Easy
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.c                     = [-1 -1 1 1];
+        S.label                 = {'DiffVsEasy'};
+        S.weighted              = 1;
+        S.prefix                = 'wde_';
+        D                       = spm_eeg_contrast(S);
 
-    % 3. Interaction of the 2 contrasts
-    S                       = [];
-    S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-    S.c                     = [-1 1 1 -1];
-    S.label                 = {'interaction'};
-    S.weighted              = 1;
-    S.prefix                = 'wi_';
-    D                       = spm_eeg_contrast(S);
+        % 3. Interaction of the 2 contrasts
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.c                     = [1 -1 -1 1];
+        % S.c                     = [1 -1 -1 1];
+        S.label                 = {'interaction'};
+        S.weighted              = 1;
+        S.prefix                = 'wi_';
+        D                       = spm_eeg_contrast(S);
+        
+    elseif tmp{1} == condtypes{3} % if the order is diff and easy
+        
+        % 2. Difficult vs Easy
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.c                     = [1 1 -1 -1];
+        S.label                 = {'DiffVsEasy'};
+        S.weighted              = 1;
+        S.prefix                = 'wde_';
+        D                       = spm_eeg_contrast(S);
 
-    % 4. Only urn contrast
+        % 3. Interaction of the 2 contrasts
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.c                     = [-1 1 1 -1];
+        S.label                 = {'interaction'};
+        S.weighted              = 1;
+        S.prefix                = 'wi_';
+        D                       = spm_eeg_contrast(S);
+        
+    end
+
+    % 4. Only urns contrast
     S                       = [];
     S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
     S.c                     = [0 1 0 1];
+    % S.c                     = [1 0 1 0];
     S.label                 = {'onlyurn'};
     S.weighted              = 1;
     S.prefix                = 'wu_';
@@ -438,6 +493,7 @@ for sub = 1:nsubs
     S                       = [];
     S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
     S.c                     = [1 0 1 0];
+    %S.c                     = [0 1 0 1];
     S.label                 = {'onlydraw'};
     S.weighted              = 1;
     S.prefix                = 'wd_';
@@ -539,33 +595,67 @@ for sub = 1:nsubs
     S                       = [];
     S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
     S.c                     = [-1 1 -1 1];
+    %S.c                     = [1 -1 1 -1];
     S.label                 = {'urnVSdraw'};
     S.weighted              = 1;
     S.prefix                = 'wud_';
     D                       = spm_eeg_contrast(S);
 
-    % 2. Difficult vs Easy
+    % check the order of the conditions. Is it easy and diff or diff and
+    % easy?
     S                       = [];
     S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-    S.c                     = [1 1 -1 -1];
-    S.label                 = {'DiffVsEasy'};
-    S.weighted              = 1;
-    S.prefix                = 'wde_';
-    D                       = spm_eeg_contrast(S);
+    S.object                = spm_eeg_load(S.D);
+    tmp                     = S.object.conditions;
+    
+    if tmp{1} == condtypes{1} % if the order is easy and diff
+        
+        % 2. Difficult vs Easy
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.c                     = [-1 -1 1 1];
+        S.label                 = {'DiffVsEasy'};
+        S.weighted              = 1;
+        S.prefix                = 'wde_';
+        D                       = spm_eeg_contrast(S);
 
-    % 3. Interaction of the 2 contrasts
-    S                       = [];
-    S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-    S.c                     = [-1 1 1 -1];
-    S.label                 = {'interaction'};
-    S.weighted              = 1;
-    S.prefix                = 'wi_';
-    D                       = spm_eeg_contrast(S);
+        % 3. Interaction of the 2 contrasts
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.c                     = [1 -1 -1 1];
+        %S.c                     = [1 -1 -1 1];
+        S.label                 = {'interaction'};
+        S.weighted              = 1;
+        S.prefix                = 'wi_';
+        D                       = spm_eeg_contrast(S);
+        
+    elseif tmp{1} == condtypes{3} % if the order is diff and easy
+        
+        % 2. Difficult vs Easy
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.c                     = [1 1 -1 -1];
+        S.label                 = {'DiffVsEasy'};
+        S.weighted              = 1;
+        S.prefix                = 'wde_';
+        D                       = spm_eeg_contrast(S);
+
+        % 3. Interaction of the 2 contrasts
+        S                       = [];
+        S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+        S.c                     = [-1 1 1 -1];
+        S.label                 = {'interaction'};
+        S.weighted              = 1;
+        S.prefix                = 'wi_';
+        D                       = spm_eeg_contrast(S);
+        
+    end
 
     % 4. Only urn contrast
     S                       = [];
     S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
     S.c                     = [0 1 0 1];
+    % S.c                     = [1 0 1 0];
     S.label                 = {'onlyurn'};
     S.weighted              = 1;
     S.prefix                = 'wu_';
@@ -575,6 +665,7 @@ for sub = 1:nsubs
     S                       = [];
     S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
     S.c                     = [1 0 1 0];
+    % S.c                     = [0 1 0 1];
     S.label                 = {'onlydraw'};
     S.weighted              = 1;
     S.prefix                = 'wd_';
@@ -620,7 +711,9 @@ end % end of subjects loop
 % analysis/beads/behav/matlab_scripts. The vector created with this script
 % is called "avdraws" (last section of the script). 
 
+%% Compute grand averages
+
 %% Crop and extract data for association with AQ (action values)
 
-
+%% RUN EXPLORATORY ANALYSES %%
 
