@@ -76,10 +76,12 @@ addpath(genpath(fullfile(basedir, 'utilities')));
 % if output and jobs directories do not exist, create them:
 outDir      = fullfile(basedir, 'output');
 jobsDir     = fullfile(basedir, 'jobs');
+cropDir     = fullfile(basedir, 'cropped');
 
 if ~exist(outDir, 'dir') && ~exist(jobsDir, 'dir')
     mkdir(outDir)
     mkdir(jobsDir)
+    mkdir(cropDir)
 end
 
 % set data path
@@ -1318,7 +1320,92 @@ end % end of subjects loop
 
 %% Compute grand averages
 
+% Grand average/grand mean will be used to crop and extract data needed for
+% the association with AQ
+S = [];
+S.D = [
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_01_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_02_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_03_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_04_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_05_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_06_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_07_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_08_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_09_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_11_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_12_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_13_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_14_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_15_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_16_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_17_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_18_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_19_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_20_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_21_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_22_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_23_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_24_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_25_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_26_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_27_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_28_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_29_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_30_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_31_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_32_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_33_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_34_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_35_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_36_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_37_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_38_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_39_beads_block_01.mat'
+       '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/analysis/beads/eeg/matlab_scripts/spm_analysis/averages/maceerpfdfMspmeeg_sub_40_beads_block_01.mat'
+       ];
+%%
+S.outfile = 'grand_average';
+S.weighted = 1;
+D = spm_eeg_grandmean(S);
+
 %% Crop and extract data for association with AQ (action values)
+
+for sub = 1:nsubs
+    
+    if sub == 10
+        continue
+    end
+    
+    % create a subject sub-directory in outerps & outtfrs to store
+    % subjected specific MEEG objects
+    subout          = fullfile(outDir, sprintf('sub-%02d', sub));
+    % subjobs         = fullfile(jobsDir, sprintf('sub-%02d', sub));
+    
+    % init S struct 
+    S               = [];
+    S.D             = fullfile(subout, sprintf('ceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.timewin       = [250 600];
+    S.freqwin       = [-Inf Inf];
+    S.channels      = {'F1','F3','F5','F7','Fz','F2','F4','F6','F8','P1','P3','P5','P7','P9','Pz','P2','P4','P6','P8','P10'};
+    % S.channels    = {'all'};
+    S.prefix        = 'p';
+    D               = spm_eeg_crop(S);
+    
+    % get access and extract the actual data
+    S               = [];
+    S.P             = fullfile(subout, sprintf('pceerpfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    D               = spm_eeg_load(S.P);
+    
+    % access the data
+    data            = D(:,:,:); % D(channels, samples, trials)
+    
+    % save data in sub directory
+    filepath        = fullfile(cropDir, sprintf('cropped_data_sub_%02d.mat',sub));
+    save(filepath, 'data')
+    
+ 
+end % end of subjects loop
 
 %% RUN EXPLORATORY ANALYSES %%
 
