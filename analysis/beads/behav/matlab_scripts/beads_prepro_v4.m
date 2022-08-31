@@ -42,6 +42,7 @@ modelfitpath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fitti
 iobserverpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'ideal_observer');
 analysispath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'prepro_data');
 resultspath     = fullfile(startpath, 'experiments', 'results');
+croppedpath     = fullfile(startpath, 'analysis', 'beads', 'behav', 'cropped');
 
 task            = 'beads';
 subpath         = fullfile(resultspath, task);
@@ -60,15 +61,15 @@ respoptions     = 3; % b,g,s
 counter         = 1; 
 
 % init required vars
-avdraws         = nan(nsubs,1);
-avacc           = nan(nsubs,1);
-easy_avdraws    = nan(nsubs,1);
-diff_avdraws    = nan(nsubs,1);
-easy_avacc      = nan(nsubs,1);
-diff_avacc      = nan(nsubs,1);
+avdraws                 = nan(nsubs,1);
+avacc                   = nan(nsubs,1);
+easy_avdraws            = nan(nsubs,1);
+diff_avdraws            = nan(nsubs,1);
+easy_avacc              = nan(nsubs,1);
+diff_avacc              = nan(nsubs,1);
 
 % only keep subnames
-subname         = {subs.name};
+subname                 = {subs.name};
 
 
 %% 1. EXTRACT AND SAVE THE BLOCK DATA %%
@@ -94,9 +95,8 @@ for subI = 1:nsubs
         load(subFile)
         
         for trial = 1:blocktrials
-            
-            id                              = ((blockI -1)*blocktrials) + trial;  
-            indx                            = counter;
+             
+            indx                            = ((blockI -1)*blocktrials) + trial; 
             
             block(indx)                     = blockI;
             trialno(indx)                   = logs.blocktrials(trial).trialnumber;
@@ -266,6 +266,7 @@ for subI = 1:nsubs
     q                       = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
     Cs                      = -0.25;        % the cost to sample
     aqvec_switch            = 1;            % still not sure why exactly this is needed 
+    cnt                     = 1;            % counter
     
     for cond = 1:conditions
        
@@ -302,26 +303,70 @@ for subI = 1:nsubs
         % extract AQ values for each sequence 
         for trial = 1:length(cond_aQ)
             
-            trial_aQ    = cond_aQ{1,trial};
+            trial_aQ    = cond_aQ{1,trial}
             
             % loop over draws (AQs for that trial) 
             for draw = 1:size(trial_aQ,1)
                 
-                thisAQ                  = trial_aQ(draw,:);
+                thisAQ                      = trial_aQ(draw,:);
+                allsub_dAQs{1,subI}(cnt,1)  = (thisAQ(1) - thisAQ(2)) - thisAQ(3)
                 
-                dAQ{cond,trial}(draw)   = (thisAQ(1) - thisAQ(2)) - thisAQ(3);
-                
-            end % end of dtaws (AQs) loop
-            
+                cnt                         = cnt+1 % update counter
+            end % end of draws (AQs) loop
         end % end of trial loop
-  
     end % end of conditiion loop
     
     % save model subject fitting output and dAQ
-    allsubs_dAQ{1,subI}      = dAQ;
-    allsubs_model{1,subI}    = model_output;
+    % allsubs_dAQ{1,subI}     = dAQ;
+    allsubs_model{1,subI}   = model_output;
+    
+    %% PREPARE FOR REGRESSION ANALYSIS OF CROPPED EEG WITH dAQ %%
+    
+    % get the sum of the total draws (should be the same with the total number of
+    % EEG epochs)
+    totaldraws              = sum(all_data(:,5));
+   
+    % count of the total draws starts after the presentation of the first
+    % draws. However, epochs start WITH the first bead presentation, so we
+    % need to add 52 to the total draws:
+    totaldraws              = totaldraws + totaltrials;
+    
+    % load the croped eeg data
+    eeg_tmp                 = load(fullfile(croppedpath, sprintf('cropped_data_sub_%02d.mat',subI)));
+    eeg_data                = eeg_tmp.data;
+    
+    % split the eeg data in frontal and parietal 
+    frontal_eeg             = eeg_data(1:9,:,:);
+    parietal_eeg            = eeg_data(10:20,:,:);
+    
+    % average eeg samples and channels over trials (that would results in
+    % one averaged data point for each trial/epoch)
+    for trl = 1:totaldraws
+        
+        tmp_frontal                     = frontal_eeg(:,:,trl);
+        tmp_parietal                    = parietal_eeg(:,:,trl);
+        frontal_aveeg{1,subI}(trl,1)    = mean(tmp_frontal(:));  % average channels*samples for this trial
+        parietal_aveeg{1,subI}(trl,1)   = mean(tmp_parietal(:)); % average channels*samples for this trial
+        
+        clear tmp_frontal tmp_parietal
+    end % end of trl 
+    
+
+    clear all_data accuracy draws response urntype condition subj
     
 end % end of subject loop 
+
+%% JUST SAVE STUFF %%
+% store average sub and model draws and acc in one matrix
+allagent_avdraws(:,1) = easy_avdraws;
+allagent_avdraws(:,2) = diff_avdraws;
+allagent_avdraws(:,3) = allsubs_modeldraws(:,1);
+allagent_avdraws(:,4) = allsubs_modeldraws(:,2);
+
+allagent_avacc(:,1) = easy_avacc;
+allagent_avacc(:,2) = diff_avacc;
+allagent_avacc(:,3) = allsub_modelacc(:,1);
+allagent_avacc(:,4) = allsub_modelacc(:,2);
 
 % save needed matrices
 save avdraws
@@ -331,6 +376,46 @@ save allsubs_modeldraws
 save allsubs_modelpoints
 save allsubs_dAQ
 save allsubs_model
+save frontal_aveeg
+save parietal_aveeg
+save allsub_dAQs
 
-% create matrix to store all accuracy and draws (io and human)
+%% RUN WITHIN-SUBJECT REGRESSION ANALYSIS %%
+
+% loop over subjects
+for sub = 1:nsubs 
+    
+    if sub == 9 | sub == 10
+        continue
+    end
+    
+    sub_dAQ         = allsub_dAQs{1,sub};
+    sub_pareeg      = parietal_aveeg{1,sub};
+    sub_fronteeg    = frontal_aveeg{1,sub};
+    
+    % first I need to add nan values to the dAQ vector as we cannot run
+    % regression with imbalanced data
+    s               = length(sub_dAQ) + 1; % where to continue from?
+    e               = length(sub_pareeg);
+    sub_dAQ(s:e,1)  = nan;
+    
+    % run regression analysis using parietal_eeg data as the dependent and
+    % dAQs as factor
+    mdl = fitlm(sub_dAQ,sub_pareeg)
+    parietal_betas(sub,1) = table2array(mdl.Coefficients(2,1));
+    
+    clear mdl
+    
+    mdl = fitlm(sub_dAQ,sub_fronteeg)
+    frontal_betas(sub,1) = table2array(mdl.Coefficients(2,1));
+    
+end
+
+%% RUN 1-SAMPLE T-TESTS %%
+
+% run t-test on the parietal data 
+[h,p,ci,stats] = ttest(parietal_betas)
+
+[h,p,ci,stats] = ttest(frontal_betas)
+
 
