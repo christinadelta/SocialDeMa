@@ -40,7 +40,6 @@
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
 modelfitpath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fitting');
 iobserverpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'ideal_observer');
-analysispath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'prepro_data');
 resultspath     = fullfile(startpath, 'experiments', 'results');
 croppedpath     = fullfile(startpath, 'analysis', 'beads', 'behav', 'cropped');
 
@@ -58,7 +57,6 @@ blocks          = 4;
 conditions      = 2;
 temp            = 0;
 respoptions     = 3; % b,g,s
-counter         = 1; 
 
 % init required vars
 avdraws                 = nan(nsubs,1);
@@ -75,8 +73,8 @@ subname                 = {subs.name};
 %% 1. EXTRACT AND SAVE THE BLOCK DATA %%
 
 for subI = 1:nsubs
-    
-    if subI == 9
+        
+    if subI == 9 | subI == 10
         continue
     end
        
@@ -101,11 +99,12 @@ for subI = 1:nsubs
             block(indx)                     = blockI;
             trialno(indx)                   = logs.blocktrials(trial).trialnumber;
             urntype(indx)                   = logs.blocktrials(trial).urntype;
-            draws(indx)                     = logs.blocktrials(trial).draws;
+            draws(indx)                     = logs.blocktrials(trial).draws + 1;
             response(indx)                  = logs.blocktrials(trial).response;
             accuracy(indx)                  = logs.blocktrials(trial).accuracy;
             condition(indx)                 = logs.blocktrials(trial).condition;
             subj(indx)                      = subI;
+            generaltrl(indx)                = indx;
             
             sequence                        = logs.blocktrials(trial).sequence; % extract tish trial sequence of draws
             
@@ -150,8 +149,6 @@ for subI = 1:nsubs
                 ct                                                  = ct+1; % update co
             end
             
-            counter = counter + 1;
-           
             clear t sequence    
 
         end % end of trial loop
@@ -159,7 +156,7 @@ for subI = 1:nsubs
     end % end of block loop
     
     % add data in one matrix
-    all_data = [subj' block' trialno' urntype' draws' response' accuracy' condition'];
+    all_data = [subj' block' trialno' urntype' draws' response' accuracy' condition' generaltrl'];
     
     %% SPLIT SUB DATA INTO CONDITIONS
     for cond = 1:conditions % loop over conditions
@@ -208,12 +205,12 @@ for subI = 1:nsubs
     addpath(genpath(iobserverpath));
     
     % define parameters of the model
-    alpha       = 10;            % softmax stochasticity parameter (for fitting to human behaviour)
-    Cw          = -10;          % cost for being wrong
-    Cd          = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
-    Cc          = 10;           % reward for being correct
+    alpha       = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
+    Cw          = -1000;          % cost for being wrong
+%     Cd          = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+%     Cc          = 10;           % reward for being correct
     prob        = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
-    Cs          = -0.25;        % the cost to sample
+    Cs          = -0.10;        % the cost to sample
     
     for cond = 1:conditions
         
@@ -228,7 +225,7 @@ for subI = 1:nsubs
         end
         
         % run ideal observer 
-        [ll, pickTrial, dQvec, ddec, aQvec choice]  = estimateLikelihoodf(alpha,Cw,Cc,thisq,Cs,thiscond_seq,1);
+        [ll, pickTrial, dQvec, ddec, aQvec choice]  = estimateLikelihoodf(alpha,Cw,thisq,Cs,thiscond_seq,1);
         
         % save ideal observer output 
         io_output(cond).pickTrials                  = pickTrial;
@@ -246,7 +243,7 @@ for subI = 1:nsubs
         allsubs_modeldraws(subI,cond)               = mean(pickTrial);
         
         % compute points 
-        % allsubs_modelpoints(subI,cond)              = (sum(choice == 1) * Cc) + (sum(choice == 2) * Cw) - (sum(pickTrial) * Cs);
+       % allsubs_modelpoints(subI,cond)              = (sum(choice == 1) * Cc) + (sum(choice == 2) * Cw) - (sum(pickTrial) * Cs);
         
     end % end of condition loop
     
@@ -266,7 +263,6 @@ for subI = 1:nsubs
     q                       = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
     Cs                      = -0.25;        % the cost to sample
     aqvec_switch            = 1;            % still not sure why exactly this is needed 
-    cnt                     = 1;            % counter
     
     for cond = 1:conditions
        
@@ -289,71 +285,22 @@ for subI = 1:nsubs
         info.p          = prob;
         
         % aaand fit the model 
-        [mparams, lla, all_ll, aQvec] = bayesbeads(thisub_seq, thisub_choices, info, alpha, Cw, Cc, cost_diff, Cs, cond, subI);
+        [mparams, lla, aQvec] = bayesbeads(thisub_seq, thisub_choices, info, alpha, Cw, Cc, cost_diff, Cs, cond, subI);
         
         % store all model output
         model_output(cond).params   = mparams;
         model_output(cond).lla      = lla;
-        model_output(cond).all_ll   = all_ll;
-        model_output(cond).aQvec    = aQvec;
-        
-        % extract AQ values for each condition
-        cond_aQ                     = aQvec;
-        
-        % extract AQ values for each sequence 
-        for trial = 1:length(cond_aQ)
-            
-            trial_aQ    = cond_aQ{1,trial}
-            
-            % loop over draws (AQs for that trial) 
-            for draw = 1:size(trial_aQ,1)
-                
-                thisAQ                      = trial_aQ(draw,:);
-                allsub_dAQs{1,subI}(cnt,1)  = (thisAQ(1) - thisAQ(2)) - thisAQ(3)
-                
-                cnt                         = cnt+1 % update counter
-            end % end of draws (AQs) loop
-        end % end of trial loop
+        model_output(cond).aQvec    = aQvec; 
+       
     end % end of conditiion loop
     
     % save model subject fitting output and dAQ
     % allsubs_dAQ{1,subI}     = dAQ;
     allsubs_model{1,subI}   = model_output;
     
-    %% PREPARE FOR REGRESSION ANALYSIS OF CROPPED EEG WITH dAQ %%
-    
-    % get the sum of the total draws (should be the same with the total number of
-    % EEG epochs)
-    totaldraws              = sum(all_data(:,5));
-   
-    % count of the total draws starts after the presentation of the first
-    % draws. However, epochs start WITH the first bead presentation, so we
-    % need to add 52 to the total draws:
-    totaldraws              = totaldraws + totaltrials;
-    
-    % load the croped eeg data
-    eeg_tmp                 = load(fullfile(croppedpath, sprintf('cropped_data_sub_%02d.mat',subI)));
-    eeg_data                = eeg_tmp.data;
-    
-    % split the eeg data in frontal and parietal 
-    frontal_eeg             = eeg_data(1:9,:,:);
-    parietal_eeg            = eeg_data(10:20,:,:);
-    
-    % average eeg samples and channels over trials (that would results in
-    % one averaged data point for each trial/epoch)
-    for trl = 1:totaldraws
-        
-        tmp_frontal                     = frontal_eeg(:,:,trl);
-        tmp_parietal                    = parietal_eeg(:,:,trl);
-        frontal_aveeg{1,subI}(trl,1)    = mean(tmp_frontal(:));  % average channels*samples for this trial
-        parietal_aveeg{1,subI}(trl,1)   = mean(tmp_parietal(:)); % average channels*samples for this trial
-        
-        clear tmp_frontal tmp_parietal
-    end % end of trl 
+    clear all_data accuracy draws response urntype condition subj model_output ll pickTrial dQvec ddec aQvec choice io_output
     
 
-    clear all_data accuracy draws response urntype condition subj
-    
 end % end of subject loop 
 
 %% JUST SAVE STUFF %%
@@ -368,54 +315,48 @@ allagent_avacc(:,2) = diff_avacc;
 allagent_avacc(:,3) = allsub_modelacc(:,1);
 allagent_avacc(:,4) = allsub_modelacc(:,2);
 
-% save needed matrices
-save avdraws
-save allsubs_io
-save allsub_modelacc 
-save allsubs_modeldraws 
-save allsubs_modelpoints
-save allsubs_dAQ
-save allsubs_model
-save frontal_aveeg
-save parietal_aveeg
-save allsub_dAQs
+%% CHECK AQ VALUES AND SUB DRAWS 
 
-%% RUN WITHIN-SUBJECT REGRESSION ANALYSIS %%
+cc = 1; 
 
-% loop over subjects
-for sub = 1:nsubs 
+for sub = 1:nsubs
     
     if sub == 9 | sub == 10
         continue
     end
-    
-    sub_dAQ         = allsub_dAQs{1,sub};
-    sub_pareeg      = parietal_aveeg{1,sub};
-    sub_fronteeg    = frontal_aveeg{1,sub};
-    
-    % first I need to add nan values to the dAQ vector as we cannot run
-    % regression with imbalanced data
-    s               = length(sub_dAQ) + 1; % where to continue from?
-    e               = length(sub_pareeg);
-    sub_dAQ(s:e,1)  = nan;
-    
-    % run regression analysis using parietal_eeg data as the dependent and
-    % dAQs as factor
-    mdl = fitlm(sub_dAQ,sub_pareeg)
-    parietal_betas(sub,1) = table2array(mdl.Coefficients(2,1));
-    
-    clear mdl
-    
-    mdl = fitlm(sub_dAQ,sub_fronteeg)
-    frontal_betas(sub,1) = table2array(mdl.Coefficients(2,1));
-    
-end
+   
+    for cond = 1:conditions
+        
+        sub_data = cond_data{1,sub}{1,cond}(:,5);
+        sub_model = allsubs_model{1,sub}(cond).aQvec;
+        
+        for i = 1:length(sub_data)
+            
+            sub_draws(cc,1) = sub;
+            sub_draws(cc,2) = cond;
+            sub_draws(cc,3) = sub_data(i,1);
+            sub_draws(cc,4) = size(sub_model{1,i},1);
+            
+            if sub_draws(cc,3) == sub_draws(cc,4)
+                sub_draws(cc,5) = 1;
+            else
+                sub_draws(cc,5)= 0;
+            end
+            
+            cc = cc+1;
+         
+        end % trials
+        
+        % compute percentage of accuracy of model draws (i.e. how many
+        % times the model drew as mutch as the participant)
+        tmp                     = find(sub_draws(:,1) == sub & sub_draws(:,2)==cond);
+        tmp_draws               = sub_draws((tmp),5);
+        sub_model_acc(sub,cond) = mean(tmp_draws == 1);
+        
+    end % conditions 
 
-%% RUN 1-SAMPLE T-TESTS %%
+end % subs
 
-% run t-test on the parietal data 
-[h,p,ci,stats] = ttest(parietal_betas)
-
-[h,p,ci,stats] = ttest(frontal_betas)
-
+% save needed matrices
+save workspace
 
