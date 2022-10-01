@@ -1,4 +1,4 @@
-function p = PG(q, numDraws, numGreen)
+function p = PG_io(q, numDraws, numGreen)
 
 % "compute conditional probabilities of the majority urn" (green? blue?)
 % This function runs at each draw and needs: number of draws so far, number of green beads (or

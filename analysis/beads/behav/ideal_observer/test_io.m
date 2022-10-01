@@ -26,7 +26,7 @@ for this_sequence = 1:size(seq_mat,1)
     
     sequence = seq_mat(this_sequence,:);
     
-    [ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(alpha,Cw,q,Cs,sequence,1);
+    [ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf_io(alpha,Cw,q,Cs,sequence,1);
     
     % update model outputs for this sequence
     choices(this_sequence)  = choice;

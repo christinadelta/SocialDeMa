@@ -204,7 +204,7 @@ addpath(genpath(iobserverpath));
 % INstead of looping over blocks, loop and run ideal observer over conditions  
 
 % define parameters of the model
-alpha       = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
+alpha       = 10;            % softmax stochasticity parameter (for fitting to human behaviour)
 Cw          = -10;          % cost for being wrong
 Cd          = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
 Cc          = 10;           % reward for being correct
@@ -245,7 +245,7 @@ for sub = 1:nsubs
         io_output(cond).choices                     = choice;
         io_output(cond).ddec                        = ddec;
         
-        clear thiscond_data thiscond_seq thisq
+       % clear thiscond_data thiscond_seq thisq
     end % end of conditions loop
     
     allsubs_io{1,sub}                               = io_output;
@@ -285,6 +285,7 @@ end % end of subject loop
 % average model draws (one point for each model instantiation), for
 % comparisons with human agents
 avdraws_io = nan(nsubs,1);
+avacc_io = nan(nsubs,1);
 
 for sub = 1:nsubs
     
@@ -295,12 +296,53 @@ for sub = 1:nsubs
     end
     
     thisub_io           = allsubs_modeldraws{1,sub};
+    thisub_io_acc       = allsub_modelacc{1,sub};
     io_draws(1)         = thisub_io{1,1};
     io_draws(2)         = thisub_io{1,2};
+    io_acc(1)           = thisub_io_acc{1,1};
+    io_acc(2)           = thisub_io_acc{1,2};
+    
     
     % compute mean of picktrials across conditions
     avdraws_io(sub,1)   = mean(io_draws);
-   
+    avacc_io(sub,1)     = mean(io_acc);
+end
+
+% compute condition draw means and accuracy for comparisons with human participants
+io_easy_avdraws     = nan(nsubs,1);
+io_diff_avdraws     = nan(nsubs,1);
+io_easy_avacc       = nan(nsubs,1);
+io_diff_avacc       = nan(nsubs,1);
+
+for sub = 1:nsubs
+    
+    % for now sub 9 is measing (I don't have access to the cluster), once
+    % I have the data of this sub I will comment this part out
+    if sub == 9
+       continue
+    end
+    
+    this_io = allsubs_io{1,sub};
+    
+    for cond = 1:conditions
+        
+        cond_io                     = this_io(cond).pickTrials;
+        cond_io_acc                 = this_io(cond).choices;
+        
+        % find choices 2 and switch them to 0
+        io_twos                     = find(cond_io_acc == 2);
+        cond_io_acc(io_twos)        = 0;
+        
+        if cond == 1
+            io_easy_avdraws(sub,1)  = mean(cond_io);
+            io_easy_avacc(sub,1)    = mean(cond_io_acc);
+        else
+            io_diff_avdraws(sub,1)  = mean(cond_io);
+            io_diff_avacc(sub,1)    = mean(cond_io_acc);
+        end
+        
+    end
+      
 end
 
 % save stuff
@@ -421,14 +463,15 @@ end % end of subjects loop
 % save dAQ mat file
 save 'allsubs_dAQ'
 
-%% AVERAGE PARTICIPANT DRAWS %%
+%% AVERAGE PARTICIPANT DRAWS & ACCURACY %%
 
 % create a nx1 vector (n=number of participants) with the averaged number
 % of draws for each participant.
 % This vector will be used as a covariate for the individual differences
 % analysis in SPM12.
 
-avdraws = nan(nsubs,1);
+avdraws     = nan(nsubs,1);
+avacc       = nan(nsubs,1);
 
 % loop over subjects
 for sub = 1:nsubs
@@ -442,18 +485,22 @@ for sub = 1:nsubs
     % extract this subject data 
     temp            = find(all_data(:,1) == sub);
     sub_draws       = all_data((temp),5);
+    sub_acc         = all_data((temp),7);
     
     avdraws(sub,1)  = mean(sub_draws);
+    avacc(sub,1)    = mean(sub_acc);
     
-    clear temp sub_draws
+    clear temp sub_draws sub_acc
 end % end of subject loop
 
 % save mat file to use with SPM12
 save avdraws
 
-% average participant draws for each condition seperately 
-easy_avdraws = nan(nsubs,1);
-diff_avdraws = nan(nsubs,1);
+% average participant draws and accuracy for each condition seperately 
+easy_avdraws    = nan(nsubs,1);
+diff_avdraws    = nan(nsubs,1);
+easy_avacc      = nan(nsubs,1);
+diff_avacc      = nan(nsubs,1);
 
 for sub = 1:nsubs 
     
@@ -469,14 +516,17 @@ for sub = 1:nsubs
     
     for cond = 1:conditions
         
-        tmp_cond            = find(sub_draws(:,9) == cond);
-        cond_draws          = sub_draws((tmp_cond),5);
+        tmp_cond                = find(sub_draws(:,9) == cond);
+        cond_draws              = sub_draws((tmp_cond),5);
+        cond_acc                = sub_draws((tmp_cond),7);
         
         if cond == 1
             
             easy_avdraws(sub,1) = mean(cond_draws);
+            easy_avacc(sub,1)   = mean(cond_acc);
         else
             diff_avdraws(sub,1) = mean(cond_draws);
+            diff_avacc(sub,1)   = mean(cond_acc);
         end
       
     end
@@ -486,31 +536,43 @@ end
 save easy_avdraws
 save diff_avdraws
 
-%% Visualise behavioural data and model output %%
+% save averaged agent data for vis in R
+all_avdraws(:,1)    = easy_avdraws;
+all_avdraws(:,2)    = diff_avdraws;
+all_avdraws(:,3)    = io_easy_avdraws;
+all_avdraws(:,4)    = io_diff_avdraws;
 
-% visualise average number of draws for human participants (histogram)
-nbins = 10;
-h = histogram(avdraws, nbins);
+all_avacc(:,1)      = easy_avacc;
+all_avacc(:,2)      = diff_avacc;
+all_avacc(:,3)      = io_easy_avacc;
+all_avacc(:,4)      = io_diff_avacc;
 
-% visualise average number of draws for ideal observer (histogram)
-nbins = 10;
-h2 = histogram(avdraws_io, nbins);
+csvwrite('beads_all_avdraws.csv', all_avdraws)
+csvwrite('beads_all_avacc.csv', all_avacc)
 
-% plot both agents together
-h = histogram(avdraws);
-hold on
-h2 = histogram(avdraws_io); 
+%% RUN STATISTICS %%
 
-% box plots/violins for human participants and ideal observer
-figure
-boxplot([avdraws,avdraws_io],'Notch','on','Labels',{'humans','ideal observer'}, 'Whisker',1)
-title('averaged number of draws')
+% load worlspace
+load('workspace.mat')
 
-% box plots for condition comparisons
-figure
-boxplot([easy_avdraws,diff_avdraws],'Notch','on','Labels',{'easy','difficult'}, 'Whisker',1)
-title('averaged number of draws')
+% two-way anova on draws 
+p = anovan(draws,{agent probability},'model','interaction','varnames',{'agent','probability'})
 
+% two-way anova on accuracy
+p = anovan(acc,{agent probability},'model','interaction','varnames',{'agent','probability'})
+
+[p,~,stats] = anovan(all_acc,{agent_cond agent_type},"Model","interaction", ...
+    "Varnames",["condition","agent_type"]);
 
 
+[p,~,stats] = anovan(all_draws,{agent_cond agent_type},"Model","interaction", ...
+    "Varnames",["condition","agent_type"])
+
+% run mixed effects anova 
+% run anova
+[pvals,~,stats] = anovan(draws, {subno agent probability}, ... 
+'model','interaction', 'random',1,'varnames',{'subno' 'agent' 'probability'})
+
+[pvals,tbl,stats] = anovan(acc, {subno agent probability}, ... 
+'model',2, 'random',1,'varnames',{'subno' 'agent' 'probability'})
 

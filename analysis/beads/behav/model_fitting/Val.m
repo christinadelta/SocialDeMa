@@ -1,4 +1,4 @@
-function [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cc, Cs)
+function [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cc,Cd, Cs)
 
 %%% computes probability that we are drawing from green urn
 pg = PG(q, nd, ng);
@@ -6,18 +6,18 @@ pg = PG(q, nd, ng);
 pb = 1 - pg;
 
 %%% cost of choosing Green, at this point
-QG = Cc*pg + Cw*pb;
+QG = Cd*pb;
 %%% cost of choosing blue at this point
-QB = Cc*pb + Cw*pg;
+QB = Cd*pg;
 
 
 if nd + 1 <= lseq
     try
         
         %%% compute value of next state given that we draw a green
-        val11 = vVal(q, nd+1, ng+1, alpha, lseq, Cw, Cc, Cs);
+        val11 = vVal(q, nd+1, ng+1, alpha, lseq, Cw, Cc,Cd, Cs);
         %%% compute value of next state given that we draw a blue
-        val10 = vVal(q, nd+1, ng, alpha, lseq, Cw, Cc, Cs);
+        val10 = vVal(q, nd+1, ng, alpha, lseq, Cw, Cc,Cd, Cs);
         
         %%% redundant with above
 %         val00 = vVal(q, nd+1, ng+1, alpha, lseq, Cw, Cs);

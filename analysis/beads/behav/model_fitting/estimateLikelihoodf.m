@@ -1,4 +1,4 @@
-function [ll, all_ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(params, sequence, setData, fixedParams, findPick, urntype)
+function [ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(params, sequence, setData, fixedParams, findPick, urntype)
 
 %%% extract free parameters 
 % Cw = params(1);
@@ -11,7 +11,8 @@ alpha   = fixedParams(1);
 q       = fixedParams(2);
 Cw      = fixedParams(3);
 Cc      = fixedParams(4);
-cond    = fixedParams(5);
+Cd      = fixedParams(5);
+cond    = fixedParams(6);
 % Cs = fixedParams(3);
 
 %%% number of sequences
@@ -70,7 +71,7 @@ for block = 1 : nblocks % blocks are the number of sequences per condition (26)
         nd = nd + 1;
 
         %%% compute values of each action
-        [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cc, Cs);
+        [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cc,Cd, Cs);
         
         %%% keep track of values across sequnce of draws
         dQvec(draw, 1:length(Qvec)) = Qvec;
@@ -83,10 +84,10 @@ for block = 1 : nblocks % blocks are the number of sequences per condition (26)
         
         %%% if trying to determine optimal stopping position (findpick ==
         %%% 1) then see if we should stop
-        if findPick == 1 & draw < nchoices & (Qvec(1) > Qvec(3) | Qvec(2) > Qvec(3))
+        if findPick == 1 && draw < nchoices && (Qvec(1) > Qvec(3) || Qvec(2) > Qvec(3))
             pickTrial(block) = draw;
             break
-        elseif findPick == 1 & draw == nchoices
+        elseif findPick == 1 && draw == nchoices
             pickTrial(block) = draw;
         end
 
@@ -112,7 +113,7 @@ for block = 1 : nblocks % blocks are the number of sequences per condition (26)
         % fprintf( 'draw: %d ll: %.2f', nd, ll);
         
         % save all ll's to take a look at them 
-        all_ll{1,block}(draw,1) = ll;
+%         all_ll{1,block}(draw,1) = ll;
         
 
     end

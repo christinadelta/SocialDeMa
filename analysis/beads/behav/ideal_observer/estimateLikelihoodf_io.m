@@ -1,4 +1,4 @@
-function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf(alpha,Cw, Cc, thisq,Cs, thiscond_seq, aqvec_switch)
+function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf_io(alpha,Cw,Cc,thisq,Cs,thiscond_seq, aqvec_switch)
 
 % this will be used for stopping at optimal draws (position)
 findPick            = 1; 
@@ -35,7 +35,7 @@ for trl = 1:ntrials
         % compute action values for each new draw (in current sequence)
         % until action value for one of the two urns exceeds action value
         % for drawing again. 
-        [v, d, Qvec]    = Val(thisq, numDraws, numGreen, alpha, lseq, Cw, Cc, Cs);
+        [v, d, Qvec]    = Val_io(thisq, numDraws, numGreen, alpha, lseq, Cw,Cc, Cs);
         
         % append action values of the current sequence to dQvec
         dQvec(draw, 1:length(Qvec))         = Qvec;

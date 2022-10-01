@@ -1,32 +1,30 @@
-function [ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(params, sequence, setData, fixedParams, findPick)
+function [ll, pickTrial, dQvec, ddec, aQvec choice] = estimateLikelihoodf(sequence, R);
 
-%%% extract parameters from parameter vector
-Cw = params(1);
-%Cs = params(2);
-%q  = params(2);
+findPick = 1;
 
-% setData = choicevec;
-%Cs    = fixedParams(1);
-alpha = fixedParams(1);
-q = fixedParams(2);
-Cs = fixedParams(3);
+alpha = R.alpha;
+Cs = R.sample;
+Cw = R.error;
+Cc = R.correct;
+q = R.q;
 
 %%% length of sequence
 lseq    = size(sequence, 2);
 
 %%% number of sequences
-nblocks = size(setData, 1);
+nblocks = size(sequence, 1);
 
 %%% intialize log likelihood to zero
 ll = 0;
 
 for block = 1 : nblocks
     
-    %%% choices of subject for this sequence of draws
-    choiceVec = setData{block};
+%     %% choices of subject for this sequence of draws
+%     choiceVec = setData{block};
 
     %%% number of choices for this sequence
-    nchoices = size(choiceVec, 1);
+%     nchoices = size(choiceVec, 1);
+    nchoices = lseq;
     
     %%% initially nd (draws) == 0 and ng (green marbles) == 0
     ng = 0;
@@ -36,11 +34,7 @@ for block = 1 : nblocks
     dQvec = [];
     
     %%% corresponding probabilities generated with softmax and alpha
-    ddec  = []; 
-        
-%     if isempty(find( mean( choiceVec') == 0 )) == 0; 
-%         disp(sprintf('missing response skipping sequence %d for this type', block)); continue; 
-%     end;
+    ddec  = [];
 
     %%% loop over draws for this sequence of draws
     for draw = 1 : nchoices
@@ -54,7 +48,7 @@ for block = 1 : nblocks
         nd = nd + 1;
 
         %%% compute values of each action
-        [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cs);
+        [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw,Cc, Cs);
         
         %%% keep track of values across sequnce of draws
         dQvec(draw, 1:length(Qvec)) = Qvec;
@@ -79,21 +73,13 @@ for block = 1 : nblocks
         if draw == lseq
             d = [d; 0];
         end
-        
-        if choiceVec(draw,:)*d == 0;
-            fprintf('missing data sequence %d   ', block);
-            choiceVec(draw,:) = [1/3 1/3 1/3];
-        end
-            
 
         %%% update log likelihood
-        try
-            ll = ll - log(choiceVec(draw,:)*d);
-        catch
-            fprintf('');
-        end
-        
-        %fprintf( 'draw: %d ll: %.2f', nd, ll);
+%         try
+%             ll = ll - log(choiceVec(draw,:)*d);
+%         catch
+%             fprintf('');
+%         end
         
 %         if findPick == 0
 % 
@@ -104,26 +90,23 @@ for block = 1 : nblocks
 %                 end
 %                 fprintf('%d pg %.2f\n', sequence(block, draw), PG(q, nd, ng));
 %             end
-%              
-%          end
+%             
+%         end
 
-    end
+    end;    %loop through draws
+    
+    %accumlate chosen urns
+    [biggest_value choice(block)] = max(Qvec);
+    
     
 %     subplot(2,2,block);
 %     plot(dQvec);
 %     legend('G', 'B', 'S');
+    
+end;    %loop through sequences
 
-%     subplot(6,4,block);
-%     h = plot(1:size(dQvec,1), dQvec);
-%     legend('B', 'G', 'D');
-%     set(gca, 'Fontname', 'Ariel', 'FontSize', 6);
-%     set(h, 'MarkerSize',6, 'marker', 'o');
-%     
-end
-
-if findPick == 0
-    pickTrial = [];
-    fprintf('ll %.2f Cw %.1f p %.2f Cs %.2f alpha %.2f\n', ll, Cw, q, Cs, alpha);
-end
+% if findPick == 0
+%     fprintf('ll %.2f Cw %.1f Cs %.1f alpha %.2f\n', ll, Cw, Cs, alpha);
+% end
 
 return

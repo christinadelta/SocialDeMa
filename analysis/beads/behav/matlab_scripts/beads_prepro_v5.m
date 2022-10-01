@@ -1,8 +1,15 @@
-% PRE-PROCESSING AND ANALYSIS SCRIPT FOR THE BEADS TASK VERSION 4
+% PRE-PROCESSING AND ANALYSIS SCRIPT FOR THE BEADS TASK VERSION 5
 
 % Part of the Optimal Stopping Problems Project
 
-% Last update: 30/08/2022
+% Last update: 17/09/2022
+
+%%% Changes introduced: %%% 
+% trying to run ideal observer using an adapted version of bruno's code
+% trying to fit model using an adapted version of bruno's code
+% This version only preprocesses behavioural data and runs the model.
+% Regressions and correlations with the cropped EEG data are performed in
+% beads_analysis_v2.m
 
 %% IMPORTANT NOTE %%
 
@@ -15,13 +22,10 @@
 % of the given trial, trial start, bead onset, response time, etc...
 
 % TOTAL MAT FILES for each subject: 56
-% BLOCK MAT FILES: 4 logs
-% SEQUENCE MAT FILES: 52 logs
+% BLOCK MAT FILES: 4 logs - USED for preprocessing
+% SEQUENCE MAT FILES: 52 logs - NOT USED
 
-% I first extract block data, remove nans and save the data in a csv file 
-% Then I extract the sequence data, remove nans and save the data in a csv file 
-
-%% PREPROCESSING - ANALYSIS STEPS %%
+%% PREPROCESSING STEPS %%
 
 % 1. extract sub block data and store based on conditions [logs, sequences]
 % 2. store sub data based on conditions
@@ -30,8 +34,7 @@
 % 5. run ideal observer 
 % 6. average model draws and acc (total and for each condition)
 % 7. run model fiiting 
-% 8. get difference in AQ values
-% 9. run stats (random effects (agent type) anova)
+
 
 %% INIT LOAD DATA %%
 
@@ -43,7 +46,7 @@ clc
 % The four next lines (paths) should be changed to your paths 
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
 modelfitpath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fitting');
-iobserverpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'ideal_observer');
+iobserverpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'brunos_io');
 resultspath     = fullfile(startpath, 'experiments', 'results');
 croppedpath     = fullfile(startpath, 'analysis', 'beads', 'behav', 'cropped');
 
@@ -74,15 +77,12 @@ diff_avacc              = nan(nsubs,1);
 % only keep subnames
 subname                 = {subs.name};
 
-
-%% 1. EXTRACT AND SAVE THE BLOCK DATA %%
-
 for subI = 1:nsubs
         
-    if subI == 9 | subI == 10
-        continue
-    end
-       
+%     if subI == 9 | subI == 10
+%         continue
+%     end
+    
     fprintf('loading beads block data\n')  
     subject = subs(subI).name;
     subdir  = fullfile(resultspath, task,subject);
@@ -97,6 +97,7 @@ for subI = 1:nsubs
         subFile = fullfile(subdir, sprintf('subject_%02d_task_%s_block_%02d_ses_%02d_logs.mat',subI, task, blockI,session));
         load(subFile)
         
+        
         for trial = 1:blocktrials
              
             indx                            = ((blockI -1)*blocktrials) + trial; 
@@ -106,11 +107,11 @@ for subI = 1:nsubs
             urntype(indx)                   = logs.blocktrials(trial).urntype;
             
             % 1st draw is not stored so, add 1
-%             if logs.blocktrials(trial).draws < maxdraws
-%                 draws(indx)                     = logs.blocktrials(trial).draws + 1;
-%             elseif logs.blocktrials(trial).draws == maxdraws
-                 draws(indx)                     = logs.blocktrials(trial).draws;
-%             end
+            if logs.blocktrials(trial).draws < maxdraws
+                draws(indx)                     = logs.blocktrials(trial).draws + 1;
+            elseif logs.blocktrials(trial).draws == maxdraws
+                draws(indx)                     = logs.blocktrials(trial).draws;
+            end
             response(indx)                  = logs.blocktrials(trial).response;
             accuracy(indx)                  = logs.blocktrials(trial).accuracy;
             condition(indx)                 = logs.blocktrials(trial).condition;
@@ -162,8 +163,7 @@ for subI = 1:nsubs
             
             clear t sequence    
 
-        end % end of trial loop
-         
+        end % end of trial loop  
     end % end of block loop
     
     % add data in one matrix
@@ -172,6 +172,7 @@ for subI = 1:nsubs
     allsub_alldata{1,subI} = all_data;
     
     %% SPLIT SUB DATA INTO CONDITIONS
+    
     for cond = 1:conditions % loop over conditions
         
         tmp                             = find(all_data(:,8) == cond);
@@ -217,13 +218,13 @@ for subI = 1:nsubs
     % first add modelpath to the path
     addpath(genpath(iobserverpath));
     
-    % define parameters of the model
-    alpha       = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
-    Cw          = -10;          % cost for being wrong
-    Cd          = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
-    Cc          = 10;           % reward for being correct
-    prob        = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
-    Cs          = 0;        % the cost to sample
+    % define parameters of the ideal observer
+    R.alpha             = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
+    R.error             = -10;          % cost for being wrong
+    R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+    R.correct           = 10;           % reward for being correct
+    R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
+    R.sample            = -0.25;            % the cost to sample
     
     for cond = 1:conditions
         
@@ -232,152 +233,83 @@ for subI = 1:nsubs
         
         % what is the probability of this cond? 
         if cond == 1
-            thisq = prob(1);
+            thisq = R.q(1);
         else 
-            thisq = prob(2);
+            thisq = R.q(2);
         end
         
-        % run ideal observer 
-        [ll, pickTrial, dQvec, ddec, aQvec choice]  = estimateLikelihoodf_io(alpha,Cw,Cc,thisq,Cs,thiscond_seq,1);
+        R.thisq = thisq;
         
-        % save ideal observer output 
-        io_output(cond).pickTrials                  = pickTrial;
-        io_output(cond).dQvec                       = dQvec;
-        io_output(cond).aQvec                       = aQvec;
-        io_output(cond).choices                     = choice;
-        io_output(cond).ddec                        = ddec;
+        % run backward induction
+        [r, Qsat] = backWardInduction(thiscond_seq, R);
         
-        %% COMPUTE MEAN ACCURACY, DRAWS & POINTS %%
+        % store ideal observer output
+        io_output(cond).r       = r;
+        io_output(cond).Qsat    = Qsat;
         
-        % compute model accuracy 
-        allsub_modelacc(subI,cond)                  = mean(choice == 1);
+        % loop over condition trials to compute choices, picktrials and acc
+        for i = 1: totaltrials/2
+            
+            choiceTrial             = find(squeeze(Qsat(i,:,3)) - max(squeeze(Qsat(i,:,1:2))') < 0); % which options this trial vec have an urn > sample
+            pickTrial(i)            = choiceTrial(1); % pick the first of the choices
+            [ma ma_i]               = max(squeeze(Qsat(i,pickTrial(i),:))); % which of the two urn was chosen? [based on AQ values]
+            choice(i)               = ma_i;  % assign chosen urn
+            choice(find(choice==2)) = 0; % recode it so it can be summed
+            
+        end
         
-        % compute number of draws
-        allsubs_modeldraws(subI,cond)               = mean(pickTrial);
-        
-        % compute points 
-        allsubs_modelpoints(subI,cond)              = (sum(choice == 1) * Cc) + (sum(choice == 2) * Cw) - (sum(pickTrial) * Cs);
-        
+        % for each subject model instance and condition, calculate acc and
+        % draws
+        allsub_ioacc(subI,cond)     = mean(choice);
+        allsubs_iodraws(subI,cond)  = mean(pickTrial);   
+    
     end % end of condition loop
     
-    % store all sub model in one cell 
-    allsubs_io{1,subI}                              = io_output;
+    % save this_sub ideal observer output
+    allsubs_io{1,subI}              = io_output;
+    
+    clear R r Qsat
     
     %% RUN MODEL FITTING %%
+%     % first add model fitting to the path
+%     addpath(genpath(modelfitpath));
+%     
+%     % define parameters of the ideal observer
+%     R.alpha             = 0.13;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
+%     R.error             = -10;          % cost for being wrong
+%     R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+%     R.correct           = 10;           % reward for being correct
+%     R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
+%     R.sample            = -0.25;            % the cost to sample
+%     
+%     for cond = 1:conditions
+%         
+%         % extract subject choice data, sequences
+%         thisub_choices       = allchoicevectors{1,subI}{1,cond};
+%         thisub_seq           = allsequences{1,subI}{1,cond};
+%         cond_matrix          = cond_data{1,subI}{1,cond};
+%        
+%         % extract urn types form data matrix
+%         info.urntypes        = cond_matrix(:,4);
+%         info.condtrials      = totaltrials/conditions;
+%         info.numdraws        = cond_matrix(:,5);
+%         % Cs                   = -0.25;   
+%         
+%         % what is the probability of this cond? 
+%         if cond == 1
+%             thisq = R.q(1);
+%         else 
+%             thisq = R.q(2);
+%         end
+%         
+%         R.thisq = thisq;
+%         
+%         
+%         
+%         
+%     end % end of conditions loop
     
-    % first add model fitting to the path
-    addpath(genpath(modelfitpath));
     
-    % define parameters of the model
-    alpha                   = 1;            % softmax stochasticity parameter (for fitting to human behaviour)
-    Cw                      = -10;          % cost for being wrong     
-    Cc                      = 10;           % reward for being correct 
-    cost_diff               = -20;          % The difference between the rewards for being correct (in this case no reward 0) and the cost of being wrong (-1000).
-    q                       = [0.8 0.6];    % proportion of the majority value in sequence (60/40 split in this case)
-    Cs                      = -0.01;         % the cost to sample
-    aqvec_switch            = 1;            % still not sure why exactly this is needed 
-    
-    for cond = 1:conditions
-       
-        thisub_choices       = allchoicevectors{1,subI}{1,cond};
-        thisub_seq           = allsequences{1,subI}{1,cond};
-        cond_matrix          = cond_data{1,subI}{1,cond};
-       
-        % extract urn types form data matrix
-        info.urntypes        = cond_matrix(:,4);
-        info.condtrials      = totaltrials/conditions;
-        info.numdraws        = cond_matrix(:,5);
-        Cs                   = -0.01;    
-       
-        % is this cond 0.8 or 0.6 probability? 
-        if cond == 1
-            prob        = q(1);
-        else
-            prob        = q(2);
-        end
-        
-        info.p          = prob;
-        
-        % aaand fit the model 
-        [mparams, lla, aQvec] = bayesbeads(thisub_seq, thisub_choices, info, alpha, Cw, Cc, cost_diff, Cs, cond, subI);
-        
-        % store all model output
-        model_output(cond).params   = mparams;
-        model_output(cond).lla      = lla;
-        model_output(cond).aQvec    = aQvec; 
-       
-    end % end of conditiion loop
-    
-    % save model subject fitting output and dAQ
-    % allsubs_dAQ{1,subI}     = dAQ;
-    allsubs_model{1,subI}   = model_output;
-    
-    clear all_data accuracy draws response urntype condition subj model_output ll pickTrial dQvec ddec aQvec choice io_output
-    
+end % end of subject loop
 
-end % end of subject loop 
-
-%% JUST SAVE STUFF %%
-% store average sub and model draws and acc in one matrix
-allagent_avdraws(:,1) = easy_avdraws;
-allagent_avdraws(:,2) = diff_avdraws;
-allagent_avdraws(:,3) = allsubs_modeldraws(:,1);
-allagent_avdraws(:,4) = allsubs_modeldraws(:,2);
-
-allagent_avacc(:,1) = easy_avacc;
-allagent_avacc(:,2) = diff_avacc;
-allagent_avacc(:,3) = allsub_modelacc(:,1);
-allagent_avacc(:,4) = allsub_modelacc(:,2);
-
-%% CHECK AQ VALUES AND SUB DRAWS 
-
-cc = 1; 
-
-for sub = 1:nsubs
-    
-    if sub == 9 | sub == 10
-        continue
-    end
-   
-    for cond = 1:conditions
-        
-        sub_data = cond_data{1,sub}{1,cond}(:,5);
-        sub_model = allsubs_model{1,sub}(cond).aQvec;
-        model_Cs(sub,cond) = allsubs_model{1,sub}(cond).params;
-        model_ll(sub,cond) = allsubs_model{1,sub}(cond).lla;
-        
-        for i = 1:length(sub_data)
-            
-            subdraws(cc,1) = sub;
-            subdraws(cc,2) = cond;
-            subdraws(cc,3) = sub_data(i,1);
-            subdraws(cc,4) = size(sub_model{1,i},1);
-            
-            if subdraws(cc,3) == subdraws(cc,4)
-                subdraws(cc,5) = 1;
-            else
-                subdraws(cc,5)= 0;
-            end
-            
-            cc = cc+1;
-         
-        end % trials
-        
-        % compute percentage of accuracy of model draws (i.e. how many
-        % times the model drew as mutch as the participant)
-        tmp                     = find(subdraws(:,1) == sub & subdraws(:,2)==cond);
-        tmp_draws               = subdraws((tmp),5);
-        sub_model_acc(sub,cond) = mean(tmp_draws == 1);
-        
-    end % conditions 
-
-end % subs
-
-% save needed matrices
-save workspace
-
-% save av draws
-drawspath = pwd;
-drawsfile = fullfile(drawspath, 'avdraws_2');
-save (drawsfile, 'avdraws')
 
