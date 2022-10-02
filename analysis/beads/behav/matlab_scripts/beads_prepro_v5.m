@@ -30,7 +30,7 @@
 % 1. extract sub block data and store based on conditions [logs, sequences]
 % 2. store sub data based on conditions
 % 3. average sub draws and acc 
-% 4. average average sub draws and acc for each condition
+% 4. average sub draws and acc for each condition
 % 5. run ideal observer 
 % 6. average model draws and acc (total and for each condition)
 % 7. run model fiiting 
@@ -49,22 +49,18 @@ modelfitpath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fitti
 iobserverpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'brunos_io');
 resultspath     = fullfile(startpath, 'experiments', 'results');
 croppedpath     = fullfile(startpath, 'analysis', 'beads', 'behav', 'cropped');
+behavpath       = fullfile(startpath, 'analysis', 'beads', 'behav');
+addpath(genpath(fullfile(behavpath, 'matlab_scripts'))); % add matlab_scripts to teh path
 
 task            = 'beads';
-subpath         = fullfile(resultspath, task);
-session         = 1;
-
 subs            = dir(fullfile(resultspath, task, '*sub*'));
 nsubs           = length(subs);
-% nsubs           = 2;
 
 totaltrials     = 52; 
 blocktrials     = 13;
-maxdraws        = 10;
 blocks          = 4;
 conditions      = 2;
 temp            = 0;
-respoptions     = 3; % b,g,s
 
 % init required vars
 avdraws                 = nan(nsubs,1);
@@ -78,98 +74,20 @@ diff_avacc              = nan(nsubs,1);
 subname                 = {subs.name};
 
 for subI = 1:nsubs
-        
-%     if subI == 9 | subI == 10
-%         continue
-%     end
-    
+    %% EXTRACT DATA FROM LOG FILES
+
     fprintf('loading beads block data\n')  
     subject = subs(subI).name;
     subdir  = fullfile(resultspath, task,subject);
     fprintf('\t reading data from subject %d\n',subI); 
     
-    co              = 1; % this will be used for spliting sequences and choice vectors in conditions one and two 
-    ct              = 1; % this will be used for spliting sequences and choice vectors in conditions one and two 
+    % extract blocktrial data
+    [subsequences,subchoiceVec,all_data]    = get_blockdata(subdir,blocks,blocktrials,subI,task);
     
-    for blockI = 1:blocks
-        
-        fprintf('\t\t loading block %d\n\n',blockI);
-        subFile = fullfile(subdir, sprintf('subject_%02d_task_%s_block_%02d_ses_%02d_logs.mat',subI, task, blockI,session));
-        load(subFile)
-        
-        
-        for trial = 1:blocktrials
-             
-            indx                            = ((blockI -1)*blocktrials) + trial; 
-            
-            block(indx)                     = blockI;
-            trialno(indx)                   = logs.blocktrials(trial).trialnumber;
-            urntype(indx)                   = logs.blocktrials(trial).urntype;
-            
-            % 1st draw is not stored so, add 1
-            if logs.blocktrials(trial).draws < maxdraws
-                draws(indx)                     = logs.blocktrials(trial).draws + 1;
-            elseif logs.blocktrials(trial).draws == maxdraws
-                draws(indx)                     = logs.blocktrials(trial).draws;
-            end
-            response(indx)                  = logs.blocktrials(trial).response;
-            accuracy(indx)                  = logs.blocktrials(trial).accuracy;
-            condition(indx)                 = logs.blocktrials(trial).condition;
-            subj(indx)                      = subI;
-            generaltrl(indx)                = indx;
-            
-            sequence                        = logs.blocktrials(trial).sequence; % extract tish trial sequence of draws
-            
-             % maybe here add this trial's responses. Given that I was not saving within sequence resposes but we need that info for
-            % the model, I will create a nx3 matrix of choices for each sequence, when n=number of draws and 3=choice options (b,g,d)
-            t                               = nan(draws(indx), respoptions); % init empty matrix
-            
-            for d = 1:draws(indx)
-                if d ~= draws(indx) % if this is not the last draw add 0's to b and g columns and 1 to draw column
-                    t(d,1:2)                = 0; % index zero for b and g columns
-                    t(d,3)                  = 1; % index one for draw column
-                else
-                    if urntype(indx) == 1 & accuracy(indx) == 1 % this is a blue urn and sub was correct
-                        t(d,2:3)            = 0; % index zero for g and draw columns
-                        t(d,1)              = 1; % index one for b column (sub ressed blue)
-                    elseif urntype(indx) == 1 & accuracy(indx) == 0 % this is a blue urn and sub was incorrect or did not respond
-                        t(d,1)              = 0; % index zero for b 
-                        t(d,2)              = 1; % index one for g column
-                        t(d,3)              = 0; % index zero for draw 
-                    elseif urntype(indx) == 0 & accuracy(indx) == 1 % this is a green urn and sub was correct
-                        t(d,1)              = 0; % index zero for b 
-                        t(d,2)              = 1; % index one for g column
-                        t(d,3)              = 0; % index zero for s 
-                    elseif urntype(indx) == 0 & accuracy(indx) == 0 % this is a green urn and sub was incorrect or did not respond
-                        t(d,2:3)            = 0; % index zero for g and draw columns
-                        t(d,1)              = 1; % index one for b column            
-                    end
-                end % end of if statement
-            end % end of draws loop
-            
-            % add thistrial sequence and choive vector t in correct cell
-            % based on condition
-            if condition(indx) == 1 
-                allsequences{1,subI}{1,condition(indx)}{1,co}       = sequence;
-                allchoicevectors{1,subI}{1,condition(indx)}{1,co}   = t;
-                
-                co                                                  = co+1; % update co
-            else 
-                allsequences{1,subI}{1,condition(indx)}{1,ct}       = sequence;
-                allchoicevectors{1,subI}{1,condition(indx)}{1,ct}   = t;
-                
-                ct                                                  = ct+1; % update co
-            end
-            
-            clear t sequence    
-
-        end % end of trial loop  
-    end % end of block loop
-    
-    % add data in one matrix
-    all_data = [subj' block' trialno' urntype' draws' response' accuracy' condition' generaltrl'];
-    
-    allsub_alldata{1,subI} = all_data;
+    % store in cell for each participant
+    allsub_alldata{1,subI}                  = all_data;
+    allsub_sequences{1,subI}                = subsequences;
+    allsub_choiceVec{1,subI}                = subchoiceVec;
     
     %% SPLIT SUB DATA INTO CONDITIONS
     
@@ -224,7 +142,7 @@ for subI = 1:nsubs
     R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
     R.correct           = 10;           % reward for being correct
     R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
-    R.sample            = -0.25;            % the cost to sample
+    R.sample            = -0.25;        % the cost to sample
     
     for cond = 1:conditions
         
@@ -270,46 +188,4 @@ for subI = 1:nsubs
     
     clear R r Qsat
     
-    %% RUN MODEL FITTING %%
-%     % first add model fitting to the path
-%     addpath(genpath(modelfitpath));
-%     
-%     % define parameters of the ideal observer
-%     R.alpha             = 0.13;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
-%     R.error             = -10;          % cost for being wrong
-%     R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
-%     R.correct           = 10;           % reward for being correct
-%     R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
-%     R.sample            = -0.25;            % the cost to sample
-%     
-%     for cond = 1:conditions
-%         
-%         % extract subject choice data, sequences
-%         thisub_choices       = allchoicevectors{1,subI}{1,cond};
-%         thisub_seq           = allsequences{1,subI}{1,cond};
-%         cond_matrix          = cond_data{1,subI}{1,cond};
-%        
-%         % extract urn types form data matrix
-%         info.urntypes        = cond_matrix(:,4);
-%         info.condtrials      = totaltrials/conditions;
-%         info.numdraws        = cond_matrix(:,5);
-%         % Cs                   = -0.25;   
-%         
-%         % what is the probability of this cond? 
-%         if cond == 1
-%             thisq = R.q(1);
-%         else 
-%             thisq = R.q(2);
-%         end
-%         
-%         R.thisq = thisq;
-%         
-%         
-%         
-%         
-%     end % end of conditions loop
-    
-    
 end % end of subject loop
-
-
