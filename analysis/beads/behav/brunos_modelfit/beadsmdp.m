@@ -14,11 +14,6 @@ for trial = 1 : Ntrials
     
     trialDraws                  = thisub_seq{1,trial};
     
-    % convert twos in the sequence to zeros (otherwise calculation of majority 
-    % bead colour will be wrong - see backwardUtility.m)
-    seq_twos                    = find(trialDraws == 2);
-    trialDraws(seq_twos)        = 0; 
-     
     nDraws                      = length(trialDraws);
     
     R.sample                    = params(1);

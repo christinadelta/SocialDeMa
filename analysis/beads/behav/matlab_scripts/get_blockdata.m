@@ -1,4 +1,4 @@
-function [subsequences,subchoiceVec,all_data] = get_blockdata(subdir,blocks,blocktrials,subI,task)
+function [subsequences,subchoiceVec,all_data] = get_blockdata(subdir,subI,task)
 
 % this function runs through beads_prepro_v5.m
 % created in October 2022
@@ -10,6 +10,8 @@ cv              = 1; % this will be used for spliting sequencesin conditions one
 respoptions     = 3; % b,g,s - needed when recovering choiceVecs
 maxdraws        = 10;
 session         = 1;
+blocktrials     = 13;
+blocks          = 4;
 
 for blockI = 1:blocks
     

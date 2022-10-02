@@ -1,7 +1,7 @@
-function [reward, Qsat] = backWardInduction(thiscond_seq, R)
+function [reward, Qsat] = backWardInduction(thiscond_seqmat, R)
 
 % how many trials per conditon?
-Ntrials         = size(thiscond_seq,2);
+Ntrials         = size(thiscond_seqmat,1);
 maxDraws        = 10;
 
 K               = 3; % choice options
@@ -13,13 +13,13 @@ Qsat            = zeros(Ntrials, maxDraws, K);
 parfor trial = 1 : Ntrials
     
     Qsad            = zeros(maxDraws, K); % action values for this sequence will be stored here
-    drawSequence    = thiscond_seq{1,trial};
+    drawSequence    = thiscond_seqmat(trial,:);
     
-    % convert twos in the sequence to zeros (otherwise calculation of majority bead colour will be wrong - see backwardUtility.m)
-    seq_ones = find(drawSequence == 1);
-    seq_twos = find(drawSequence == 2);
-    drawSequence(seq_twos) = 0; 
-    
+%     % convert twos in the sequence to zeros (otherwise calculation of majority bead colour will be wrong - see backwardUtility.m)
+%     seq_ones = find(drawSequence == 1);
+%     seq_twos = find(drawSequence == 2);
+%     drawSequence(seq_twos) = 0; 
+%     
     for draw = 1 : maxDraws
                    
         Qsad(draw, :) = backWardUtility(drawSequence, draw, maxDraws, R);
