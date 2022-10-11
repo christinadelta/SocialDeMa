@@ -29,25 +29,48 @@ mkdir -p $erpc$"diffEasy" $erpc$"urnDraw" $erpc$"inter" $erpc$"urns" $erpc$"draw
 mkdir -p $tfrc$"diffEasy" $tfrc$"urnDraw" $tfrc$"inter" $tfrc$"urns" $tfrc$"draws"
 
 # loop over subjects and start moving and renaming the contrast images
-for i in {1..2}
+for i in {1..1}
 do # go to this_sub dir grab the image files from the folder and store them in the corresponding constrast folder
-
-  # 1. first go to the erp contrats and then to tfr contrasts
-  # 1.a difficult vs easy contrast images
-  # 1.b urn vs darw contrast images
-  # 1.c interaction images
-  # 1.d urns images
-  # 1.e draws images
-
+# 1. first go to the erp contrats and then to tfr contrasts
   # if subject num is smaller than 10 add a decimal
   if (( ${i} < 10 )); then
     subout=$outputdir$"sub-0${i}/"
-    tmp="sub-0${i}"
+    tmp="sub_0${i}_" # grab subject number
 
   else
     subout=$outputdir$"sub-${i}/"
-    tmp="sub-${i}"
+    tmp="sub_${i}_"
   fi # end of if statement
-
+  # test that you are in the correct dir and with the correct sub number
+  echo $subout
   echo $tmp
+
+  # first move and rename (add sub number) the erp contrast images
+  tmpdir=$subout$"wde_maceerpfdfMspmeeg_${tmp}beads_block_01" # diff vs easy contrast dir
+  tmpdir2=$subout$"wud_maceerpfdfMspmeeg_${tmp}beads_block_01" # urn vs draw contrast dir
+  tmpdir3=$subout$"wi_maceerpfdfMspmeeg_${tmp}beads_block_01" # uinteraction contrast dir
+  tmpdir4=$subout$"wu_maceerpfdfMspmeeg_${tmp}beads_block_01" # urns contrast dir
+  tmpdir5=$subout$"wd_maceerpfdfMspmeeg_${tmp}beads_block_01" # draws contrast dir
+
+  # where to move?
+  mv $tmpdir$"/condition_DiffVsEasy.nii" $erpc$"diffEasy/${tmp}condition_diffeasy.nii" # diff vs easy
+  mv $tmpdir2$"/condition_urnVSdraw.nii" $erpc$"urnDraw/${tmp}condition_urndraw.nii" # urns vs draws
+  mv $tmpdir3$"/condition_interaction.nii" $erpc$"inter/${tmp}condition_interaction.nii" # interaction
+  mv $tmpdir4$"/condition_onlyurn.nii" $erpc$"urns/${tmp}condition_onlyurn.nii" # only urns
+  mv $tmpdir5$"/condition_onlydraw.nii" $erpc$"draws/${tmp}condition_onlydraw.nii" # only draws
+
+  # second move and rename (add sub number) the tfr contrast images
+  tmpdir=$subout$"wde_mPrtf_cetfrfdfMspmeeg_${tmp}beads_block_01" # diff vs easy contrast dir
+  tmpdir2=$subout$"wud_mPrtf_cetfrfdfMspmeeg_${tmp}beads_block_01" # urn vs draw contrast dir
+  tmpdir3=$subout$"wi_mPrtf_cetfrfdfMspmeeg_${tmp}beads_block_01" # uinteraction contrast dir
+  tmpdir4=$subout$"wu_mPrtf_cetfrfdfMspmeeg_${tmp}beads_block_01" # urns contrast dir
+  tmpdir5=$subout$"wd_mPrtf_cetfrfdfMspmeeg_${tmp}beads_block_01" # draws contrast dir
+
+  # where to move?
+  mv $tmpdir$"/condition_DiffVsEasy.nii" $tfrc$"diffEasy/${tmp}condition_diffeasy.nii" # diff vs easy
+  mv $tmpdir2$"/condition_urnVSdraw.nii" $tfrc$"urnDraw/${tmp}condition_urndraw.nii" # urns vs draws
+  mv $tmpdir3$"/condition_interaction.nii" $tfrc$"inter/${tmp}condition_interaction.nii" # interaction
+  mv $tmpdir4$"/condition_onlyurn.nii" $tfrc$"urns/${tmp}condition_onlyurn.nii" # only urns
+  mv $tmpdir5$"/condition_onlydraw.nii" $tfrc$"draws/${tmp}condition_onlydraw.nii" # only draws
+
 done # end of for loop
