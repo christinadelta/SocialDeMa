@@ -28,7 +28,8 @@ if numDraws + 1 <= lseq
     val10   = vVal_io(q, numDraws+1, numGreen, alpha, lseq, Cw,Cc,Cs);
     
     % action value is cost to sample plus expected value of future state
-    QS      = Cs + pg * (val11 * q + val10 * (1 - q)) + pb * (val11 * (1 - q) + val10 * q);
+    QS      = Cs + pg * (val11 * q + val10 * (1 - q)) +...
+        pb * (val11 * (1 - q) + val10 * q);
     
     % arrange action values for the three options into a vector 
     Qvec    = [QG; QB; QS];

@@ -1,6 +1,6 @@
-function Qsa = actionValueBeads(utility, R, nd, ng, drawi, maxDraws)
+function Qsa = actionValueBeads_b(utility, R, nd, ng, drawi, maxDraws)
 
-pg = PG(R.thisq, nd, ng);
+pg = PG_b(R.thisq, nd, ng);
 
 pb = 1 - pg;
 
@@ -19,5 +19,3 @@ else
 end
 
 Qsa = [QG; QB; QD];
-
-return

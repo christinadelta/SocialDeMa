@@ -1,6 +1,6 @@
-function [mparams, lla, aQvec] = bayesbeads(thiscond_seqmat, thiscond_choiceVec, R)
+function [minParams, ll, Qsad, cprob] = bayesbeads_b(thiscond_seqmat, thiscond_choiceVec, R)
 
-% RUN MODEL FITTING USING NICK'S VERSION
+% RUN MODEL FITTING USING BRUNO'S VERSION
 
 % this function calls fminsearch to fit the free parameter cost-to-sample or Cs)
 % inputs: 1) m*k matrix (m= number of sequences, k=number of draws) --> i.e., 26x10
@@ -16,30 +16,26 @@ function [mparams, lla, aQvec] = bayesbeads(thiscond_seqmat, thiscond_choiceVec,
 
 % ------------------------------------------------------------------------------
 
-% unpack free parameter
-params          = R.sample;
+% extract free parameter
+param = R.sample;
 
-% fixed parameters 
-fixedParams     = [R.alpha; R.thisq; R.error; R.correct];
-findPick        = 1;
-
-options         = optimset('MaxFunEvals', 5000, 'TolFun', 0.001);  
+options         = optimset('MaxFunEvals', 5000, 'TolFun', 0.001);
+    
 llaMin          = Inf;
+startParam      = param;
 
-startParam      = params;
-
-[mparams, lla]  = fminsearch(@(params) estimateLikelihood(params, thiscond_seqmat, thiscond_choiceVec, fixedParams, findPick),startParam, options);
+[mparams, lla] = fminsearch(@(param) fitmdp_beadsb(param, R, thiscond_seqmat, thiscond_choiceVec),startParam, options);
 
 if lla < llaMin
-    llaMin      = lla;
-    minParams   = mparams;
+    llaMin = lla;
+    minParams = mparams;
 end
 
 fprintf('ll %.3f\n', lla);
 fprintf('min params %.3f\n', minParams);
 
 
-[ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(minParams, thiscond_seqmat, thiscond_choiceVec, fixedParams, findPick);
+[ll, Qsad, cprob] = fitmdp_beads(minParams, R, thiscond_seqmat, thiscond_choiceVec);
 
 
 return

@@ -2,7 +2,9 @@
 
 % Part of the Optimal Stopping Problems Project
 
-% Last update: 30/09/2022
+% UPDATES:
+% 30/09/2022
+% 12/10/2022
 
 %%% Changes introduced: %%% 
 % trying to run ideal observer using an adapted version of bruno's code
@@ -133,10 +135,11 @@ for subI = 1:nsubs
         
     end
     
-    %% RUN IDEAL OBSERVER - BRUNO'S VERSION%%
+    %% RUN IDEAL OBSERVER - BRUNO'S VERSION & NICK'S VERSION %%
     
     % first add modelpath to the path
     addpath(genpath(biobserverpath));
+    addpath(genpath(iobserverpath));
     
     % define parameters of the ideal observer
     R.alpha             = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
@@ -157,6 +160,8 @@ for subI = 1:nsubs
         
         end
         
+        tmp_seqmat = thiscond_seqmat;
+        
         % what is the probability of this cond? 
         if cond == 1
             thisq = R.q(1);
@@ -181,12 +186,12 @@ for subI = 1:nsubs
         % recode 2s to 0s for backward induction 
         thiscond_seqmat(find(thiscond_seqmat==2))=0;
         
-        % run backward induction
+        % run backward induction (bruno's code)
         [r, Qsat] = backWardInduction(thiscond_seqmat, R);
         
         % store ideal observer output
-        io_output(cond).r       = r;
-        io_output(cond).Qsat    = Qsat;
+        bio_output(cond).r       = r;
+        bio_output(cond).Qsat    = Qsat;
         
         % loop over condition trials to compute choices, picktrials and acc
         for i = 1: totaltrials/2
@@ -204,25 +209,55 @@ for subI = 1:nsubs
         
         % for each subject model instance and condition, calculate acc and
         % draws
-        allsub_ioacc(subI,cond)     = mean(choice);
-        allsubs_iodraws(subI,cond)  = mean(pickTrial);  
-        allsubs_iopoints(subI,cond) = (sum(choice==1)*R.correct) + (sum(choice==0)*R.error) + (sum(pickTrial)*R.sample);
-    
-        clear R r Qsat thiscond_data thiscond_seq thiscond_seqmat choice pickTrial urntype
+        allsub_bioacc(subI,cond)     = mean(choice);
+        allsubs_biodraws(subI,cond)  = mean(pickTrial);  
+        allsubs_biopoints(subI,cond) = (sum(choice==1)*R.correct) + (sum(choice==0)*R.error) + (sum(pickTrial)*R.sample);
+        
+        % run estimateLikelihoodf (Nick's code)
+        [ll, picktrl, dQvec, ddec, aQvec choices] = estimateLikelihoodf_io(thiscond_seqmat,R);
+        
+        io_output(cond).aQvec       = aQvec;
+        io_output(cond).picktrl     = picktrl;
+        
+        for tr = 1:totaltrials/2 
+            
+            if (choices(tr) == 1 & urntype(tr) == 1) | (choices(tr)== 2 & urntype(tr) == 0)
+                allchoices(tr) = 1;
+            else
+                allchoices(tr) = 0;
+            end  
+        end
+        
+        % store all io outpus
+        allsub_ioacc(subI,cond)     = mean(allchoices==1);
+        allsubs_iodraws(subI,cond)  = mean(picktrl);  
+        allsubs_iopoints(subI,cond) = (sum(allchoices==1)*R.correct) + (sum(allchoices==0)*R.error) + (sum(picktrl)*R.sample);
+ 
+        clear r Qsat thiscond_data thiscond_seq thiscond_seqmat choice pickTrial urntype
         
     end % end of condition loop
     
+    % clear workspace 
+    clear R cond cond_acc cond_draws urntype 
+    
     % save this_sub ideal observer output
-    allsubs_io{1,subI}              = io_output;
+    allsubs_bio{1,subI}                 = bio_output; % bruno's io output
+    allsubs_io{1,subI}                  = io_output; % Nick's io output
     
     
     %% RUN MODEL FITTING %%
     
+    % for now (and for diagnostic purposes), will fit data using a) Nick's
+    % model_fitting code and b) Bruno's code (will adapt it).
+    % later on, we'll see which one will be used. I use Nick's model
+    % fitting method to adapt it to Bruno's backwardInduction code
+    
     % first add model fitting to the path
     addpath(genpath(bmodelfitpath));
+    addpath(genpath(modelfitpath));
     
     % define parameters of the ideal observer
-    R.alpha             = 0.13;         % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
+    R.alpha             = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
     R.error             = -10;          % cost for being wrong
     R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
     R.correct           = 10;           % reward for being correct
@@ -231,8 +266,9 @@ for subI = 1:nsubs
     
     for cond = 1:conditions
         
-        thiscond_data    = cond_data{1,subI}{1,cond};
-        thiscond_seq     = subsequences{1,cond};
+        thiscond_data       = cond_data{1,subI}{1,cond};
+        thiscond_seq        = subsequences{1,cond};
+        thiscond_choiceVec  = subchoiceVec{1,cond};
         
         % what is the probability of this cond? 
         if cond == 1
@@ -245,8 +281,6 @@ for subI = 1:nsubs
         
         % what is the urntype?
         urntype = thiscond_data(:,4);
-        
-        thiscond_choiceVes = subchoiceVec{1,cond};
         
         % extract sequences from cell and store in matrix (26x10)
         for i = 1:size(thiscond_seq,2)
@@ -268,27 +302,21 @@ for subI = 1:nsubs
         % recode 2s to 0s for backward induction 
         thiscond_seqmat(find(thiscond_seqmat==2))=0;
         
+        % fit free parameter using Nick's version of the model
+        [mparams, lla, aQvec]           = bayesbeads(thiscond_seqmat, thiscond_choiceVec, R);
         
+        % store model-fitting output
+        allsubs_params_mn(subI,cond)    = mparams;
+        allsubs_lla_mn(subI,cond)       = lla;
+        allsubs_AQs_mn{1,subI}          = aQvec;
         
+        % fit free parameter using Bruno's version of the model
+        [minParams, ll, Qsad, cprob]    = bayesbeads_b(thiscond_seqmat, thiscond_choiceVec, R);
+        
+        allsubs_params_mb(subI,cond)    = minParams;
+        allsubs_ll_mb(subI,cond)        = ll;
+        allsubs_AQs_mb{1,subI}          = Qsad;
 
-
-        
-        
-        
-        
-        
-        
-        
-        
     end % end of condition loop
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+       
 end % end of subject loop

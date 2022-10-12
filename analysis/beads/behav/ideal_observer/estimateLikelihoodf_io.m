@@ -1,15 +1,22 @@
-function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf_io(alpha,Cw,Cc,thisq,Cs,thiscond_seq, aqvec_switch)
+function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf_io(thiscond_seqmat, R)
 
 % this will be used for stopping at optimal draws (position)
 findPick            = 1; 
-ntrials             = size(thiscond_seq, 2);    % number of trials/sequences
-logLikelihood       = 0;                        % initialise likelihood log to zero  
+ntrials             = size(thiscond_seqmat, 1);    % number of trials/sequences
+logLikelihood       = 0;                           % initialise likelihood log to zero  
+
+% unpack the R struct
+alpha               = R.alpha;
+Cs                  = R.sample;
+Cw                  = R.error;
+Cc                  = R.correct;
+q                   = R.thisq;
 
 % loop over condition sequences (26)
 for trl = 1:ntrials
     
     % extract this trial's sequence
-    thisequence = thiscond_seq{1,trl};
+    thisequence = thiscond_seqmat(trl,:);
     
     % number of choices for this sequence
     lseq                = length(thisequence);
@@ -35,7 +42,7 @@ for trl = 1:ntrials
         % compute action values for each new draw (in current sequence)
         % until action value for one of the two urns exceeds action value
         % for drawing again. 
-        [v, d, Qvec]    = Val_io(thisq, numDraws, numGreen, alpha, lseq, Cw,Cc, Cs);
+        [v, d, Qvec]    = Val_io(q, numDraws, numGreen, alpha, lseq, Cw,Cc, Cs);
         
         % append action values of the current sequence to dQvec
         dQvec(draw, 1:length(Qvec))         = Qvec;

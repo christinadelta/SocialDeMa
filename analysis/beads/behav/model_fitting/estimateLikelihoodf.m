@@ -1,22 +1,17 @@
-function [ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(params, sequence, setData, fixedParams, findPick, urntype)
+function [ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(params, sequence, setData, fixedParams, findPick)
 
 %%% extract free parameters 
 % Cw = params(1);
 Cs      = params(1);
-% comment this out when running through beads preprocessing script
-% setData = choiceVec;
 
 % extract fixed parameters
 alpha   = fixedParams(1);
 q       = fixedParams(2);
 Cw      = fixedParams(3);
 Cc      = fixedParams(4);
-Cd      = fixedParams(5);
-cond    = fixedParams(6);
-% Cs = fixedParams(3);
 
 %%% number of sequences
-nblocks = size(setData, 2);
+nblocks = size(sequence, 1);
 
 %%% intialize log likelihood to zero
 ll = 0;
@@ -24,41 +19,27 @@ ll = 0;
 for block = 1 : nblocks % blocks are the number of sequences per condition (26)
     
     % extract this sequence
-    this_seq = sequence{block};
+    this_seq    = sequence(block,:);
     
     %%% choices of subject for this sequence of draws
-    choiceVec = setData{block};
+    choiceVec   = setData{1,block};
     
     %%% length of sequence
-    lseq    = size(this_seq, 2);
+    lseq        = size(this_seq, 2);
 
     %%% number of choices for this sequence
-    nchoices = size(choiceVec, 1);
-    
-    %%% NEED TO ASK NICK ABOUT THIS
-    % now, i'm not sure if this part is needed but, if this is a green type
-    % sequence, swipe the codes (in the sequence)
-    if urntype(block) == 0
-        seq_ones            = find(this_seq == 1);
-        seq_twos            = find(this_seq == 2);
-        this_seq(seq_ones)  = 2;
-        this_seq(seq_twos)  = 1;
-    end
+    nchoices    = size(choiceVec, 1);
 
     %%% initially nd (draws) == 0 and ng (green marbles) == 0
-    ng = 0;
-    nd = 0;
+    ng          = 0;
+    nd          = 0;
     
     %%% Qvec is values of each action
-    dQvec = [];
+    dQvec       = [];
     
     %%% corresponding probabilities generated with softmax and alpha
-    ddec  = []; 
+    ddec        = []; 
         
-%     if isempty(find( mean( choiceVec') == 0 )) == 0; 
-%         disp(sprintf('missing response skipping sequence %d for this type', block)); continue; 
-%     end;
-
     %%% loop over draws for this sequence of draws
     for draw = 1 : nchoices
 
@@ -71,7 +52,7 @@ for block = 1 : nblocks % blocks are the number of sequences per condition (26)
         nd = nd + 1;
 
         %%% compute values of each action
-        [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cc,Cd, Cs);
+        [v, d, Qvec] = Val(q, nd, ng, alpha, lseq, Cw, Cc, Cs);
         
         %%% keep track of values across sequnce of draws
         dQvec(draw, 1:length(Qvec)) = Qvec;
@@ -109,13 +90,7 @@ for block = 1 : nblocks % blocks are the number of sequences per condition (26)
         catch
             fprintf('');
         end
-        
-        % fprintf( 'draw: %d ll: %.2f', nd, ll);
-        
-        % save all ll's to take a look at them 
-%         all_ll{1,block}(draw,1) = ll;
-        
-
+   
     end
     
 %     subplot(2,2,block);
