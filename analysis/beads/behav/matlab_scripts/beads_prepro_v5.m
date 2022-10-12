@@ -320,3 +320,40 @@ for subI = 1:nsubs
     end % end of condition loop
        
 end % end of subject loop
+
+%% RUN BEHAV STATISTICS %%
+
+% 1. 2x2 MIXED ANOVA on draws
+% first add all the required data in one matrix 
+subvec              = repmat(1:nsubs,1,4)';                             % create a vector with 4 copies participant number 
+agentvec            = repmat([ones(1,nsubs*2) ones(1,nsubs*2)*2],1,1)'; % create a vector with 2 copies of agent type (indexed as 1=human, 2=io)
+probvec             = repmat([ones(1,nsubs) ones(1,nsubs)*2],1,2)';     % create a vector with 2 copies of probability type (indexed as 1=0.8, 2=0.6)
+
+% % add them all in one matrix for anova
+% anovamat_draws(:,1) = subvec;
+% anovamat_draws(:,2) = humanvec;
+% anovamat_draws(:,3) = probvec;
+
+% create 1 vec with all draws (human, io) 
+drawsmat(:,1)       = easy_avdraws;
+drawsmat(:,2)       = diff_avdraws;
+drawsmat(:,3:4)     = allsubs_biodraws;
+drawsvec            = drawsmat(:);
+
+% create 1 vec with all acc (human, io) 
+accmat(:,1)         = easy_avacc;
+accmat(:,2)         = diff_avacc;
+accmat(:,3:4)       = allsub_bioacc;
+accvec              = accmat(:);
+
+% run mixed 2x2 anova on draws 
+[pvals,~,stats] = anovan(drawsvec, {subvec agentvec probvec}, ... 
+'model','interaction', 'random',1,'varnames',{'subvec' 'agentvec' 'probvec'})
+
+% run mixed 2x2 anova on accuracy 
+[pvals,~,stats] = anovan(accvec, {subvec agentvec probvec}, ... 
+'model','interaction', 'random',1,'varnames',{'subvec' 'agentvec' 'probvec'})
+
+
+
+
