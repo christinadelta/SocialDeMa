@@ -41,7 +41,7 @@ for cond = 1:conds
     R.q = probs(1,cond);
     R.cond = cond;
     
-    options         = optimset('Display','iter','MaxFunEvals', 5000, 'TolFun', 0.001,'PlotFcns', @optimplotfval);
+    options         = optimset('MaxFunEvals', 5000, 'TolFun', 0.001);
     
     llaMin          = Inf;
     startParam      = param;
@@ -54,7 +54,7 @@ for cond = 1:conds
     end
     
     fprintf('ll %.3f\n', lla);
-    fprintf('optimal cost-sample: %.3f\n optimal beta: %.3f\n', minParams);
+    fprintf('optimal cost-sample %.3f\n, optimal ', minParams);
 
     
     [ll, Qsad, cprob] = fitmdp_beads(minParams, R, seq_mat, choiceVec, condraws);

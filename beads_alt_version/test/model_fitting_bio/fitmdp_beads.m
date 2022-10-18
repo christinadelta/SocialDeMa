@@ -1,11 +1,13 @@
 function [ll, Qsad, cprob] = fitmdp_beads(param, R, seq_mat, choiceVec, condraws)
 
 
-beta = 0.13; % not sure if will use that (Nick uses ailpha value of 1)
-alpha = R.alpha;
+% beta = 0.13; % not sure if will use that (Nick uses ailpha value of 1)
+
+% alpha = R.alpha;
 maxDraws = 10; 
 k = 3;
-R.sample = param;
+R.sample = param(1);
+R.beta = param(2);
 
 % get number of trials/sequences 
 ntrials     = max(size(seq_mat));
@@ -26,9 +28,9 @@ for trial = 1:ntrials
 
     for draw = 1:ndraws  
         % run backwardutility
-        Qsad(trial,draw,1:3) = backWardUtility_b(trialdraws,draw,maxDraws,R)'
+        Qsad(trial,draw,1:3) = backWardUtility_b(trialdraws,draw,maxDraws,R)';
         vVec = Qsad(trial,draw,1:3);
-        cprob(trial,draw,:) = exp(beta*vVec)./sum(exp(beta*vVec))
+        cprob(trial,draw,:) = exp(R.beta*vVec)./sum(exp(R.beta*vVec));
      
     end % end of draws loop
     
@@ -48,9 +50,9 @@ for trial = 1:ntrials
     end
 
     if ndraws - 1 > 0 & ndraws < maxDraws
-        ll = ll - sum(log(squeeze(cprob(trial, ndraws-1, k)))) - log(squeeze(cprob(trial, ndraws, seqChoice)))
+        ll = ll - sum(log(squeeze(cprob(trial, ndraws-1, k)))) - log(squeeze(cprob(trial, ndraws, seqChoice)));
     elseif ndraws < maxDraws
-        ll = ll - log(squeeze(cprob(trial, ndraws, seqChoice)))
+        ll = ll - log(squeeze(cprob(trial, ndraws, seqChoice)));
     end % end of if
 
     % llall(trial,cond) = ll;
