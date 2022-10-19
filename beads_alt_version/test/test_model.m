@@ -3,6 +3,10 @@
 clear all
 clc
 
+startpath   = pwd;
+modelfitb   = fullfile(startpath, 'model_fitting_bio');
+addpath(genpath(modelfitb));
+
 % define parameters 
 R.correct   = 10;
 R.error     = -10;

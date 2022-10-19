@@ -4,10 +4,10 @@ function [ll, Qsad, cprob] = fitmdp_beads(param, R, seq_mat, choiceVec, condraws
 % beta = 0.13; % not sure if will use that (Nick uses ailpha value of 1)
 
 % alpha = R.alpha;
-maxDraws = 10; 
-k = 3;
-R.sample = param(1);
-R.beta = param(2);
+maxDraws    = 10; 
+k           = 3;
+R.sample    = param(1);
+R.beta      = param(2);
 
 % get number of trials/sequences 
 ntrials     = max(size(seq_mat));
