@@ -9,17 +9,18 @@ function [minParams, ll, Qsad, cprob] = bayesbeads_b(thiscond_seqmat, thiscond_c
 %         3) R structure with parameters (e.g., cost-correct, cost-error,
 %         cost-to-sample...)
 
-% outputs: 1) mparams is the estimated fitted (free) parameter (in our case
-%          that is cost-to-sample)
-%          2) lla (log likelihood)
+% outputs: 1) mparams is the estimated fitted (free) parameters (in our case
+%          that is cost-to-sample and beta)
+%          2) lla (minimum log likelihood)
 %          3) cell with action values vectors.
 
 % ------------------------------------------------------------------------------
 
 % extract free parameter
-param = R.sample;
+param(1) = R.initsample;
+% param(2) = R.initbeta;
 
-options         = optimset('MaxFunEvals', 5000, 'TolFun', 0.001);
+options         = optimset('Display','iter','MaxFunEvals', 5000, 'TolFun', 0.001,'PlotFcns', @optimplotfval);
     
 llaMin          = Inf;
 startParam      = param;
@@ -31,8 +32,9 @@ if lla < llaMin
     minParams = mparams;
 end
 
-fprintf('ll %.3f\n', lla);
-fprintf('min params %.3f\n', minParams);
+fprintf('min ll: %.3f\n', lla);
+fprintf('optimal cost-sample: %.3f\n ', minParams(1));
+% fprintf('optimal beta: %.3f\n ', minParams(2));
 
 
 [ll, Qsad, cprob] = fitmdp_beads(minParams, R, thiscond_seqmat, thiscond_choiceVec);

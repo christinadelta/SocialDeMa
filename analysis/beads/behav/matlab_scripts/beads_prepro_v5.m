@@ -5,6 +5,7 @@
 % UPDATES:
 % 30/09/2022
 % 12/10/2022
+% 18/10/2022
 
 %%% Changes introduced: %%% 
 % trying to run ideal observer using an adapted version of bruno's code
@@ -36,6 +37,9 @@
 % 5. run ideal observer 
 % 6. average model draws and acc (total and for each condition)
 % 7. run model fiiting 
+
+% TODO:
+% 1) Look at acc of both model-fitting outputs 
 
 
 %% INIT LOAD DATA %%
@@ -144,10 +148,10 @@ for subI = 1:nsubs
     % define parameters of the ideal observer
     R.alpha             = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
     R.error             = -10;          % cost for being wrong
-    R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+%     R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
     R.correct           = 10;           % reward for being correct
     R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
-    R.sample            = -0.25;        % the cost to sample
+    R.sample            = -0.25;            % the cost to sample
     
     for cond = 1:conditions
         
@@ -210,28 +214,21 @@ for subI = 1:nsubs
         % for each subject model instance and condition, calculate acc and
         % draws
         allsub_bioacc(subI,cond)     = mean(choice);
-        allsubs_biodraws(subI,cond)  = mean(pickTrial);  
+        allsubs_biodraws(subI,cond)  = mean(pickTrial); 
         allsubs_biopoints(subI,cond) = (sum(choice==1)*R.correct) + (sum(choice==0)*R.error) + (sum(pickTrial)*R.sample);
         
         % run estimateLikelihoodf (Nick's code)
-        [ll, picktrl, dQvec, ddec, aQvec choices] = estimateLikelihoodf_io(thiscond_seqmat,R);
+        [ll, picktrl, dQvec, ddec, aQvec choices] = estimateLikelihoodf_io(tmp_seqmat,R);
         
         io_output(cond).aQvec       = aQvec;
         io_output(cond).picktrl     = picktrl;
         
-        for tr = 1:totaltrials/2 
-            
-            if (choices(tr) == 1 & urntype(tr) == 1) | (choices(tr)== 2 & urntype(tr) == 0)
-                allchoices(tr) = 1;
-            else
-                allchoices(tr) = 0;
-            end  
-        end
+        choices(find(choices==2))   = 0; % re-code incorrect responses
         
         % store all io outpus
-        allsub_ioacc(subI,cond)     = mean(allchoices==1);
-        allsubs_iodraws(subI,cond)  = mean(picktrl);  
-        allsubs_iopoints(subI,cond) = (sum(allchoices==1)*R.correct) + (sum(allchoices==0)*R.error) + (sum(picktrl)*R.sample);
+        allsub_ioacc(subI,cond)     = mean(choices==1);
+        allsubs_iodraws(subI,cond)  = mean(picktrl); 
+        allsubs_iopoints(subI,cond) = (sum(choices==1)*R.correct) + (sum(choices==0)*R.error) + (sum(picktrl)*R.sample);
  
         clear r Qsat thiscond_data thiscond_seq thiscond_seqmat choice pickTrial urntype
         
@@ -257,12 +254,12 @@ for subI = 1:nsubs
     addpath(genpath(modelfitpath));
     
     % define parameters of the ideal observer
-    R.alpha             = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
+    R.initbeta          = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
     R.error             = -10;          % cost for being wrong
     R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
     R.correct           = 10;           % reward for being correct
     R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
-    R.sample            = -0.25;        % the cost to sample
+    R.initsample        = -0.25;        % the cost to sample
     
     for cond = 1:conditions
         
@@ -278,9 +275,6 @@ for subI = 1:nsubs
         end
         
         R.thisq = thisq;
-        
-        % what is the urntype?
-        urntype = thiscond_data(:,4);
         
         % extract sequences from cell and store in matrix (26x10)
         for i = 1:size(thiscond_seq,2)
@@ -313,13 +307,53 @@ for subI = 1:nsubs
         % fit free parameter using Bruno's version of the model
         [minParams, ll, Qsad, cprob]    = bayesbeads_b(thiscond_seqmat, thiscond_choiceVec, R);
         
-        allsubs_params_mb(subI,cond)    = minParams;
+        allsubs_cs_mb(subI,cond)        = minParams(1);
+%         allsubs_beta_mb(subI,cond)      = minParams(2);
         allsubs_ll_mb(subI,cond)        = ll;
-        allsubs_AQs_mb{1,subI}          = Qsad;
-
+        % allsubs_AQs_mb{1,subI}          = Qsad;
+        
+        % calculate model (fit) draws 
+        for i = 1: totaltrials/2
+            thist = squeeze(Qsad(i,:,:));
+            for k = 1:length(thist)
+                
+                if any(isnan(thist(k,:)), 'all')
+                    break
+                end
+                thisdraw = k;
+            end
+            
+            choicet(i) = thisdraw -1; % to bring the draws back to normal (we don't want to include the last draw-choice)
+            
+            % remove nans from the model AQ/choice vector
+            thist = rmmissing(thist);
+            
+            AQs_mb{1,i}= thist;
+            
+        end  
+        allsubs_draws_mb(subI,cond) = mean(choicet);
+        
+        % store modelfit AQs in cell for both conditions 
+        % this will be used for regressions with EEG data
+        cond_AQs_mb{1,cond}  = AQs_mb;
+        
     end % end of condition loop
+    
+    % store modelfit AQs in cell for all subs
+    allsubs_AQs_mb{1,subI} = cond_AQs_mb;
+    
        
 end % end of subject loop
+
+
+%% PLOT MODEL FIT RESULTS %%
+
+allsub_draws(:,1) = easy_avdraws;
+allsub_draws(:,2) = diff_avdraws;
+
+% make plots
+makePlots(allsubs_beta_mb, allsubs_cs_mb, allsubs_ll_mb, allsub_draws)
+% makePlots(allsubs_cs_mb, allsubs_ll_mb, allsub_draws)
 
 %% RUN BEHAV STATISTICS %%
 
