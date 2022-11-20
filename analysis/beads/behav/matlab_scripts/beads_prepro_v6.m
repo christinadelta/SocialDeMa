@@ -6,10 +6,11 @@
 % 30/09/2022
 % 12/10/2022
 % 18/10/2022
+% 8/11/2022 -- removed the estimatelikelihoodf.m model version (I only run
+% the newest backwardInduction version)
 
 %%% Changes introduced: %%% 
-% trying to run ideal observer using an adapted version of bruno's code
-% trying to fit model using an adapted version of bruno's code
+% running ideal observer and model fitting using the newest model version
 % This version only preprocesses behavioural data and runs the model.
 % Regressions and correlations with the cropped EEG data are performed in
 % beads_analysis_v2.m
@@ -39,8 +40,6 @@
 % 7. run model fiiting 
 
 % TODO:
-% 1) Look at acc of both model-fitting outputs 
-
 
 %% INIT LOAD DATA %%
 
@@ -51,9 +50,7 @@ clc
 % GET PATHS & DEFINE VARIABLES
 % The four next lines (paths) should be changed to your paths 
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
-modelfitpath    = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fitting');
 bmodelfitpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'brunos_modelfit');
-iobserverpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'ideal_observer');
 biobserverpath  = fullfile(startpath, 'analysis', 'beads', 'behav', 'brunos_io');
 resultspath     = fullfile(startpath, 'experiments', 'results');
 croppedpath     = fullfile(startpath, 'analysis', 'beads', 'behav', 'cropped');
@@ -76,6 +73,7 @@ easy_avacc              = nan(nsubs,1);
 diff_avacc              = nan(nsubs,1);
 
 for subI = 1:nsubs
+    
     %% EXTRACT DATA FROM LOG FILES
 
     fprintf('loading beads block data\n')  
@@ -139,11 +137,10 @@ for subI = 1:nsubs
         
     end
     
-    %% RUN IDEAL OBSERVER - BRUNO'S VERSION & NICK'S VERSION %%
+    %% RUN IDEAL OBSERVER %%
     
     % first add modelpath to the path
     addpath(genpath(biobserverpath));
-    addpath(genpath(iobserverpath));
     
     % define parameters of the ideal observer
     R.alpha             = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
@@ -152,20 +149,17 @@ for subI = 1:nsubs
     R.correct           = 10;           % reward for being correct
     R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
     R.sample            = -0.25;            % the cost to sample
-    R.samplen           = -0.025;
     
     for cond = 1:conditions
         
-        thiscond_data    = cond_data{1,subI}{1,cond};
-        thiscond_seq     = subsequences{1,cond};
+        thiscond_data               = cond_data{1,subI}{1,cond};
+        thiscond_seq                = subsequences{1,cond};
         
         % extract sequences from cell and store in matrix (26x10)
         for i = 1:size(thiscond_seq,2)
-            thiscond_seqmat(i,:) = thiscond_seq{1,i};
+            thiscond_seqmat(i,:)    = thiscond_seq{1,i};
         
         end
-        
-        tmp_seqmat = thiscond_seqmat;
         
         % what is the probability of this cond? 
         if cond == 1
@@ -189,14 +183,14 @@ for subI = 1:nsubs
         end
         
         % recode 2s to 0s for backward induction 
-        thiscond_seqmat(find(thiscond_seqmat==2))=0;
+        thiscond_seqmat(find(thiscond_seqmat==2)) = 0;
         
         % run backward induction (bruno's code)
         [r, Qsat] = backWardInduction(thiscond_seqmat, R);
         
         % store ideal observer output
-        bio_output(cond).r       = r;
-        bio_output(cond).Qsat    = Qsat;
+        bio_output(cond).r          = r;
+        bio_output(cond).Qsat       = Qsat;
         
         % loop over condition trials to compute choices, picktrials and acc
         for i = 1: totaltrials/2
@@ -218,41 +212,20 @@ for subI = 1:nsubs
         allsubs_biodraws(subI,cond)  = mean(pickTrial); 
         allsubs_biopoints(subI,cond) = (sum(choice==1)*R.correct) + (sum(choice==0)*R.error) + (sum(pickTrial)*R.sample);
         
-        % run estimateLikelihoodf (Nick's code)
-        [ll, picktrl, dQvec, ddec, aQvec choices] = estimateLikelihoodf_io(tmp_seqmat,R);
-        
-        io_output(cond).aQvec       = aQvec;
-        io_output(cond).picktrl     = picktrl;
-        
-        choices(find(choices==2))   = 0; % re-code incorrect responses
-        
-        % store all io outpus
-        allsub_ioacc(subI,cond)     = mean(choices==1);
-        allsubs_iodraws(subI,cond)  = mean(picktrl); 
-        allsubs_iopoints(subI,cond) = (sum(choices==1)*R.correct) + (sum(choices==0)*R.error) + (sum(picktrl)*R.sample);
- 
         clear r Qsat thiscond_data thiscond_seq thiscond_seqmat choice pickTrial urntype
         
-    end % end of condition loop
+    end % end of conditions loop
     
     % clear workspace 
     clear R cond cond_acc cond_draws urntype 
     
     % save this_sub ideal observer output
     allsubs_bio{1,subI}                 = bio_output; % bruno's io output
-    allsubs_io{1,subI}                  = io_output; % Nick's io output
-    
     
     %% RUN MODEL FITTING %%
     
-    % for now (and for diagnostic purposes), will fit data using a) Nick's
-    % model_fitting code and b) Bruno's code (will adapt it).
-    % later on, we'll see which one will be used. I use Nick's model
-    % fitting method to adapt it to Bruno's backwardInduction code
-    
     % first add model fitting to the path
     addpath(genpath(bmodelfitpath));
-    addpath(genpath(modelfitpath));
     
     % define parameters of the ideal observer
     R.initbeta          = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
@@ -261,7 +234,6 @@ for subI = 1:nsubs
     R.correct           = 10;           % reward for being correct
     R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
     R.initsample        = -0.25;        % the cost to sample
-    R.initsamplen       = -0.025; 
     
     for cond = 1:conditions
         
@@ -298,99 +270,74 @@ for subI = 1:nsubs
         % recode 2s to 0s for backward induction 
         thiscond_seqmat(find(thiscond_seqmat==2))=0;
         
-        % fit free parameter using Nick's version of the model
-        [mparams, lla, aQvec]           = bayesbeads(thiscond_seqmat, thiscond_choiceVec, R);
-        
-        % store model-fitting output
-        allsubs_cs_mn(subI,cond)        = mparams(1);
-        allsubs_beta_mn(subI,cond)      = mparams(2);
-        allsubs_lla_mn(subI,cond)       = lla;
-        allsubs_AQs_mn{1,subI}          = aQvec;
-        
         % fit free parameter using Bruno's version of the model
         [minParams, ll, Qsad, cprob]    = bayesbeads_b(thiscond_seqmat, thiscond_choiceVec, R);
         
         allsubs_cs_mb(subI,cond)        = minParams(1);
         allsubs_beta_mb(subI,cond)      = minParams(2);
         allsubs_ll_mb(subI,cond)        = ll;
-        allsubs_AQs_mb{1,subI}          = Qsad;
+        allsubs_AQs_mb{1,subI}{cond}    = Qsad;
         
-% %         % calculate model (fit) draws 
-% %         for i = 1: totaltrials/2
-% %             thist = squeeze(Qsad(i,:,:));
-% %             for k = 1:length(thist)
-% %                 
-% %                 if any(isnan(thist(k,:)), 'all')
-% %                     break
-% %                 end
-% %                 thisdraw = k;
-% %             end
-% %             
-% %             choicet(i) = thisdraw -1; % to bring the draws back to normal (we don't want to include the last draw-choice)
-% %             
-% %             % remove nans from the model AQ/choice vector
-% %             thist = rmmissing(thist);
-% %             
-% %             AQs_mb{1,i}= thist;
-% %             
-% %         end  
-% %         allsubs_draws_mb(subI,cond) = mean(choicet);
-% %         
-% %         % store modelfit AQs in cell for both conditions 
-% %         % this will be used for regressions with EEG data
-% %         cond_AQs_mb{1,cond}  = AQs_mb;
+        %% CLEAN & STORE MODEL Q VALUES %%
         
-    end % end of condition loop
-    
-    % store modelfit AQs in cell for all subs
-    allsubs_AQs_mb{1,subI} = cond_AQs_mb;
-    
-       
-end % end of subject loop
+        % this will be used for associations between action values and
+        % neural responses
+        for i = 1: totaltrials/2
+            
+            thist                   = squeeze(Qsad(i,:,:));
+            
+            for k = 1:length(thist)
 
+                if any(isnan(thist(k,:)), 'all')
+                    break
+                end
+                thisdraw            = k;
+            end
+
+            % to bring the draws back to normal (we don't want to include the last draw-choice)
+            choicet(i)              = thisdraw -1; % this will be used to compare human vs model fit draws
+            
+            % remove nans from the model AQ/choice vector
+            thist                   = rmmissing(thist);
+            AQs_mb{1,i}             = thist;
+
+        end % end of for loop
+        
+        % store model fit draws and action values
+        modelfit_draws(subI,cond)   = mean(choicet);
+        modelfit_AQs{1,subI}{cond}  = AQs_mb;
+
+        % clear workspace
+        clear thist choicet thisdraw minParams Qsad ll cprob
+    end % end of condition loop  
+    
+end % end of subject loop
 
 %% PLOT MODEL FIT RESULTS %%
 
-allsub_draws(:,1) = easy_avdraws;
-allsub_draws(:,2) = diff_avdraws;
+allsub_draws(:,1)   = easy_avdraws;
+allsub_draws(:,2)   = diff_avdraws;
+allsub_acc(:,1)     = easy_avacc;
+allsub_acc(:,2)     = diff_avacc;
 
 % make plots
 makePlots(allsubs_beta_mb, allsubs_cs_mb, allsubs_ll_mb, allsub_draws)
 % makePlots(allsubs_cs_mb, allsubs_ll_mb, allsub_draws)
 
-%% RUN BEHAV STATISTICS %%
+%% SAVE NEEDED FILES FOR ANALYSES %%
 
-% 1. 2x2 MIXED ANOVA on draws
-% first add all the required data in one matrix 
-subvec              = repmat(1:nsubs,1,4)';                             % create a vector with 4 copies participant number 
-agentvec            = repmat([ones(1,nsubs*2) ones(1,nsubs*2)*2],1,1)'; % create a vector with 2 copies of agent type (indexed as 1=human, 2=io)
-probvec             = repmat([ones(1,nsubs) ones(1,nsubs)*2],1,2)';     % create a vector with 2 copies of probability type (indexed as 1=0.8, 2=0.6)
+% save files that needed for statistical analyses
+save workspace
+save('sub_data', 'allsub_draws','allsub_acc', 'allsubs_biodraws', 'allsub_bioacc') % save subject and io outputs
+save('mf_data', 'modelfit_AQs', 'modelfit_draws', 'allsubs_cs_mb', 'allsubs_beta_mb', 'allsubs_ll_mb')
 
-% % add them all in one matrix for anova
-% anovamat_draws(:,1) = subvec;
-% anovamat_draws(:,2) = humanvec;
-% anovamat_draws(:,3) = probvec;
+% lastly extract number of draws per subject 
+for sub =  1:nsubs
+    
+    subtemp         = allsub_alldata{1,sub};
+    subtotal(sub)   = sum(subtemp(:,5)+1); % +1 to account for last draw (which is the urn choice)
+    
+end
 
-% create 1 vec with all draws (human, io) 
-drawsmat(:,1)       = easy_avdraws;
-drawsmat(:,2)       = diff_avdraws;
-drawsmat(:,3:4)     = allsubs_biodraws;
-drawsvec            = drawsmat(:);
-
-% create 1 vec with all acc (human, io) 
-accmat(:,1)         = easy_avacc;
-accmat(:,2)         = diff_avacc;
-accmat(:,3:4)       = allsub_bioacc;
-accvec              = accmat(:);
-
-% run mixed 2x2 anova on draws 
-[pvals,~,stats] = anovan(drawsvec, {subvec agentvec probvec}, ... 
-'model','interaction', 'random',1,'varnames',{'subvec' 'agentvec' 'probvec'})
-
-% run mixed 2x2 anova on accuracy 
-[pvals,~,stats] = anovan(accvec, {subvec agentvec probvec}, ... 
-'model','interaction', 'random',1,'varnames',{'subvec' 'agentvec' 'probvec'})
-
-
-
-
+% transpose subtotal and save
+subtotal            = subtotal'; save('subtotal','subtotal', 'cond_data', 'allsub_alldata');
