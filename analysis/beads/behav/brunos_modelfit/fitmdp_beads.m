@@ -3,8 +3,8 @@ function [ll, Qsad, cprob] = fitmdp_beads(param, R, thiscond_seqmat, thiscond_ch
 maxDraws    = size(thiscond_seqmat,2); 
 k           = 3;
 R.sample    = param(1);
-%beta        = param(2); % 
-beta        = R.initbeta; %
+beta        = param(2); % 
+% beta        = R.initbeta; %
 
 % get number of trials/sequences 
 ntrials     = max(size(thiscond_seqmat));
