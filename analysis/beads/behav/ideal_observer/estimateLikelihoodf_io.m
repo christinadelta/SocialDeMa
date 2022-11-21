@@ -1,8 +1,8 @@
 function [logLikelihood, pickTrial, dQvec, ddec, aQvec, choice] = estimateLikelihoodf_io(thiscond_seqmat, R)
 
 % this will be used for stopping at optimal draws (position)
-findPick            = 1; 
-ntrials             = size(thiscond_seqmat, 1);    % number of trials/sequences
+findPick            = 1;
+ntrials             = size(thiscond_seqmat, 1);   % number of trials/sequences
 logLikelihood       = 0;                           % initialise likelihood log to zero  
 
 % unpack the R struct

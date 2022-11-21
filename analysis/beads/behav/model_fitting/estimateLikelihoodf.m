@@ -3,12 +3,12 @@ function [ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(params, seque
 %%% extract free parameters 
 % Cw = params(1);
 Cs      = params(1);
+alpha   = params(2); % for softmax stochasticity (behavioural noise)
 
 % extract fixed parameters
-alpha   = fixedParams(1);
-q       = fixedParams(2);
-Cw      = fixedParams(3);
-Cc      = fixedParams(4);
+q       = fixedParams(1);
+Cw      = fixedParams(2);
+Cc      = fixedParams(3);
 
 %%% number of sequences
 nblocks = size(sequence, 1);

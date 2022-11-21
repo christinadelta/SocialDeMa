@@ -16,14 +16,16 @@ function [mparams, lla, aQvec] = bayesbeads(thiscond_seqmat, thiscond_choiceVec,
 
 % ------------------------------------------------------------------------------
 
-% unpack free parameter
-params          = R.sample;
+% unpack free parameters
+params(1)          = R.initsample;
+params(2)           = R.initbeta;
 
 % fixed parameters 
-fixedParams     = [R.alpha; R.thisq; R.error; R.correct];
+fixedParams     = [R.thisq; R.error; R.correct];
 findPick        = 1;
 
-options         = optimset('MaxFunEvals', 5000, 'TolFun', 0.001);  
+% options         = optimset('Display','iter','MaxFunEvals', 5000, 'TolFun', 0.001,'PlotFcns', @optimplotfval);
+options         = optimset('MaxFunEvals', 5000, 'TolFun', 0.001); % the above is slow
 llaMin          = Inf;
 
 startParam      = params;
@@ -35,8 +37,9 @@ if lla < llaMin
     minParams   = mparams;
 end
 
-fprintf('ll %.3f\n', lla);
-fprintf('min params %.3f\n', minParams);
+fprintf('ll: %.3f\n', lla);
+fprintf('min cost-sample: %.3f\n', minParams(1));
+fprintf('optimal beta: %.3f\n ', minParams(2));
 
 
 [ll, pickTrial, dQvec, ddec, aQvec] = estimateLikelihoodf(minParams, thiscond_seqmat, thiscond_choiceVec, fixedParams, findPick);

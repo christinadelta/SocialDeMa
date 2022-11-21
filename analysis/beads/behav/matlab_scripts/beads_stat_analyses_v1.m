@@ -71,7 +71,8 @@ for sub = 1:nsubs
     sub_modelQs = modelfit_AQs{1,sub};
     
     % load subject-specific cropped MEEG file
-    sub_eeg     = load(fullfile(eeg_path, sprintf('cropped_data_sub_%02d.mat', sub)));
+    % sub_eeg     = load(fullfile(eeg_path, sprintf('cropped_data_sub_%02d.mat', sub)));
+    sub_eeg     = load(fullfile(eeg_path, sprintf('tfrcropped_data_sub_%02d.mat', sub)));
     subdraw     = subtotal(sub);
     
     % run function to separate the "channels x samples x epochs" data based

@@ -7,9 +7,9 @@ library(ggpubr)
 #                             header=FALSE)
 
 
-all_agent_draws = read_excel("Desktop/figures_beads/all_agent_draws.xls")
+all_agent_draws = read_excel("Desktop/rhul_related_stuff/optimal_stopping_problems/figures_beads/all_agent_draws.xls")
 
-all_agent_acc = read_excel("Desktop/figures_beads/all_agent_acc.xls")
+all_agent_acc = read_excel("Desktop/rhul_related_stuff/optimal_stopping_problems/figures_beads/all_agent_acc.xls")
 
 model_fitting_cs = read_excel("Desktop/figures_beads/model_fitting_cs.xlsx")
 model_fitting_ll = read_excel("Desktop/figures_beads/model_fitting_ll.xlsx")
