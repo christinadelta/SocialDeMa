@@ -2,9 +2,15 @@ function [ll, Qsad, cprob] = fitmdp_beads(param, R, thiscond_seqmat, thiscond_ch
 
 maxDraws    = size(thiscond_seqmat,2); 
 k           = 3;
-R.sample    = param(1);
-beta        = param(2); % 
-% beta        = R.initbeta; %
+
+% how many free parameters are used to find minimal -ll?
+if R.freepars == 2
+    R.sample    = param(1);
+    beta        = param(2); % softmax beta parameter is one of the free params
+else
+    R.sample    = param;
+    beta        = R.initbeta; %
+end
 
 % get number of trials/sequences 
 ntrials     = max(size(thiscond_seqmat));
@@ -30,7 +36,7 @@ for trial = 1:ntrials
         % run backwardutility
         Qsad(trial,draw,1:3)    = backWardUtility_b(trialdraws,draw,maxDraws,R)';
         vVec                    = Qsad(trial,draw,1:3);
-        cprob(trial,draw,:)     = exp(beta*vVec)./sum(exp(beta*vVec));
+        cprob(trial,draw,:)     = exp(beta*vVec)./sum(exp(beta*vVec)); % softmax to convert action values to probabiltiies of these actions
      
     end % end of draws loop
     

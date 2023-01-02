@@ -16,9 +16,17 @@ function [minParams, ll, Qsad, cprob] = bayesbeads_b(thiscond_seqmat, thiscond_c
 
 % ------------------------------------------------------------------------------
 
-% extract free parameter
-param(1) = R.initsample;
-param(2) = R.initbeta;
+% how many free parameters?
+fparams     = R.freepars;
+
+if fparams == 2
+    % extract free parameter
+    param(1) = R.initsample;
+    param(2) = R.initbeta;
+
+else
+    param = R.initsample; 
+end
 
 % options         = optimset('Display','iter','MaxFunEvals', 5000, 'TolFun', 0.001,'PlotFcns', @optimplotfval);
 options         = optimset('MaxFunEvals', 5000, 'TolFun', 0.001); % the above is slow
@@ -33,9 +41,14 @@ if lla < llaMin
     minParams = mparams;
 end
 
-fprintf('min ll: %.3f\n', lla);
-fprintf('optimal cost-sample: %.3f\n ', minParams(1));
-fprintf('optimal beta: %.3f\n ', minParams(2));
+if fparams == 2
+    fprintf('min ll: %.3f\n', lla);
+    fprintf('optimal cost-sample: %.3f\n ', minParams(1));
+    fprintf('optimal beta: %.3f\n ', minParams(2));
+else
+    fprintf('min ll: %.3f\n', lla);
+    fprintf('optimal cost-sample: %.3f\n ', minParams);
+end
 
 
 [ll, Qsad, cprob] = fitmdp_beads(minParams, R, thiscond_seqmat, thiscond_choiceVec);

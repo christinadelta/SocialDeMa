@@ -1,4 +1,4 @@
-function [subsequences,subchoiceVec,all_data] = get_blockdata(subdir,subI,task)
+function [subsequences,subchoiceVec,all_data, draws_index] = get_blockdata(subdir,subI,task)
 
 % this function runs through beads_prepro_v5.m
 % created in October 2022
@@ -12,6 +12,8 @@ maxdraws        = 10;
 session         = 1;
 blocktrials     = 13;
 blocks          = 4;
+count           = 0;
+s               = 0;
 
 for blockI = 1:blocks
     
@@ -23,6 +25,7 @@ for blockI = 1:blocks
     for trial = 1:blocktrials
         
         indx                            = ((blockI -1)*blocktrials) + trial; 
+        s                               = s + 1
 
         block(indx)                     = blockI;
         trialno(indx)                   = logs.blocktrials(trial).trialnumber;
@@ -51,6 +54,10 @@ for blockI = 1:blocks
         t                               = nan(draws_choice, respoptions); % init empty matrix
         
         for d = 1:draws_choice
+            
+            count                       = count + 1
+            draws_index(count,1)        = d;
+            draws_index(count,2)        = s;
             if d ~= draws_choice % if this is not the last draw add 0's to b and g columns and 1 to draw column
                 t(d,1:2)                = 0; % index zero for b and g columns
                 t(d,3)                  = 1; % index one for draw column

@@ -8,12 +8,17 @@
 % 18/10/2022
 % 8/11/2022 -- removed the estimatelikelihoodf.m model version (I only run
 % the newest backwardInduction version)
+% 15/12/2022
 
 %%% Changes introduced: %%% 
 % running ideal observer and model fitting using the newest model version
 % This version only preprocesses behavioural data and runs the model.
 % Regressions and correlations with the cropped EEG data are performed in
 % beads_analysis_v2.m
+
+%%% latest changes (15/12):
+% run diagncostics on model fitting 
+% run
 
 %% IMPORTANT NOTE %%
 
@@ -82,12 +87,13 @@ for subI = 1:nsubs
     fprintf('\t reading data from subject %d\n',subI); 
     
     % extract blocktrial data
-    [subsequences,subchoiceVec,all_data]    = get_blockdata(subdir,subI,task);
+    [subsequences,subchoiceVec,all_data, draws_index]    = get_blockdata(subdir,subI,task);
     
     % store in cell for each participant
     allsub_alldata{1,subI}                  = all_data;
     allsub_sequences{1,subI}                = subsequences;
     allsub_choiceVec{1,subI}                = subchoiceVec;
+    allsub_drawinfo{1,subI}                 = draws_index;
     
     %% SPLIT SUB DATA INTO CONDITIONS
     
@@ -224,120 +230,237 @@ for subI = 1:nsubs
     
     %% RUN MODEL FITTING %%
     
-    % first add model fitting to the path
-    addpath(genpath(bmodelfitpath));
+%     % first add model fitting to the path
+%     addpath(genpath(bmodelfitpath));
+%     
+%     % define parameters of the ideal observer
+%     R.initbeta          = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
+%     R.error             = -10;          % cost for being wrong
+%     R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+%     R.correct           = 10;           % reward for being correct
+%     R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
+%     R.initsample        = -0.25;        % the cost to sample
+%     R.freepars          = 2;            % number of free parameters. If 1=only cost-to-sample, if 2:const-to-sample and beta
+%     
+%     for cond = 1:conditions
+%         
+%         thiscond_data       = cond_data{1,subI}{1,cond};
+%         thiscond_seq        = subsequences{1,cond};
+%         thiscond_choiceVec  = subchoiceVec{1,cond};
+%         
+%         % what is the probability of this cond? 
+%         if cond == 1
+%             thisq = R.q(1);
+%         else 
+%             thisq = R.q(2);
+%         end
+%         
+%         R.thisq = thisq;
+%         
+%         % extract sequences from cell and store in matrix (26x10)
+%         for s = 1:size(thiscond_seq,2)
+%             thiscond_seqmat(s,:) = thiscond_seq{1,s};
+%         end
+%         
+%         % what is the urntype?
+%         urntype = thiscond_data(:,4);
+% 
+%         for u = 1:length(urntype)
+%             if urntype(u) == 0 % if green urn switch index coding
+%                 seq_ones = find(thiscond_seqmat(u,:) == 1);
+%                 seq_twos = find(thiscond_seqmat(u,:) == 2);
+%                 thiscond_seqmat(u,seq_ones) = 2;
+%                 thiscond_seqmat(u,seq_twos) = 1;
+%             end 
+%         end
+% 
+%         % recode 2s to 0s for backward induction 
+%         thiscond_seqmat(find(thiscond_seqmat==2))=0;
+%         
+%         % fit free parameter using Bruno's version of the model
+%         [minParams, ll, Qsad, cprob]        = bayesbeads_b(thiscond_seqmat, thiscond_choiceVec, R);
+%         
+%         % extract model fitting output and store for each subject
+%         if R.freepars == 2
+%             allsubs_cs_mb(subI,cond)        = minParams(1);
+%             allsubs_beta_mb(subI,cond)      = minParams(2);
+%         else
+%             allsubs_cs_mb(subI,cond)        = minParams;
+%         end
+%         
+%         allsubs_ll_mb(subI,cond)            = ll;
+%         allsubs_AQs_mb{1,subI}{cond}        = Qsad;
+%         
+%         %% CLEAN & STORE MODEL Q VALUES %%
+%         
+%         % this will be used for associations between action values and
+%         % neural responses
+%         for i = 1: totaltrials/2
+%             
+%             thist                   = squeeze(Qsad(i,:,:)); % get current sequence draws 
+%             
+%             for k = 1:length(thist)
+% 
+%                 if any(isnan(thist(k,:)), 'all')
+%                     break
+%                 end
+%                 thisdraw            = k;
+%             end
+% 
+%             % to bring the draws back to normal (we don't want to include the last draw-choice)
+%             choicet(i,1)              = thisdraw -1; % this will be used to compare human vs model fit draws
+%             
+%             % remove nans from the model AQ/choice vector
+%             thist                   = rmmissing(thist);
+%             
+%             % check when the difference between the MAX urn Q-value and
+%             % Q-value for drawing-gain becomes negative (this is where the
+%             % model would stop)
+%             for k = 1:size(thist,1)
+%                 
+%                 maxU        = max(thist(k,1:2));
+%                 thisdiff    = thist(k,3) - maxU;
+%                 
+%                 if thisdiff < 0
+%                     break
+%                 end
+%  
+%             end
+%             
+%             realm_draws(i,1)        = k - 1; % subtract 1 as last draw is urn choice
+%             AQs_mb{1,i}             = thist;
+% 
+%         end % end of for loop
+%         
+%         % store model fit draws and action values
+%         modelfit_draws(subI,cond)       = mean(choicet); % 
+%         act_modelfit_draws(subI,cond)   = mean(realm_draws); % this is when model would have stopped
+%         mdraws{1,subI}{cond}            = choicet;
+%         actual_mdraws{1,subI}{cond}     = realm_draws; % this is when model would have stopped
+%         modelfit_AQs{1,subI}{cond}      = AQs_mb;
+% 
+%         % clear workspace
+%         clear thist choicet thisdraw minParams Qsad ll cprob
+%     end % end of condition loop 
+%     
+%     
+%     %% Fit model with different starting points
+%     
+%     % fit the model to particpant data using a range of different beta
+%     % values
+%     range_betas = [1 5 10 15 20]; 
+%     
+%     for sp = 1:length(range_betas) 
+%         
+%         % define parameters of the model
+%         R.initbeta          = range_betas(sp);  % softmax stochasticity parameter (for fitting to human behaviour)
+%         R.error             = -10;              % cost for being wrong
+%         R.diff              = -20;              % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+%         R.correct           = 10;               % reward for being correct
+%         R.q                 = [0.8 0.6];        % proportion of the majority value in sequence (60:40 split in this case)
+%         R.initsample        = -0.25;            % the cost to sample
+%         R.freepars          = 2;                % number of free parameters. If 1=only cost-to-sample, if 2:const-to-sample and beta
+% 
+%         for cond = 1:conditions
+%             
+%             thiscond_data       = cond_data{1,subI}{1,cond};
+%             thiscond_seq        = subsequences{1,cond};
+%             thiscond_choiceVec  = subchoiceVec{1,cond};
+% 
+%             % what is the probability of this cond? 
+%             if cond == 1
+%                 thisq = R.q(1);
+%             else 
+%                 thisq = R.q(2);
+%             end
+% 
+%             R.thisq = thisq;
+% 
+%             % extract sequences from cell and store in matrix (26x10)
+%             for s = 1:size(thiscond_seq,2)
+%                 thiscond_seqmat(s,:) = thiscond_seq{1,s};
+%             end
+% 
+%             % what is the urntype?
+%             urntype = thiscond_data(:,4);
+% 
+%             for u = 1:length(urntype)
+%                 if urntype(u) == 0 % if green urn switch index coding
+%                     seq_ones = find(thiscond_seqmat(u,:) == 1);
+%                     seq_twos = find(thiscond_seqmat(u,:) == 2);
+%                     thiscond_seqmat(u,seq_ones) = 2;
+%                     thiscond_seqmat(u,seq_twos) = 1;
+%                 end 
+%             end
+% 
+%             % recode 2s to 0s for backward induction 
+%             thiscond_seqmat(find(thiscond_seqmat==2))=0;
+%             
+%             % run model with different beta value every time 
+%             [minParams, ll, Qsad, cprob]    = runmf_starpoints(R, cond, thiscond_seqmat, thiscond_choiceVec);
+%             
+%              % extract model fitting output and store for each subject
+%             allcs_mb{1,sp}(subI,cond)        = minParams(1);
+%             allbeta_mb{1,sp}(subI,cond)      = minParams(2);
+%             all_ll_mb{1,sp}(subI,cond)        = ll;
+%             allAQs_mb{1,sp}{1,subI}{cond}    = Qsad;
+%             
+%             %% CLEAN & STORE MODEL Q VALUES %%
+%         
+%             % this will be used for associations between action values and
+%             % neural responses
+%             for i = 1: totaltrials/2
+% 
+%                 thist                   = squeeze(Qsad(i,:,:)); % get current sequence draws 
+% 
+%                 for k = 1:length(thist)
+% 
+%                     if any(isnan(thist(k,:)), 'all')
+%                         break
+%                     end
+%                     thisdraw            = k;
+%                 end
+% 
+%                 % to bring the draws back to normal (we don't want to include the last draw-choice)
+%                 choicet(i,1)              = thisdraw -1; % this will be used to compare human vs model fit draws
+% 
+%                 % remove nans from the model AQ/choice vector
+%                 thist                   = rmmissing(thist);
+% 
+%                 % check when the difference between the MAX urn Q-value and
+%                 % Q-value for drawing-gain becomes negative (this is where the
+%                 % model would stop)
+%                 for k = 1:size(thist,1)
+% 
+%                     maxU        = max(thist(k,1:2));
+%                     thisdiff    = thist(k,3) - maxU;
+% 
+%                     if thisdiff < 0
+%                         break
+%                     end
+% 
+%                 end
+% 
+%                 realm_draws(i,1)        = k - 1; % subtract 1 as last draw is urn choice
+%                 AQs_mb{1,i}             = thist;
+% 
+%             end % end of for loop
+% 
+%             % store model fit draws and action values
+%             all_modelfit_draws{1,sp}(subI,cond)       = mean(choicet); % 
+%             all_act_modelfit_draws{1,sp}(subI,cond)   = mean(realm_draws); % this is when model would have stopped
+%             all_mdraws{1,sp}{1,subI}{cond}            = choicet;
+%             all_actual_mdraws{1,sp}{1,subI}{cond}     = realm_draws; % this is when model would have stopped
+%             all_modelfit_AQs{1,sp}{1,subI}{cond}      = AQs_mb;
+%  
+%         end % end of conditions loop
+%         
+%     end % end of betas loop
     
-    % define parameters of the ideal observer
-    R.initbeta          = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
-    R.error             = -10;          % cost for being wrong
-    R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
-    R.correct           = 10;           % reward for being correct
-    R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
-    R.initsample        = -0.25;        % the cost to sample
-    
-    for cond = 1:conditions
-        
-        thiscond_data       = cond_data{1,subI}{1,cond};
-        thiscond_seq        = subsequences{1,cond};
-        thiscond_choiceVec  = subchoiceVec{1,cond};
-        
-        % what is the probability of this cond? 
-        if cond == 1
-            thisq = R.q(1);
-        else 
-            thisq = R.q(2);
-        end
-        
-        R.thisq = thisq;
-        
-        % extract sequences from cell and store in matrix (26x10)
-        for i = 1:size(thiscond_seq,2)
-            thiscond_seqmat(i,:) = thiscond_seq{1,i};
-        end
-        
-        % what is the urntype?
-        urntype = thiscond_data(:,4);
-
-        for u = 1:length(urntype)
-            if urntype(u) == 0 % if green urn switch index coding
-                seq_ones = find(thiscond_seqmat(u,:) == 1);
-                seq_twos = find(thiscond_seqmat(u,:) == 2);
-                thiscond_seqmat(u,seq_ones) = 2;
-                thiscond_seqmat(u,seq_twos) = 1;
-            end 
-        end
-
-        % recode 2s to 0s for backward induction 
-        thiscond_seqmat(find(thiscond_seqmat==2))=0;
-        
-        % fit free parameter using Bruno's version of the model
-        [minParams, ll, Qsad, cprob]    = bayesbeads_b(thiscond_seqmat, thiscond_choiceVec, R);
-        
-        allsubs_cs_mb(subI,cond)        = minParams(1);
-        allsubs_beta_mb(subI,cond)      = minParams(2);
-        allsubs_ll_mb(subI,cond)        = ll;
-        allsubs_AQs_mb{1,subI}{cond}    = Qsad;
-        
-        %% CLEAN & STORE MODEL Q VALUES %%
-        
-        % this will be used for associations between action values and
-        % neural responses
-        for i = 1: totaltrials/2
-            
-            thist                   = squeeze(Qsad(i,:,:));
-            
-            for k = 1:length(thist)
-
-                if any(isnan(thist(k,:)), 'all')
-                    break
-                end
-                thisdraw            = k;
-            end
-
-            % to bring the draws back to normal (we don't want to include the last draw-choice)
-            choicet(i)              = thisdraw -1; % this will be used to compare human vs model fit draws
-            
-            % remove nans from the model AQ/choice vector
-            thist                   = rmmissing(thist);
-            AQs_mb{1,i}             = thist;
-
-        end % end of for loop
-        
-        % store model fit draws and action values
-        modelfit_draws(subI,cond)   = mean(choicet);
-        modelfit_AQs{1,subI}{cond}  = AQs_mb;
-
-        % clear workspace
-        clear thist choicet thisdraw minParams Qsad ll cprob
-    end % end of condition loop  
     
 end % end of subject loop
 
-%% PLOT MODEL FIT RESULTS %%
+%% save workspace
 
-allsub_draws(:,1)   = easy_avdraws;
-allsub_draws(:,2)   = diff_avdraws;
-allsub_acc(:,1)     = easy_avacc;
-allsub_acc(:,2)     = diff_avacc;
+% save('differentbetas_fit.mat','allcs_mb','allbeta_mb','all_ll_mb','allAQs_mb','all_modelfit_draws','all_act_modelfit_draws','all_mdraws','all_actual_mdraws','all_modelfit_AQs')
 
-% make plots
-makePlots(allsubs_beta_mb, allsubs_cs_mb, allsubs_ll_mb, allsub_draws)
-% makePlots(allsubs_cs_mb, allsubs_ll_mb, allsub_draws)
-
-%% SAVE NEEDED FILES FOR ANALYSES %%
-
-% save files that needed for statistical analyses
-save workspace
-save('sub_data', 'allsub_draws','allsub_acc', 'allsubs_biodraws', 'allsub_bioacc') % save subject and io outputs
-save('mf_data', 'modelfit_AQs', 'modelfit_draws', 'allsubs_cs_mb', 'allsubs_beta_mb', 'allsubs_ll_mb')
-
-% lastly extract number of draws per subject 
-for sub =  1:nsubs
-    
-    subtemp         = allsub_alldata{1,sub};
-    subtotal(sub)   = sum(subtemp(:,5)+1); % +1 to account for last draw (which is the urn choice)
-    
-end
-
-% transpose subtotal and save
-subtotal            = subtotal'; save('subtotal','subtotal', 'cond_data', 'allsub_alldata');
