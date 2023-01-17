@@ -59,19 +59,23 @@ for i = 1:length(S.trialdef)
 end
 
 % ectract event values 
-eventvalues = [event(:).value]';
+% eventvalues = event(:).value';
 
-% add two cols
-eventvalues = cat(1, zeros(2,1), eventvalues);
+% calculate the difference in eventvalues and newvalues columns
+% diff_values = length(event) - length(eventvalues);
+
+% add (diff_values) columns
+% eventvalues = cat(1, zeros(diff_values,1), eventvalues);
 newvalues = zeros(length(event),1);
 
+
 % add new event values to the events struct
-for i = 1:length(eventvalues)
+for i = 1:length(event)
     
     % if the event trigger is easy (1 or 2)
-    if eventvalues(i) == 1 | eventvalues(i) == 2
+    if ([event(i).value]) == 1 | ([event(i).value]) == 2
         
-        if eventvalues(i + 4) == trialend % if it is the last trigger/draw
+        if ([event(i+4).value]) == trialend % if it is the last trigger/draw
             
             newvalues(i) = 2; % urn-choice event trigger
         else
@@ -79,9 +83,9 @@ for i = 1:length(eventvalues)
         end
         
     % if the event trigger is difficult (3 or 4)
-    elseif eventvalues(i) == 3 | eventvalues(i) == 4
+    elseif ([event(i).value]) == 3 | ([event(i).value]) == 4
         
-        if eventvalues(i + 4) == trialend % if it is the last trigger/draw
+        if ([event(i+4).value]) == trialend % if it is the last trigger/draw
             
             newvalues(i) = 4; % urn-choice event trigger
         else
@@ -153,5 +157,8 @@ S.D = D;
 S.trl = trl;
 S.conditionlabels = conditionlabels;
 
+%%% delete values 200
+% newtmp = newvalues 
+% newtmp(newtmp==200)=[]
 
 return

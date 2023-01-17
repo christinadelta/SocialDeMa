@@ -661,6 +661,7 @@ S.D = [
        '/Volumes/DeepSpaceStuff/optimal_stopping_data/beads/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_40_beads_block_01.mat'
        ];
 
+
 S.outfile = 'grand_average';
 S.weighted = 1;
 D = spm_eeg_grandmean(S);
@@ -705,8 +706,8 @@ for sub = 1:nsubs
     S.timewin       = [-Inf Inf];
     % S.timewin       = [300 500];
     S.freqwin       = [-Inf Inf];
-    S.channels      = {'F1','F3','F5','F7','FC5','FC3','FC1','CP5','CP3','CP1','P1','P3','P5','P7','Pz','CPz',
-        'Fz','F2','F4','F6','F8','FC6','FC4','FC2','FCz','CP6','CP4','CP2','P2','P4','P6','P8'};
+    S.channels      = {'F1','F3','F5','F7','FC5','FC3','FC1','CP5','CP3','CP1','P1','P3','P5','P7','P9','Pz','CPz',
+        'Fz','F2','F4','F6','F8','FC6','FC4','FC2','FCz','CP6','CP4','CP2','P2','P4','P6','P8','P10'};
     % S.channels    = {'all'};
     S.prefix        = 'p';
     D               = spm_eeg_crop(S);
