@@ -36,13 +36,13 @@
 % channel exclude it from the createMontage.m function (for more info see
 % the documentation within the createMontage.m file).
 
-% 2. beadsTrialdef.m -- this function re-writes the events as as sample
+% 2. bcTrialdef.m -- this function re-writes the events as as sample
 % choices (reject choices) and accept choices. During the
 % recording there was no way to code the triggers as reject and accept choices
 % (because the trigger is sent right after the bead presentation screen is
 % flipped), thus we need to do this change "manually" before epoching. For
 % more info on how this is accomplished, see the documentation of the 
-% bestchoiceTrialdef.m file. 
+% bcTrialdef.m file. 
 
 %%%% TODO:
 % 1. FIX MONTAGE SPECIFICATION
@@ -50,7 +50,7 @@
 %% Create required directories and define paths %%
 
 % Add SPM12 to the matlab path if needed:
-% addpath /Users/christinadelta/neuro_software/spm12 % change this to your
+% addpath /Users/christinadelta/software/neuroscience/spm12 % change this to your
 % own SPM12 path
 % savepath
 
