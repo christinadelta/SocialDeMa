@@ -13,6 +13,8 @@ function [] = bcEstimateContrasts(S,tmp,sub)
 fn = S.D;
 
 % -----------------------------
+
+% 1. first, create a 'accept vs reject' contrast
 % extract filename from S struct
 S                       = [];
 S.D                     = fn;
@@ -22,5 +24,24 @@ S.weighted              = 1;
 S.prefix                = 'wra_';
 D                       = spm_eeg_contrast(S);
 
+% 2. second, create a 'only reject' contrast
+% extract filename from S struct
+S                       = [];
+S.D                     = fn;
+S.c                     = [1 0];
+S.label                 = {'reject'};
+S.weighted              = 1;
+S.prefix                = 'wr_';
+D                       = spm_eeg_contrast(S);
+
+% 3. third, create a 'only accept' contrast
+% extract filename from S struct
+S                       = [];
+S.D                     = fn;
+S.c                     = [0 1];
+S.label                 = {'accept'};
+S.weighted              = 1;
+S.prefix                = 'wa_';
+D                       = spm_eeg_contrast(S);
 
 end 

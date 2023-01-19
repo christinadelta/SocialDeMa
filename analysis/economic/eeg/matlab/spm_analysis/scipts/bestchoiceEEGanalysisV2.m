@@ -95,8 +95,10 @@ blocks          = 2;
 % conditions      = 2;
 choices         = 2;
 analysest       = 2; % analyses types (erp & tf)
-nconstrasts     = 2;
+nconstrasts     = 3;
 condtypes       = {'reject' 'accept'};
+contrastpref    = {'wra_' 'wr_' 'wa_'};
+
 
 %% Preprocessing steps [ERPs: 1 - 12, TFRs: 1 - 15] %%
 
@@ -273,7 +275,7 @@ for sub = 1:nsubs
 
             % run the trial definition function here to get the trl matrix and
             % condition labels
-            [trl, conditionlabels, S]       = bcTrialdef(S);
+            [trl, conditionlabels, S]       = bcTrialdef(S, sub);
             
             D                               = spm_eeg_epochs(S);
 
@@ -379,7 +381,7 @@ for sub = 1:nsubs
     S.append                        = true;
     S.methods.channels              = {'EEG'};
     S.methods.fun                   = 'threshchan';
-    S.methods.settings.threshold    = 150;
+    S.methods.settings.threshold    = 120;
     S.methods.settings.excwin       = 1000;
     D                               = spm_eeg_artefact(S);
     
@@ -410,8 +412,8 @@ for sub = 1:nsubs
 
     %% STEP 11: contrast ERP averaged conditions
     
-    % We will first contrast averaged ERPs. We will create a contrasts as
-    % accpet vs reject
+    % We will first contrast averaged ERPs. We will create 3 contrasts as:
+    % accpet vs reject, only reject, only accept 
     S                       = [];
     S.D                     = fullfile(subout, sprintf('maceerpfdfMspmeeg_sub_%02d_economic_block_01.mat', sub));
     S.object                = spm_eeg_load(S.D);
@@ -420,19 +422,21 @@ for sub = 1:nsubs
     % estimate ERP contrasts
     bcEstimateContrasts(S, tmp, sub)
     
-    % STEP 12: Convert to 3D volumes 
+    %% STEP 12: Convert to 3D volumes 
 
-    % convert the 5 contrast MEEG objects into .nii file
-    S               = [];
-    S.D             = fullfile(subout, sprintf('wra_maceerpfdfMspmeeg_sub_%02d_economic_block_01.mat', sub));
-    S.mode          = 'scalp x time';
-    S.conditions    = {};
-    S.channels      = 'EEG';
-    S.timewin       = [-Inf Inf];
-    S.freqwin       = [-Inf Inf];
-    S.prefix        = '';
-
-    D               = spm_eeg_convert2images(S);
+    % convert the 3 contrast MEEG objects into .nii file
+    for c = 1:nconstrasts
+        S               = [];
+        S.D             = fullfile(subout, sprintf('%smaceerpfdfMspmeeg_sub_%02d_economic_block_01.mat', contrastpref{c}, sub));
+        S.mode          = 'scalp x time';
+        S.conditions    = {};
+        S.channels      = 'EEG';
+        S.timewin       = [-Inf Inf];
+        S.freqwin       = [-Inf Inf];
+        S.prefix        = '';
+    
+        D               = spm_eeg_convert2images(S);
+    end % end of contrasts loop
 
     %% RUN TIME-FREQUENCY ANALYSIS %%
 
@@ -509,7 +513,7 @@ for sub = 1:nsubs
     %% STEP 13: Compute contrasts of averaged power file
 
     % As with evoked responses, TFRs also will be contrasted as: accept vs
-    % reject
+    % reject, only accept, only reject
     S                       = [];
     S.D                     = fullfile(subout, sprintf('mPrtf_cetfrfdfMspmeeg_sub_%02d_economic_block_01.mat', sub));
     S.object                = spm_eeg_load(S.D);
@@ -520,21 +524,77 @@ for sub = 1:nsubs
     
     %% STEP 14: Convert to 3D volumes 
 
-    % convert the 5 contrast MEEG objects into .nii file
-    S               = [];
-    S.D             = fullfile(subout, sprintf('wra_mPrtf_cetfrfdfMspmeeg_sub_%02d_economic_block_01.mat', sub));
-    S.mode          = 'scalp x time';
-    S.conditions    = {};
-    S.channels      = 'EEG';
-    S.timewin       = [-Inf Inf];
-    S.freqwin       = [-Inf Inf];
-    S.prefix        = '';
+    % convert the 3 contrast MEEG objects into .nii file
+    for c = 1:nconstrasts
+        S               = [];
+        S.D             = fullfile(subout, sprintf('%smPrtf_cetfrfdfMspmeeg_sub_%02d_economic_block_01.mat', contrastpref{c}, sub));
+        S.mode          = 'scalp x time';
+        S.conditions    = {};
+        S.channels      = 'EEG';
+        S.timewin       = [-Inf Inf];
+        S.freqwin       = [-Inf Inf];
+        S.prefix        = '';
+    
+        D               = spm_eeg_convert2images(S);
 
-    D               = spm_eeg_convert2images(S);
+    end
 
 
 end % end of subjects loop
 
 % THIS IS IT WITH PREPROCESSING!!!
+
+%% Compute grand averages
+
+% Grand average/grand mean will be used to crop and extract data needed for
+% the association with AQ
+S = [];
+S.D = [
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_01_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_02_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_03_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_04_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_05_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_06_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_07_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_08_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_09_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_10_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_11_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_12_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_13_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_14_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_15_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_16_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_17_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_18_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_19_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_20_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_21_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_22_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_23_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_24_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_25_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_26_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_27_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_28_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_29_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_30_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_31_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_32_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_33_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_34_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_35_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_36_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_37_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_38_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_39_economic_block_01.mat'
+       '/Volumes/DeepSpaceStuff/optimal_stopping_data/economic/spm_analysis/averages/ERPs_TFR_averaged/maceerpfdfMspmeeg_sub_40_economic_block_01.mat'
+       ];
+
+S.outfile = 'grand_average';
+S.weighted = 1;
+D = spm_eeg_grandmean(S);
+
 
 

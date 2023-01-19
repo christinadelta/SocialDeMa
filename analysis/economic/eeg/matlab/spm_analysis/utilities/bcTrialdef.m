@@ -1,4 +1,4 @@
-function [trl, conditionlabels, S] = bcTrialdef(S)
+function [trl, conditionlabels, S] = bcTrialdef(S, sub)
 
 % Definition of trials based on events for economic (and facial attractivanes) task analysed with spm 
 % Based on the spm_eeg_trialdef.m function 
@@ -67,25 +67,38 @@ newvalues = zeros(length(event),1);
 % create new event list
 for i = 1:length(event)
 
-    % if event trigger is a sample trigger (smaller than 10)
-    if ([event(i).value]) <= 10
-
-        % if this is the last sample (accept choice)
-        if ([event(i+3).value]) == trialend;
-
-            newvalues(i) = 2; % this is an "accept" event trigger
+    if sub == 1 % if this is the first sub (triggers were coded a bit differently)
+        if ([event(i).value]) <= 10
+    
+            % if this is the last sample (accept choice)
+            if ([event(i+3).value]) == trialend
+    
+                newvalues(i) = 2; % this is an "accept" event trigger
+            else
+                newvalues(i) = 1; % this is a "reject" event trigger
+            end
         else
-            newvalues(i) = 1; % this is a "reject" event trigger
+            newvalues(i) = 200;
         end
+    else % if this is sub sject 2 - 40
 
-    else % if the i(th) trigger is anything else than 1:10, re-code it to 200
+        if ([event(i).value]) == 1 % if this is the "sample" trigger code
 
-        newvalues(i) = 200;
+            % if this is the last sample (accept choice)
+            if ([event(i+3).value]) == trialend
+    
+                newvalues(i) = 2; % this is an "accept" event trigger
+            else
+                newvalues(i) = 1; % this is a "reject" event trigger
+            end
+        else
+            newvalues(i) = 200;
+        end
     end
 
     % add new values as a new field to events struct
     event(:,i).newvalue = newvalues(i);
-end % end of new events list loop
+end % end of for loop
 
 % build trl based on selected events
 trl = [];
