@@ -2,6 +2,8 @@
 
 % VERSION 3 (updated July 2022)
 
+% SECOND UPDATE: 16/01/2023
+
 % Part of the Optimal Stopping Problems Project
 
 %% IMPORTANT NOTES %%
@@ -27,16 +29,17 @@
 %% INIT LOAD DATA %%
 
 % get paths and define vars
-startpath               = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
-resultspath             = fullfile(startpath, 'experiments', 'results');
+startpath               = '/Volumes/DeepSpaceStuff/optimal_stopping_data/data/';
+% resultspath             = fullfile(startpath, 'experiments', 'results');
 task                    = 'economic';
-subpath                 = fullfile(resultspath, task);
+datatype                = 'behav'; 
+subpath                 = fullfile(startpath, task, datatype);
 phase                   = 1; % change this when extracting phase 2 data
 session                 = 1; % change this when extracting phase 2 data
 
-subs                    = dir(fullfile(resultspath, task, '*sub*'));
-% nsubs                   = length(subs);
-nsubs                   = 5;
+subs                    = dir(fullfile(subpath, '*sub*'));
+nsubs                   = length(subs);
+% nsubs                   = 5;
 
 phase1_blocks           = 20;
 phase1_blocktrials      = 40;
@@ -45,7 +48,7 @@ phase1_totaltrials      = phase1_blocks*phase1_blocktrials;
 phase2_totaltrials      = 40; 
 phase2_blocktrials      = 20;
 phase2_blocks           = 2;
-respoptions             = 2; % accept vs decline
+respoptions             = 2; % accept vs decline (for phase 2)
 thisequence             = nan(1,phase2_blocktrials); % every sequence has different number of draws
 temp                    = 0;
 
@@ -60,7 +63,7 @@ for subI = 1:nsubs
     
     fprintf('loading economic phase 1 data\n')  
     subject = subs(subI).name;
-    subdir  = fullfile(resultspath, task,subject);
+    subdir  = fullfile(subpath,subject);
     fprintf('\t reading data from subject %d\n',subI); 
     
     for blockI = 1:phase1_blocks
@@ -154,7 +157,7 @@ for subI = 1:nsubs
     
     fprintf('loading economic phase 2 block data\n')  
     subject = subs(subI).name;
-    subdir  = fullfile(resultspath, task,subject);
+    subdir  = fullfile(subpath,subject);
     fprintf('\t reading data from subject %d\n',subI); 
     
     for blockI = 1:phase2_blocks
@@ -237,6 +240,26 @@ for subI = 1:nsubs
     clear tmpsub sub_blockdata
     
 end % end of subject loop
+
+%% STORE THE NUMBER OF SAMPLES AS A SEPARATE ARRAY FOR EEG
+
+% for each subject average the number of samples to get one data value per
+% subject. This array will then be used as a covariate in the individual
+% differences analysis with EEG
+
+for sub = 1:nsubs 
+
+    % extract sub dataset
+    tmp_sub                 = find(phase2_blockdata(:,1) == sub);
+    sub_samples             = phase2_blockdata((tmp_sub),4);
+    allsubs_samples(sub,1)  = nanmean(sub_samples);
+    
+    % clear stuff
+    clear tmp_sub sub_samples 
+
+end % end of subjects loop
+
+save('avsamples.mat', 'allsubs_samples')
 
 %% DEAL WITH SEQUENCES %%
 
