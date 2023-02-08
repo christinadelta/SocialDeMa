@@ -71,7 +71,7 @@ for i = 1:length(event)
         if ([event(i).value]) == 1
     
             % if this is the last sample (accept choice)
-            if ([event(i+3).value]) == trialend | ([event(i+4).value]) == trialend
+            if ([event(i+3).value]) == trialend | ([event(i+4).value]) == trialend | ([event(i+4).value]) == []
     
                 newvalues(i) = 2; % this is an "accept" event trigger
             else
@@ -85,7 +85,7 @@ for i = 1:length(event)
         if ([event(i).value]) == 1 % if this is the "sample" trigger code
 
             % if this is the last sample (accept choice)
-            if ([event(i+3).value]) == trialend | ([event(i+4).value]) == trialend
+            if ([event(i+3).value]) == trialend | ([event(i+2).value]) == 14 
     
                 newvalues(i) = 2; % this is an "accept" event trigger
             else
