@@ -52,27 +52,27 @@ addpath(genpath(eeg_path)); addpath(genpath(scripts_path))
 % 2. 2x2 MIXED ANOVA on accuracy
 
 % first add all the required data in one matrix 
-% subvec              = repmat(1:nsubs,1,4)';                             % create a vector with 4 copies participant number 
-% agentvec            = repmat([ones(1,nsubs*2) ones(1,nsubs*2)*2],1,1)'; % create a vector with 2 copies of agent type (indexed as 1=human, 2=io)
-% probvec             = repmat([ones(1,nsubs) ones(1,nsubs)*2],1,2)';     % create a vector with 2 copies of probability type (indexed as 1=0.8, 2=0.6)
-% 
-% % create 1 vec with all draws (human, io) 
-% drawsmat(:,1:2)     = allsub_draws;
-% drawsmat(:,3:4)     = allsubs_biodraws;
-% drawsvec            = drawsmat(:);
-% 
-% % create 1 vec with all acc (human, io) 
-% accmat(:,1:2)       = allsub_acc;
-% accmat(:,3:4)       = allsub_bioacc;
-% accvec              = accmat(:);
-% 
-% % run rm 2x2 anova on draws 
-% [pvals,~,stats] = anovan(drawsvec, {subvec agentvec probvec}, ... 
-% 'model','interaction', 'random',1,'varnames',{'subvec' 'agentvec' 'probvec'})
-% 
-% % run rm 2x2 anova on accuracy 
-% [pvals,~,stats] = anovan(accvec, {subvec agentvec probvec}, ... 
-% 'model','interaction', 'random',1,'varnames',{'subvec' 'agentvec' 'probvec'})
+subvec              = repmat(1:nsubs,1,4)';                             % create a vector with 4 copies participant number 
+agentvec            = repmat([ones(1,nsubs*2) ones(1,nsubs*2)*2],1,1)'; % create a vector with 2 copies of agent type (indexed as 1=human, 2=io)
+probvec             = repmat([ones(1,nsubs) ones(1,nsubs)*2],1,2)';     % create a vector with 2 copies of probability type (indexed as 1=0.8, 2=0.6)
+
+% create 1 vec with all draws (human, io) 
+drawsmat(:,1:2)     = allsub_draws;
+drawsmat(:,3:4)     = allsubs_biodraws;
+drawsvec            = drawsmat(:);
+
+% create 1 vec with all acc (human, io) 
+accmat(:,1:2)       = allsub_acc;
+accmat(:,3:4)       = allsub_bioacc;
+accvec              = accmat(:);
+
+% run rm 2x2 anova on draws 
+[pvals,~,stats] = anovan(drawsvec, {subvec agentvec probvec}, ... 
+'model','interaction', 'random',1,'varnames',{'subvec' 'agentvec' 'probvec'})
+
+% run rm 2x2 anova on accuracy 
+[pvals,~,stats] = anovan(accvec, {subvec agentvec probvec}, ... 
+'model','interaction', 'random',1,'varnames',{'subvec' 'agentvec' 'probvec'})
 
 %% COMPUTE AQ DIFFERENCES & EXTRACT CROPPED NEURAL RESPONSES %%
 
