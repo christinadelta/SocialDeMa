@@ -82,6 +82,7 @@ nsubs           = 5;
 
 totaltrials     = 52; 
 conditions      = 2;
+nmodels         = 2;
 
 % init required variables
 avdraws                 = nan(nsubs,1);
@@ -256,7 +257,41 @@ all_draws       = [easy_avdraws diff_avdraws];
 
 % run anovas and pairwise comparisons 
 [draws_stats,acc_stats, pc_results, pc_tables] = ...
-    runBehavStats(nsubs,all_draws,all_acc,all_ioacc,all_iodraws);
+    runBehavStats(nsubs,all_draws,all_acc,all_ioacc,all_iodraws); % output will be used for plotting 
+
+
+%% MODEL FIT %% 
+
+% first add model fitting to the path
+addpath(genpath(bmodelfitpath));
+
+
+% RUN MODEL 1:
+% FREE PARAMS: ONLY BETA 
+% define a few parameters 
+R.error             = -10;          % cost for being wrong
+R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+R.correct           = 10;           % reward for being correct
+R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
+R.initsample        = -0.25;        % the cost to sample
+range_betas         = [1 5 10];     % for model 1 where only beta param is used
+
+for beta_model = 1:length(range_betas)
+
+    this_beta       = range_betas(beta_model);
+
+    for sub = 1:nsubs
+
+        
+
+        for cond = 1:conditions
+
+        end % end of conditions loop
+    end % end of subjects loop
+end % end of models loop
+
+
+% 
 
 
 
