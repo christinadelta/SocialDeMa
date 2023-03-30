@@ -68,8 +68,8 @@ clc
 % The four next lines (paths) should be changed to your paths 
 startpath       = '/Users/christinadelta/githubstuff/rhul_stuff/SocialDeMa/';
 datapath        = '/Volumes/DeepSpaceStuff/optimal_stopping_data/data/';
-bmodelfitpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'brunos_modelfit');
-biobserverpath  = fullfile(startpath, 'analysis', 'beads', 'behav', 'brunos_io');
+bmodelfitpath   = fullfile(startpath, 'analysis', 'beads', 'behav', 'model_fit');
+biobserverpath  = fullfile(startpath, 'analysis', 'beads', 'behav', 'ideal_observer');
 resultspath     = fullfile(datapath, 'beads', 'behav');
 croppedpath     = fullfile(startpath, 'analysis', 'beads', 'behav', 'cropped');
 behavpath       = fullfile(startpath, 'analysis', 'beads', 'behav');
@@ -263,6 +263,7 @@ anova_struct        = struct('all_draws', all_draws, 'all_acc', all_acc,...
 output_struct_one   = runBehavStats(nsubs, anova_struct); % output will be used for plotting 
 
 clear anova_struct
+
 %% MODEL FIT 1 %% 
 
 % first add model fitting to the path
@@ -471,6 +472,13 @@ clear minParams ll Qsad cprob model_samples model_urnchoice R
 %% RUN ANOVAS & PAIRWISE COMPARISONS %%
 
 % factors: Agent type (human, io, beta, beta_cs), probability 
+anova_struct        = struct('all_draws', all_draws, 'all_acc', all_acc,'all_ioacc', all_ioacc,...
+    'all_iodraws',all_iodraws,'model1_samples',model1_samples,'model1_acc',model1_acc,'model2_samples',...
+    model2_samples,'model2_acc',model2_acc);
+
+output_struct_two   = runBehavStats(nsubs, anova_struct); % output will be used for plotting 
+
+
 
 %% COMPARE & SELECT MODELS %%
 
