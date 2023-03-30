@@ -77,11 +77,12 @@ addpath(genpath(fullfile(behavpath, 'matlab_scripts'))); % add matlab_scripts to
 
 task            = 'beads';
 subs            = dir(fullfile(resultspath, '*sub*'));
-% nsubs           = length(subs);
-nsubs           = 5;
+nsubs           = length(subs);
+% nsubs           = 5;
 
 totaltrials     = 52; 
 conditions      = 2;
+condtrials      = totaltrials/conditions;
 nmodels         = 2;
 
 % init required variables
@@ -251,16 +252,18 @@ end % end of subjects loop
 %% RUN STATISTICS ON BEHAVIOUR & IO %%
 
 % add draws and performance in one vec
-all_acc         = [easy_avacc diff_avacc];
-all_draws       = [easy_avdraws diff_avdraws];
+all_acc             = [easy_avacc diff_avacc];
+all_draws           = [easy_avdraws diff_avdraws];
 
+% make a struct with all the vectors needed for the analysis
+anova_struct        = struct('all_draws', all_draws, 'all_acc', all_acc,...
+    'all_ioacc', all_ioacc, 'all_iodraws', all_iodraws);
 
 % run anovas and pairwise comparisons 
-[draws_stats,acc_stats, pc_results, pc_tables] = ...
-    runBehavStats(nsubs,all_draws,all_acc,all_ioacc,all_iodraws); % output will be used for plotting 
+output_struct_one   = runBehavStats(nsubs, anova_struct); % output will be used for plotting 
 
-
-%% MODEL FIT %% 
+clear anova_struct
+%% MODEL FIT 1 %% 
 
 % first add model fitting to the path
 addpath(genpath(bmodelfitpath));
@@ -274,24 +277,241 @@ R.diff              = -20;          % The difference between the rewards for bei
 R.correct           = 10;           % reward for being correct
 R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
 R.initsample        = -0.25;        % the cost to sample
-range_betas         = [1 5 10];     % for model 1 where only beta param is used
+R.freeparams        = 1;            % only beta is used
+range_betas         = 1;            % for model 1 where only beta param is used
+% N                   = 1000;         % number of iterations when computing model sampling rates 
+% sequence_len        = 10;
 
-for beta_model = 1:length(range_betas)
+for beta_model = 1:range_betas
 
-    this_beta       = range_betas(beta_model);
+    % init beta value
+    this_beta               = exprnd(10);
+    R.initbeta              = this_beta;
+    beta_vals(beta_model)   = this_beta;
 
     for sub = 1:nsubs
 
-        
+        subdata         = cond_data{1,sub};         % all data matrix
+        sub_choicesvec  = allsub_choiceVec{1,sub};  % subject choices (two 26 by 3 matricies)
+        sub_sequence    = allsub_sequences{1,sub};  % sequence that this-subject was presented with
 
         for cond = 1:conditions
 
+            % extract condition data
+            sub_cond        = subdata{1,cond};
+            cond_choices    = sub_choicesvec{1,cond};
+            cond_sequence   = sub_sequence{1,cond};
+
+            % what is the probability of this cond? 
+            if cond == 1
+
+                thisq       = R.q(1);
+            else 
+                thisq       = R.q(2);
+            end
+        
+            R.thisq         = thisq;
+
+            % extract sequences from cell and store in matrix (26x10)
+            for s = 1:size(cond_sequence,2)
+                thiscond_seqmat(s,:)                        = cond_sequence{1,s};
+            end
+            
+            % what is the urntype?
+            urntype                                         = sub_cond(:,4);
+
+            for u = 1:length(urntype)
+                if urntype(u) == 0 % if green urn switch index coding
+                    seq_ones                                = find(thiscond_seqmat(u,:) == 1);
+                    seq_twos                                = find(thiscond_seqmat(u,:) == 2);
+                    thiscond_seqmat(u,seq_ones)             = 2;
+                    thiscond_seqmat(u,seq_twos)             = 1;
+                end 
+            end
+
+            % recode 2s to 0s for backward induction 
+            thiscond_seqmat(find(thiscond_seqmat==2))       = 0;
+        
+            % fit free parameter using Bruno's version of the model
+            [minParams, ll, Qsad, cprob, model_samples,model_urnchoice]     = bayesbeads_b(thiscond_seqmat, cond_choices, R);
+
+            
+            model1(cond).param                              = minParams;
+            model1(cond).ll                                 = ll;
+            model1(cond).Qsad                               = Qsad;
+            model1(cond).cprob                              = cprob;
+            model1(cond).samples                            = model_samples;
+
+            % all_model_samples(sub,cond,beta_model)          = mean(model_samples);
+            model1_samples(sub,cond)                        = mean(model_samples); % for ploting only right now
+
+            % compute model performance (to be used for statistical
+            % analysis 
+            for t = 1:size(model_urnchoice,1)
+                
+                if (model_urnchoice(t) == 1 & urntype(t) == 1) | (model_urnchoice(t) == 2 & urntype(t) == 0)
+                    model_choice(t) = 1;
+                else
+                    model_choice(t) = 0;
+                end % end of condition
+            end % end of trials loop
+
+            model1_acc(sub,cond)                            = mean(model_choice);
+            model1(cond).acc                                = mean(model_choice);
+
         end % end of conditions loop
+
+        % store subject and model data
+        all_model1{beta_model,sub}                          = model1;
+
     end % end of subjects loop
+
+    model_sampling_rate(beta_model,:)                       = mean(model1_samples,1); % average across subjects 
+
 end % end of models loop
 
+% choose the first one for ploting and comparing with model 2
+% model1_1 = all_model_samples(:,:,1)
+% bar(model_sampling_rate) % check sampling rates
 
-% 
+clear minParams ll Qsad cprob model_samples model_urnchoice R
+
+%% MODEL FIT 2 %%
+
+% RUN MODEL 2:
+% free parameters: [beta, cost-to-sample]
+% define a few parameters 
+R.error             = -10;          % cost for being wrong
+R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+R.correct           = 10;           % reward for being correct
+R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
+R.initsample        = -0.25;        % the cost to sample
+R.freeparams        = 2;            %  Cs and beta are used
+R.initbeta          = 3;            % 
+
+for sub = 1:nsubs
+
+    subdata         = cond_data{1,sub};         % all data matrix
+    sub_choicesvec  = allsub_choiceVec{1,sub};  % subject choices (two 26 by 3 matricies)
+    sub_sequence    = allsub_sequences{1,sub};  % sequence that this-subject was presented with
+
+    for cond = 1:conditions
+
+        % extract condition data
+        sub_cond        = subdata{1,cond};
+        cond_choices    = sub_choicesvec{1,cond};
+        cond_sequence   = sub_sequence{1,cond};
+
+        % what is the probability of this cond? 
+        if cond == 1
+
+            thisq       = R.q(1);
+        else 
+            thisq       = R.q(2);
+        end
+    
+        R.thisq         = thisq;
+
+        % extract sequences from cell and store in matrix (26x10)
+        for s = 1:size(cond_sequence,2)
+            thiscond_seqmat(s,:)                        = cond_sequence{1,s};
+        end
+        
+        % what is the urntype?
+        urntype                                         = sub_cond(:,4);
+
+        for u = 1:length(urntype)
+            if urntype(u) == 0 % if green urn switch index coding
+                seq_ones                                = find(thiscond_seqmat(u,:) == 1);
+                seq_twos                                = find(thiscond_seqmat(u,:) == 2);
+                thiscond_seqmat(u,seq_ones)             = 2;
+                thiscond_seqmat(u,seq_twos)             = 1;
+            end 
+        end
+
+        % recode 2s to 0s for backward induction 
+        thiscond_seqmat(find(thiscond_seqmat==2))       = 0;
+    
+        % fit free parameter using Bruno's version of the model
+        [minParams, ll, Qsad, cprob, model_samples,model_urnchoice]     = bayesbeads_b(thiscond_seqmat, cond_choices, R);
+
+        
+        model2(cond).param                              = minParams;
+        model2(cond).ll                                 = ll;
+        model2(cond).Qsad                               = Qsad;
+        model2(cond).cprob                              = cprob;
+        model2(cond).samples                            = model_samples;
+        model2_samples(sub,cond)                        = mean(model_samples); % for ploting only right now
+
+        % compute model performance
+        for t = 1:size(model_urnchoice,1)
+                
+            if (model_urnchoice(t) == 1 & urntype(t) == 1) | (model_urnchoice(t) == 2 & urntype(t) == 0)
+                model_choice(t) = 1;
+            else
+                model_choice(t) = 0;
+            end % end of condition
+        end % end of trials loop
+
+        model2_acc(sub,cond)                            = mean(model_choice);
+        model2(cond).acc                                = mean(model_choice);
+
+    end % end of conditions loop
+
+    all_model2{1,sub}                                   = model2;
+
+end % end of subjects loop
+
+% model2_samples_mean = mean(model2_samples_plot,1)
+% allmodels_barplot = [model_sampling_rate(1,:); model2_samples_mean]
+% bar(allmodels_barplot)
+
+clear minParams ll Qsad cprob model_samples model_urnchoice R
+
+%% RUN ANOVAS & PAIRWISE COMPARISONS %%
+
+% factors: Agent type (human, io, beta, beta_cs), probability 
+
+%% COMPARE & SELECT MODELS %%
+
+
+%% RECOVER PARAMETERS %% 
+
+%% COMPUTE AQ DIFFERENCES %%
+
+for sub = 1:nsubs
+
+    % exctract this sub data
+    sub_model1          = all_model1{1,sub};
+    sub_model2          = all_model2{1,sub};
+
+    % run the function
+    AQdiffs     = computeAQdifference(sub_model2, condtrials, sub);
+
+    all_AQdiffs{1,sub} = AQdiffs;
+
+
+end % end of subjects loop
+
+%%  PREP EEG DATA %%
+
+% add eegpath
+wd              = pwd;
+eeg_path        = fullfile(wd, 'cropped'); addpath(genpath(eeg_path));
+
+
+% run this first for ERPs and then for TFRs 
+for sub = 1:nsubs 
+
+    % load subject-specific cropped MEEG file
+    sub_eeg         = load(fullfile(eeg_path, sprintf('erpcropped_data_sub_%02d.mat', sub)));
+    sub_drawinfo    = allsub_drawinfo{1,sub};
+    sub_AQdiffs     = all_AQdiffs{1,sub};
+    sub_cond        = cond_data{sub,1};
+
+end 
+
+%% PLOT STUFF %%
 
 
 
