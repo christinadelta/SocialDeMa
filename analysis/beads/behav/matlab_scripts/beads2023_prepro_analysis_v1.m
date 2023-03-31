@@ -478,8 +478,6 @@ anova_struct        = struct('all_draws', all_draws, 'all_acc', all_acc,'all_ioa
 
 output_struct_two   = runBehavStats(nsubs, anova_struct); % output will be used for plotting 
 
-
-
 %% COMPARE & SELECT MODELS %%
 
 

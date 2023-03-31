@@ -182,6 +182,16 @@ elseif struct_size > 4
     acc_tbl.("Group A")         = groups(acc_tbl.("Group A"));
     acc_tbl.("Group B")         = groups(acc_tbl.("Group B"));
 
+    % store output
+    pc_results.draws            = draws_results;
+    pc_results.acc              = acc_results;
+    pc_tables.draws             = draws_tbl;
+    pc_tables.acc               = acc_tbl;
+
+    output_struct = struct('draws_stats',draws_stats,'acc_stats',acc_stats,...
+        'pc_results',pc_results,'pc_tables',pc_tables);
+
+
 
 
 end % end of if statement 
