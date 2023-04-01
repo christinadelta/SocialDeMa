@@ -500,10 +500,12 @@ simR.loss           = -10;
 simR.diff           = -20;
 simR.rangebeta      = 10; %  betas ~Exp(10) will be used 
 
-% simulate dataset of 52 sequences/trials (26 easy and 26 difficult ones)
-[sim_sequnces, sim_choiceVectors] = simBeadsData(simvars);
+nmodels             = 2;
 
-% fit models to simulated data with the range of parameter values
+Reps = 50; % should change to 100?
+
+
+
 
 
 %% COMPARE & SELECT MODELS %%

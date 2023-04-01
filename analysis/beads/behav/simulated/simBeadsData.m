@@ -28,7 +28,7 @@ for cond = 1:conditions
     % extract probability value for this condition
     thisq   = qvals(cond);
 
-    for trl = 1:ntrials/2
+    for trl = 1:cond_trls
 
         s                               = [ones(1,thisq*maxDraws), ones(1,maxDraws-thisq*maxDraws)*2]; % create tmp sequence
         s_random                        = randperm(length(s));
@@ -36,9 +36,9 @@ for cond = 1:conditions
 
         % create a vector with choices for this sequence (should be up to
         % 10th draw)
-        draw                            = maxDraws; % number of draws
-        choicevec{trl}                  = zeros(draw, k); % set the matrix 
-        choicevec{trl}((1:(end-1)),3)   = 1; % choices for drawing again up to last bead (ones in column 3)
+        draw                            = maxDraws;         % number of draws
+        choicevec{trl}                  = zeros(draw, k);   % set the matrix 
+        choicevec{trl}((1:(end-1)),3)   = 1;                % choices for drawing again up to last bead (ones in column 3)
 
         if mean(tmp_sequences(trl, 1:draw)) > 1.5
             choicevec{trl}(end, 2)      = 1;
@@ -50,10 +50,10 @@ for cond = 1:conditions
     end % end of trials loop
 
     % recode 2s to 0s for backward induction 
-     tmp_sequences(find(tmp_sequences==2))       = 0;
+     tmp_sequences(find(tmp_sequences==2))      = 0;
 
-     sim_sequnces{1,cond}       = tmp_sequences;
-     sim_choiceVectors{1,cond}  = choicevec;
+     sim_sequnces{1,cond}                       = tmp_sequences;
+     sim_choiceVectors{1,cond}                  = choicevec;
 
      clear tmp_sequences choicevec
 end % end of conditions loop
