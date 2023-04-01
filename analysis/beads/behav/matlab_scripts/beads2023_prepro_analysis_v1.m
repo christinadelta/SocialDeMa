@@ -73,7 +73,9 @@ biobserverpath  = fullfile(startpath, 'analysis', 'beads', 'behav', 'ideal_obser
 resultspath     = fullfile(datapath, 'beads', 'behav');
 croppedpath     = fullfile(startpath, 'analysis', 'beads', 'behav', 'cropped');
 behavpath       = fullfile(startpath, 'analysis', 'beads', 'behav');
+simpath         = fullfile(behavpath, 'simulated');
 addpath(genpath(fullfile(behavpath, 'matlab_scripts'))); % add matlab_scripts to teh path
+addpath(genpath(fullfile(simpath))); 
 
 task            = 'beads';
 subs            = dir(fullfile(resultspath, '*sub*'));
@@ -478,10 +480,34 @@ anova_struct        = struct('all_draws', all_draws, 'all_acc', all_acc,'all_ioa
 
 output_struct_two   = runBehavStats(nsubs, anova_struct); % output will be used for plotting 
 
+%% RECOVER PARAMETERS %% 
+
+% in parameter recover simulate 52 datasets and fit the model N
+% times with a range of Beta parameter values (in model 1) and a range of
+% Beta and Cs parameters in model 2. To see whether parameter recovery is 
+% good I plot the simulated vs fitted parameter values in scatter plots.
+
+% define variables for data simulation
+simvars.ntrials     = 52;
+simvars.maxDraws    = 10;
+simvars.qvals       = [0.8 0.6];
+simvars.conditions  = 2;
+
+% define parameters for simulations
+simR.rangeCs        = [-5:0.25:0];
+simR.reward         = 10;
+simR.loss           = -10;
+simR.diff           = -20;
+simR.rangebeta      = 10; %  betas ~Exp(10) will be used 
+
+% simulate dataset of 52 sequences/trials (26 easy and 26 difficult ones)
+[sim_sequnces, sim_choiceVectors] = simBeadsData(simvars);
+
+% fit models to simulated data with the range of parameter values
+
+
 %% COMPARE & SELECT MODELS %%
 
-
-%% RECOVER PARAMETERS %% 
 
 %% COMPUTE AQ DIFFERENCES %%
 
@@ -518,7 +544,6 @@ for sub = 1:nsubs
 end 
 
 %% PLOT STUFF %%
-
 
 
 
