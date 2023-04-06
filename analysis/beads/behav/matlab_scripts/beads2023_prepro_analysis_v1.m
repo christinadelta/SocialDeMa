@@ -281,14 +281,13 @@ R.correct           = 10;           % reward for being correct
 R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
 R.initsample        = -0.25;        % the cost to sample
 R.freeparams        = 1;            % only beta is used
-range_betas         = 1;            % for model 1 where only beta param is used
-% N                   = 1000;         % number of iterations when computing model sampling rates 
-% sequence_len        = 10;
+range_betas         = 1;
 
 for beta_model = 1:range_betas
 
     % init beta value
-    this_beta               = exprnd(10);
+    % this_beta               = exprnd(10);
+    this_beta               = 3;
     R.initbeta              = this_beta;
     beta_vals(beta_model)   = this_beta;
 
@@ -347,6 +346,8 @@ for beta_model = 1:range_betas
 
             % all_model_samples(sub,cond,beta_model)          = mean(model_samples);
             model1_samples(sub,cond)                        = mean(model_samples); % for ploting only right now
+            allsubs_beta_model1(sub,cond)                 = minParams;
+            allsubs_ll_model1(sub,cond)                     = ll;
 
             % compute model performance (to be used for statistical
             % analysis 
@@ -391,6 +392,7 @@ R.q                 = [0.8 0.6];    % proportion of the majority value in sequen
 R.initsample        = -0.25;        % the cost to sample
 R.freeparams        = 2;            %  Cs and beta are used
 R.initbeta          = 3;            % 
+
 
 for sub = 1:nsubs
 
@@ -445,6 +447,10 @@ for sub = 1:nsubs
         model2(cond).cprob                              = cprob;
         model2(cond).samples                            = model_samples;
         model2_samples(sub,cond)                        = mean(model_samples); % for ploting only right now
+        allsubs_cs_model2(sub,cond)                     = minParams(1);
+        allsubs_beta_model2(sub,cond)                   = minParams(2);
+        allsubs_ll_model2(sub,cond)                     = ll;
+
 
         % compute model performance
         for t = 1:size(model_urnchoice,1)
@@ -494,18 +500,87 @@ simvars.qvals       = [0.8 0.6];
 simvars.conditions  = 2;
 
 % define parameters for simulations
-simR.rangeCs        = [-5:0.25:0];
-simR.reward         = 10;
-simR.loss           = -10;
-simR.diff           = -20;
-simR.rangebeta      = 10; %  betas ~Exp(10) will be used 
+% simR.rangeCs        = [-5:0.25:0];
+simR.correct            = 10;
+simR.error              = -10;
+simR.diff               = -20;
+simR.initsample         = -0.25; % cost-to-sample is fixed in beta model
+simR.freeparams         = 1; 
 
-nmodels             = 2;
+% deal with betas
+beta_bounds             =[0 30];        % maximum and minimum value of beta?
+nbins                   = 25;
+allbetas                = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
 
-Reps = 50; % should change to 100?
+nReps                   = length(allbetas);
+
+% RUN MODEL 1 -- BETA
+for rep = 1:nReps
+
+    simR.initbeta           = allbetas(1,rep); % this rep beta value?
+    
+    % simulate dataset of 52 sequences/trials (26 easy and 26 difficult ones)
+    simoutput = simBeadsData(simvars,simR);
+
+    % store the main simulated parameters and samples
+    simulated_model1(rep).samples          = simoutput.simdraws;
+    simulated_model1(rep).avsamples        = simoutput.avsamples;
+    
+    for cond = 1:conditions
+
+        cond_simsequence                                        = simoutput.simsequences{1,cond};
+        cond_simvecs                                            = simoutput.simchoicevec{1,cond};
+        simR.thisq                                              = simvars.qvals(cond);
+
+        % what is the simulated urntype?
+        simurntype                                         = simoutput.simurns(:,cond);
+
+        for u = 1:length(simurntype)
+            if simurntype(u) == 0 % if green urn switch index coding
+                seq_ones                                = find(cond_simsequence(u,:) == 1);
+                seq_twos                                = find(cond_simsequence(u,:) == 2);
+                cond_simsequence(u,seq_ones)             = 2;
+                cond_simsequence(u,seq_twos)             = 1;
+            end 
+        end
+
+        % recode 2s to 0s for backward induction 
+        cond_simsequence(find(cond_simsequence==2))       = 0;
+
+        
+        % now that we have simulated sequences and responses, fit the model
+        % with the simulated R struct
+        [minParams,ll,Qsad,cprob,fitted_samples,fitted_urnchoice] = bayesbeads_b(cond_simsequence, cond_simvecs, simR);
+
+        % compute fitted/recovered performance (to be used for statistical
+        % analysis 
+        for t = 1:size(fitted_urnchoice,1)
+            
+            if (fitted_urnchoice(t) == 1 & simurntype(t,1) == 1) | (fitted_urnchoice(t) == 2 & simurntype(t,1) == 0)
+                fitted_choice(t) = 1;
+            else
+                fitted_choice(t) = 0;
+            end % end of condition
+        end % end of trials loop
+        
+        performance(cond)               = mean(fitted_choice);
+        fitted_avsamples(cond)          = mean(fitted_samples);
+        
+        % store the main simulated parameters and samples
+        simulated_model1(rep).beta(cond)       = simR.initbeta;
+        simulated_model1(rep).correct(cond)    = simoutput.performance(cond);
+
+        % store fitted parameters and samples
+        fitted_model1(rep).samples(:,cond)     = fitted_samples;
+        fitted_model1(rep).beta(cond)          = minParams(1);
+        fitted_model1(rep).correct(cond)       = performance;
+        fitted_model1(rep).avsamples(cond)     = fitted_avsamples;
+        fitted_model1(rep).ll(cond)            = ll;
+        
+    end 
 
 
-
+end % end of model 1 repetitions loop
 
 
 %% COMPARE & SELECT MODELS %%
