@@ -27,10 +27,10 @@ for ts = 1 : Nconsider
     
     %     fprintf('sample %d rnk %d %.2f %.4f %.2f\n', ts, z, sampleSeries(ts), expectedStop(ts), expectedCont(ts));
     
-    difVal(ts) = expectedCont(ts) - expectedStop(ts)
+    difVal(ts) = expectedCont(ts) - expectedStop(ts);
     
-    choiceCont(ts) = expectedCont(ts)
-    choiceStop(ts) = expectedStop(ts)
+    choiceCont(ts) = expectedCont(ts);
+    choiceStop(ts) = expectedStop(ts);
     
     currentRnk(ts) = z;
  

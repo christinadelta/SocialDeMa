@@ -11,31 +11,34 @@
 % initiate a few parameters
 log_or_not                  = 1; % log or not?
 subjects                    = 1; % one subject at a time
-subI                        = 1; % test subject
+subI                        = 2; % test subject
 
 %% EXTRACT SUBJECT DATA AND SAVE IN PARAMS %%
 
 % for now we need to extract this_subject phase 1 ratings [400x1], sequences
 % [1x40x10] and number of samples [40x1].  
-subrates                    = allsubs_ratings{1,subI};
-subsequences                = allsubs_price_sequences{1,subI};
-subsamples                  = allsubs_data{1,subI}.samples;
-subranks                    = allsubs_data{1,subI}.rank;
-subratesequences            = allsubs_rate_sequences{1,subI};
-subprices                   = allsubs_prices{1,subI};
+subrates                    = all_ratings{1,subI}(:,2);
+subsequences                = allsub_price_sequences{1,subI};
+subsamples                  = allsub_samples(:,subI);
+% subranks                    = allsubs_data{1,subI}.rank;
+subratesequences            = allsub_rate_sequences{1,subI};
+subprices                   = all_ratings{1,subI}(:,3);
 
 % 1. get ranks? this seems a bit confusing, because I already have the
 % rank of options that each subject chose in allsubs_data.rank struct
 % field. Also I don't get the code in line 93 in Nick's code
-% for i = 1:length(subsequences)
-%     sequenceranks{1,i} = tiedrank(subsequences{1,i})';
-% end
+for i = 1:length(subsequences)
+    tmpRank = tiedrank(subsequences{1,i});
+    sequenceranks(i,:) = tmpRank;
+    subranks(i,1) = sequenceranks(i,subsamples(i,1));
+    
+end
 % 
 % 2 log_or_not 
 if log_or_not == 1
     
-    Generate_params.ratings(:,subI)             = log(subrates(:,1));
-    Generate_params.prices(:,subI)              = log(subprices(:,2)); % for computing prior mean & variance
+    Generate_params.ratings(:,subI)             = log(subrates);
+    Generate_params.prices(:,subI)              = log(subprices); % for computing prior mean & variance
 
     for i = 1:length(subsequences)
         Generate_params.seq_vals(i,:,subI)      = log(subsequences{1,i})';

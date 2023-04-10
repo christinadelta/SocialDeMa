@@ -34,8 +34,8 @@ startpath               = '/Volumes/DeepSpaceStuff/optimal_stopping_data/data/';
 task                    = 'economic';
 datatype                = 'behav'; 
 subpath                 = fullfile(startpath, task, datatype);
-phase                   = 1; % change this when extracting phase 2 data
-session                 = 1; % change this when extracting phase 2 data
+% phase                   = 1; % change this when extracting phase 2 data
+% session                 = 1; % change this when extracting phase 2 data
 
 subs                    = dir(fullfile(subpath, '*sub*'));
 nsubs                   = length(subs);
@@ -151,6 +151,7 @@ end % end of subjects loop
 session     = 2;
 phase       = 2;
 counter     = 0; % init counter var
+
 
 % loop over subs
 for subI = 1:nsubs
