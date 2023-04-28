@@ -373,33 +373,36 @@ for model = 1:model_num
             % recode 2s to 0s for backward induction 
             thiscond_seqmat(find(thiscond_seqmat==2))       = 0;
 
-            modeloutput                     = fitAllModel(R,thiscond_seqmat,cond_choices,urntype);
-            mout(cond).modelout             = modeloutput;
+            modeloutput                         = fitAllModel(R,thiscond_seqmat,cond_choices,urntype);
+            % mout(cond).modelout               = modeloutput; % not needed for now
 
             % for each subject and condition, store most important outputs:
-            allsubNLL(sub,cond)             = modeloutput.NLL;
+            allsubNLL(sub,cond)                 = modeloutput.NLL;
             
             if R.freeparams == 1
-                allsubFitParams(sub,cond)   = modeloutput.fittedX; % right now it doesn't really matter which parameter it is
+                allsubFitParams(sub,cond)       = modeloutput.fittedX; % right now it doesn't really matter which parameter it is
             elseif R.freeparams == 2
-                param_one(sub,cond)         = modeloutput.fittedX(1); 
-                param_two(sub,cond)         = modeloutput.fittedX(2); 
-                allsubFitParams(sub).fitted1     = param_one;
-                allsubFitParams(sub).fitted2     = param_two;
+                allsubFitParams.X1(sub,cond)    = modeloutput.fittedX(1); % cost error or cost sample
+                allsubFitParams.X2(sub,cond)    = modeloutput.fittedX(2); % reward or beta
+            elseif R.freeparams == 3
+                allsubFitParams.X1(sub,cond)    = modeloutput.fittedX(1); % cost sample
+                allsubFitParams.X2(sub,cond)    = modeloutput.fittedX(2); % cost error
+                allsubFitParams.X3(sub,cond)    = modeloutput.fittedX(3); % reward
             end
 
-            allsubAvSamples(sub,cond)       = modeloutput.avSamples;
-            allsubAvPerformance(sub,cond)   = modeloutput.modelPerformance;
+            allsubAvSamples(sub,cond)           = modeloutput.avSamples;
+            allsubAvPerformance(sub,cond)       = modeloutput.modelPerformance;
 
         end % end of conditions loop
     end % end of subjects loop
 
     % store the above for each model 
-    allModelsNLL{1,model}           = allsubNLL;
-    allModelsFitParams{1,model}     = allsubFitParams;
-    allModelsAvSamples{1,model}     = allsubAvSamples;
-    allModelsAvPerformance{1,model} = allsubAvPerformance;
+    allModelsNLL{1,model}                   = allsubNLL;
+    allModelsFitParams{1,model}             = allsubFitParams;
+    allModelsAvSamples{1,model}             = allsubAvSamples;
+    allModelsAvPerformance{1,model}         = allsubAvPerformance;
 
+    clear allsubNLL allsubFitParams allsubAvSamples allsubAvPerformance
 end % end of models loop
 
 %% RUN STATISTICS ON BEHAVIOUR, IO & MODELS %%

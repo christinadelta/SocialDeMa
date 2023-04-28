@@ -39,7 +39,8 @@ elseif model == 2
     param(2)    = R.initreward;
 elseif model == 3
     param(1)    = R.initsample;
-    param(2)    = R.initdiff;
+    param(2)    = R.initerror;
+    param(3)    = R.initreward;
 elseif model == 4
     param       = R.initbeta;
 elseif model == 5

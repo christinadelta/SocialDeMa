@@ -45,7 +45,7 @@ for t = 1:trials
             tmp_diff                        = [zeros(len,1) ones(len,1) zeros(len,1)]; % [0 1 0]
         end
 
-        tmp_diff(1:length(choiceProbs),:)   = choiceProbs;
+        tmp_diff(1:size(choiceProbs,1),:)   = choiceProbs;
         choiceProbs                         = tmp_diff;
     end 
     

@@ -5,15 +5,30 @@ k           = 3;
 
 % which parameters are free?
 if R.model == 1
-    R.sample        = param;
-    beta            = R.beta;
-    R.costloss      = R.error;
-    R.costreward    = R.correct;
+    R.sample        = param;        % free
+    beta            = R.beta;       % fixed 
+    R.costloss      = R.error;      % fixed 
+    R.costreward    = R.correct;    % fixed 
 elseif R.model == 2
     R.costloss      = param(1);
     R.costreward    = param(2);
     R.sample        = R.Cs;
     beta            = R.beta;
+elseif R.model == 3
+    R.sample        = param(1);
+    R.costloss      = param(2);
+    R.costreward    = param(3);
+    beta            = R.beta;
+elseif R.model == 4
+    R.sample        = R.Cs;
+    R.costloss      = R.error;
+    R.costreward    = R.correct;
+    beta            = param;
+elseif R.model == 5
+    R.sample        = param(1);
+    R.costloss      = R.error;
+    R.costreward    = R.correct;
+    beta            = param(2);
 end 
 
 
