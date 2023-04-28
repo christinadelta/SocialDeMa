@@ -25,11 +25,14 @@ conditions  = simvars.conditions;
 k           = 3;
 
 % simlute vector with urns 
-temp            = [ones(cond_trls,1); zeros(cond_trls,1)]';
-temp_rand       = randperm(length(temp));
-temp            = temp(temp_rand);
-simurns(1:cond_trls,1) = temp(1:cond_trls);
-simurns(1:cond_trls,2) = temp(cond_trls+1:end);
+for cond = 1:conditions
+
+    temp            = [ones(cond_trls/2,1); zeros(cond_trls/2,1)]';
+    temp_rand       = randperm(length(temp));
+    temp            = temp(temp_rand);
+    simurns(:,cond) = temp;
+
+end 
 
 % loop over conditions 
 for cond = 1:conditions 
@@ -45,8 +48,10 @@ for cond = 1:conditions
         s                               = [ones(1,thisq*maxDraws), ones(1,maxDraws-thisq*maxDraws)*2]; % create tmp sequence
         s_random                        = randperm(length(s));
         tmp_sequences(trl,:)            = s(s_random); 
+    
+        % tmp_sequences(trl,:)            = (rand(1, maxDraws) > thisq) + 1; 
 
-    clear s s_random 
+        clear s s_random 
     end % end of trials loop
 
     sim_sequnces{1,cond}               = tmp_sequences;
@@ -54,7 +59,7 @@ for cond = 1:conditions
 
     % what is the probability of this condition? 
     simR.thisq                          = thisq;
-    simR.sample                         = simR.initsample; 
+    simR.sample                         = -0.25; 
     simR.beta                           = simR.initbeta;
     
     % deal with simulated urns, we need that to get simulated agent's
