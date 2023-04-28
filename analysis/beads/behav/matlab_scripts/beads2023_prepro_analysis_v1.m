@@ -26,9 +26,9 @@
 
 % 4. fit models:
 %   - model 1: free parameter 1 = Cost-sample
-%   - model 2: free parameter 1 = Cost-error
+%   - model 2: free parameter 2 = Cost-error & reward (difference (cost-error - reward) didn't work !!!)
 %   - model 3: free parameter 1 = beta
-%   - model 4: free parameter 2 = Cost-sample, Cost-error
+%   - model 4: free parameter 3 = Cost-sample, Cost-error & reward
 %   - model 5: free parameter 2 = Cost-sample, beta
 
 % POTENTIAL ADDITIONAL MODELS TO INCLUDE (will decide after making the above model fit and parameter recovery work):
@@ -300,25 +300,29 @@ for model = 1:model_num
 
     elseif model == 2
 
-        R.initdiff     = R.difference;
-        R.freeparams   = 1;
+        % R.initdiff     = R.difference;
+        % R.freeparams   = 1;
+        R.initerror     = R.error;
+        R.initreward    = R.correct;
+        R.freeparams    = 2;
 
     elseif model == 3
 
-        R.initsample   = R.Cs;
-        R.initdiff     = R.difference;
-        R.freeparams   = 2;
+        R.initsample    = R.Cs;
+        R.initerror     = R.error;
+        R.initreward    = R.correct;
+        R.freeparams    = 3;
 
     elseif model == 4
 
-        R.initbeta     = 3;
-        R.freeparams   = 1;
+        R.initbeta      = 3;
+        R.freeparams    = 1;
 
      elseif model == 5
 
-        R.initsample   = R.Cs;
-        R.initbeta     = 3;
-        R.freeparams   = 2;
+        R.initsample    = R.Cs;
+        R.initbeta      = 3;
+        R.freeparams    = 2;
 
     end
 
@@ -369,13 +373,33 @@ for model = 1:model_num
             % recode 2s to 0s for backward induction 
             thiscond_seqmat(find(thiscond_seqmat==2))       = 0;
 
-            modeloutput         = fitAllModel(R,thiscond_seqmat,cond_choices,urntype);
-            mout(cond).modelout = modeloutput;
+            modeloutput                     = fitAllModel(R,thiscond_seqmat,cond_choices,urntype);
+            mout(cond).modelout             = modeloutput;
 
-            % for each subject and condition, store 
+            % for each subject and condition, store most important outputs:
+            allsubNLL(sub,cond)             = modeloutput.NLL;
+            
+            if R.freeparams == 1
+                allsubFitParams(sub,cond)   = modeloutput.fittedX; % right now it doesn't really matter which parameter it is
+            elseif R.freeparams == 2
+                param_one(sub,cond)         = modeloutput.fittedX(1); 
+                param_two(sub,cond)         = modeloutput.fittedX(2); 
+                allsubFitParams(sub).fitted1     = param_one;
+                allsubFitParams(sub).fitted2     = param_two;
+            end
+
+            allsubAvSamples(sub,cond)       = modeloutput.avSamples;
+            allsubAvPerformance(sub,cond)   = modeloutput.modelPerformance;
 
         end % end of conditions loop
     end % end of subjects loop
+
+    % store the above for each model 
+    allModelsNLL{1,model}           = allsubNLL;
+    allModelsFitParams{1,model}     = allsubFitParams;
+    allModelsAvSamples{1,model}     = allsubAvSamples;
+    allModelsAvPerformance{1,model} = allsubAvPerformance;
+
 end % end of models loop
 
 %% RUN STATISTICS ON BEHAVIOUR, IO & MODELS %%
