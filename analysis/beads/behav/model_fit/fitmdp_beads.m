@@ -20,11 +20,15 @@ elseif R.model == 3
     R.costreward    = param(3);
     beta            = R.beta;
 elseif R.model == 4
+    R.diff          = param;
+    R.sample        = R.Cs;
+    beta            = R.beta;
+elseif R.model == 5
     R.sample        = R.Cs;
     R.costloss      = R.error;
     R.costreward    = R.correct;
     beta            = param;
-elseif R.model == 5
+elseif R.model == 6
     R.sample        = param(1);
     R.costloss      = R.error;
     R.costreward    = R.correct;
@@ -86,7 +90,7 @@ for trial = 1:ntrials
         
         % if model fitting:
         if fitm == 1
-            ll                  = ll - log(this_choices(draw,:)*cVec)
+            ll                  = ll - log(this_choices(draw,:)*cVec);
         end
 
 %         if isnan(ll)
@@ -100,40 +104,6 @@ for trial = 1:ntrials
 
      
     end % end of draws loop
-
-
-    
-    % I think this is how it works
-
-    %%%% UPDATE:
-    % THE FOLLOWING (commented) CODE IS NOT CORRECT!!!
-    
-    % only compute -ll if model fitting 
-%     if fitm == 1
-% 
-%         % not sure what the next line of code does
-%         % seqChoice = (choiceVec{cond,trial}(end) == 2)
-%     
-%         % so.... seqChoice should be either 2 or 1. In Bruno's code if
-%         % green then seqChoice = 1, if blue then seqChoice = 2
-%         
-%         if this_choices(end,1) == 1
-%             % then it's a blue trial (1)
-%             seqChoice = 1;
-%         elseif this_choices(end,2) == 1
-%             % then it's a green trial (2)
-%             seqChoice = 2;
-%         end
-%         
-%         % update -ll 
-%         if ndraws - 1 > 0 & ndraws < maxDraws
-%             ll = ll - sum(log(squeeze(cprob(trial, ndraws-1, k)))) - log(squeeze(cprob(trial, ndraws, seqChoice)));
-%         elseif ndraws < maxDraws
-%             ll = ll - log(squeeze(cprob(trial, ndraws, seqChoice)));
-%         end % end of if
-%     end
-
-    % llall(trial,cond) = ll;
     
 end % end of trials loop
 

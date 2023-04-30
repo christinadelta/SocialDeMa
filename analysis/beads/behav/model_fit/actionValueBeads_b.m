@@ -5,15 +5,15 @@ pg = PG_b(R.thisq, nd, ng);
 pb = 1 - pg;
 
 % compute action values for each urn either by using the cost for being
-% encorrect + reward for being correct, or by using just the difference
+% incorrect + reward for being correct, or by using just the difference
 % between the two
-% if R.model == 2 || R.model == 3
-%     QG = R.difference * pb;
-%     QB = R.difference * pg;
-% else
-    QG = R.costreward*pg + R.costloss*pb;
-    QB = R.costreward*pb + R.costloss*pg;
-% end
+if R.model == 4
+    QG = R.diff * pb;
+    QB = R.diff * pg;
+else
+    QG = R.costreward * pg + R.costloss * pb;
+    QB = R.costreward * pb + R.costloss * pg;
+end
 
 if drawi < maxDraws
 

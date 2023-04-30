@@ -287,7 +287,7 @@ R.Cs                = -0.25;
 R.beta              = 3;
 
 % how many models, which models?
-model_names         = {'CostSample' 'CostError' 'CsCerror' 'beta' 'betaCs'};
+model_names         = {'CostSample' 'CostError' 'CsCerror' 'CostDifference' 'beta' 'betaCs'};
 model_num           = length(model_names);
 
 % loop over models 
@@ -315,10 +315,15 @@ for model = 1:model_num
 
     elseif model == 4
 
+        R.initdiff      = R.difference;
+        R.freeparams    = 1;
+
+    elseif model == 5
+
         R.initbeta      = 3;
         R.freeparams    = 1;
 
-     elseif model == 5
+     elseif model == 6
 
         R.initsample    = R.Cs;
         R.initbeta      = 3;
@@ -406,6 +411,7 @@ for model = 1:model_num
 end % end of models loop
 
 %% RUN STATISTICS ON BEHAVIOUR, IO & MODELS %%
+
 
 
 %% RECOVER MODEL PARAMETERS %%
