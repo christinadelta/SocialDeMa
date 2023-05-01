@@ -33,7 +33,6 @@ for t = 1:trials
     % ensure stopping point at last draw
     choiceProbs(end,urnchoice)   = Inf; 
 
-
     % sometimes the model draws les than the actual sequence length; find rows with sum zero...
     for l = 1:size(choiceProbs,1)
 
@@ -44,6 +43,7 @@ for t = 1:trials
 
     end % end of cprob length loop
     % ...and remove them
+    
     choiceProbs(any(isnan(choiceProbs), 2), :) = [];
 
     % in cases that the model uses less beads than the total sequence (e.g., 6 draws instaed of 10), the

@@ -287,7 +287,7 @@ R.Cs                = -0.25;
 R.beta              = 3;
 
 % how many models, which models?
-model_names         = {'CostSample' 'CostError' 'CsCerror' 'CostDifference' 'beta' 'betaCs'};
+model_names         = {'CostSample' 'ErrorReward' 'CsErrorReward' 'Difference' 'Beta' 'BetaCs'};
 model_num           = length(model_names);
 
 % loop over models 
@@ -411,6 +411,38 @@ for model = 1:model_num
 end % end of models loop
 
 %% RUN STATISTICS ON BEHAVIOUR, IO & MODELS %%
+
+% run stats for all model, human behaviour % io
+% add draws and performance in one vec
+all_acc             = [easy_avacc diff_avacc];
+all_draws           = [easy_avdraws diff_avdraws];
+
+% extract model samples and performance
+costSample_modelSamples     = allModelsAvSamples{1,1}; % cost-sample model
+CerrorReward_modelSamples   = allModelsAvSamples{1,2}; % cost-error & reward model
+CsCerrorReward_modelSamples = allModelsAvSamples{1,3}; % cost-sample, cost-error & reward model
+costDiff_modelSamples       = allModelsAvSamples{1,4}; % difference model
+beta_modelSamples           = allModelsAvSamples{1,5}; % beta model
+betaCs_modelSamples         = allModelsAvSamples{1,6}; % beta & cost-sample model
+
+costSample_modelPerf        = allModelsAvPerformance{1,1};
+CerrorReward_modelPerf      = allModelsAvPerformance{1,2};
+CsCerrorReward_modelPerf    = allModelsAvPerformance{1,3};
+costDiff_modelPerf          = allModelsAvPerformance{1,4};
+beta_modelPerf              = allModelsAvPerformance{1,5};
+betaCs_modelPerf            = allModelsAvPerformance{1,6};
+
+% make a struct with all the vectors needed for the analysis
+anova_struct        = struct('all_draws', all_draws, 'all_acc', all_acc,...
+    'all_ioacc', all_ioacc, 'all_iodraws', all_iodraws,...
+    'costSample_modelSamples', costSample_modelSamples, 'CerrorReward_modelSamples', CerrorReward_modelSamples,...
+    'CsCerrorReward_modelSamples', CsCerrorReward_modelSamples, 'costDiff_modelSamples', costDiff_modelSamples,...
+    'beta_modelSamples', beta_modelSamples, 'betaCs_modelSamples', betaCs_modelSamples,...
+    'costSample_modelPerf', costSample_modelPerf, 'CerrorReward_modelPerf', CerrorReward_modelPerf,...
+    'CsCerrorReward_modelPerf', CsCerrorReward_modelPerf, 'costDiff_modelPerf', costDiff_modelPerf,...
+    'beta_modelPerf', beta_modelPerf, 'betaCs_modelPerf', betaCs_modelPerf);
+
+% run stats function
 
 
 
