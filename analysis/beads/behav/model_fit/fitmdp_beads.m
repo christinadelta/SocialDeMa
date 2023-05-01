@@ -10,25 +10,11 @@ if R.model == 1
     R.costloss      = R.error;      % fixed 
     R.costreward    = R.correct;    % fixed 
 elseif R.model == 2
-    R.costloss      = param(1);
-    R.costreward    = param(2);
-    R.sample        = R.Cs;
-    beta            = R.beta;
-elseif R.model == 3
-    R.sample        = param(1);
-    R.costloss      = param(2);
-    R.costreward    = param(3);
-    beta            = R.beta;
-elseif R.model == 4
-    R.diff          = param;
-    R.sample        = R.Cs;
-    beta            = R.beta;
-elseif R.model == 5
     R.sample        = R.Cs;
     R.costloss      = R.error;
     R.costreward    = R.correct;
     beta            = param;
-elseif R.model == 6
+elseif R.model == 3
     R.sample        = param(1);
     R.costloss      = R.error;
     R.costreward    = R.correct;

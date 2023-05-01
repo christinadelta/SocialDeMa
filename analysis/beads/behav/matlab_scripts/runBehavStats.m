@@ -78,7 +78,7 @@ if struct_size <= 4
     % 1. multicompare draws
     % run multicompare on agent_type and probability factors
     [draws_results,~,~,groups]  = multcompare(draws_stats.stats,"Dimension",[2 3]); 
-    
+    % [c, m, h, nms] = multcompare(draws_stats.stats,"Dimension",[2 3],'Alpha',.05, 'CriticalValueType','bonferroni'); 
     
     % look at results in a table 
     draws_tbl                   = array2table(draws_results,"VariableNames",...

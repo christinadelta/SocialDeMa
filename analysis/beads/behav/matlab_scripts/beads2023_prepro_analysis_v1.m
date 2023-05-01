@@ -27,15 +27,25 @@
 % 4. fit models:
 %   - model 1: free parameter 1 = Cost-sample
 %   - model 2: free parameter 2 = Cost-error & reward (difference (cost-error - reward) didn't work !!!)
-%   - model 3: free parameter 1 = beta
-%   - model 4: free parameter 3 = Cost-sample, Cost-error & reward
-%   - model 5: free parameter 2 = Cost-sample, beta
+%   - model 3: free parameter 3 = Cost-sample, Cost-error & reward 
+%   - model 4: free parameter 1 = Cost difference (for testing and comparison with model 2)
+%   - model 5: free parameter 1 = beta
+%   - model 6: free parameter 2 = Cost-sample, beta
 
 % POTENTIAL ADDITIONAL MODELS TO INCLUDE (will decide after making the above model fit and parameter recovery work):
-%   - model 6: free parameter 1 = discounting factor (gamma)
-%   - model 7: free parameter 3 = Cost-sample, beta, discounting factor (gamma)
+%   - model 7: free parameter 1 = discounting factor (gamma)
+%   - model 8: free parameter 3 = Cost-sample, beta, discounting factor (gamma)
 
 % 5. parameter recovery
+% NOTE TO SELF:
+% In parameter recovery, we first need to simulate 52 datasets and
+% then simulate responses 
+% TO TEST:
+% To simulate responses I use backward induction and then the choice probabilities computed with the
+% softmax function. Previously, I tried simulating responses using only the Q values but this seems incorrect. Not sure if using the softmax-choices will work, but it looks like the
+% reasonable thing to do as a response model! -- Also, this is consistent
+% with RL models 
+
 % 6. model comparison
 % 7. compute AQ differences [draw-again higher-option]
 % 8. next analysis steps will be introduced soon...
@@ -300,30 +310,10 @@ for model = 1:model_num
 
     elseif model == 2
 
-        % R.initdiff     = R.difference;
-        % R.freeparams   = 1;
-        R.initerror     = R.error;
-        R.initreward    = R.correct;
-        R.freeparams    = 2;
-
-    elseif model == 3
-
-        R.initsample    = R.Cs;
-        R.initerror     = R.error;
-        R.initreward    = R.correct;
-        R.freeparams    = 3;
-
-    elseif model == 4
-
-        R.initdiff      = R.difference;
-        R.freeparams    = 1;
-
-    elseif model == 5
-
         R.initbeta      = 3;
         R.freeparams    = 1;
 
-     elseif model == 6
+     elseif model == 3
 
         R.initsample    = R.Cs;
         R.initbeta      = 3;
@@ -414,8 +404,8 @@ end % end of models loop
 
 % run stats for all model, human behaviour % io
 % add draws and performance in one vec
-all_acc             = [easy_avacc diff_avacc];
-all_draws           = [easy_avdraws diff_avdraws];
+all_acc                     = [easy_avacc diff_avacc];
+all_draws                   = [easy_avdraws diff_avdraws];
 
 % extract model samples and performance
 costSample_modelSamples     = allModelsAvSamples{1,1}; % cost-sample model
@@ -443,10 +433,63 @@ anova_struct        = struct('all_draws', all_draws, 'all_acc', all_acc,...
     'beta_modelPerf', beta_modelPerf, 'betaCs_modelPerf', betaCs_modelPerf);
 
 % run stats function
+output_struct_one   = runBehavStats(nsubs, anova_struct); % output will be used for plotting 
 
-
+clear anova_struct
 
 %% RECOVER MODEL PARAMETERS %%
+
+% define some initial variables for the simulations
+simvars.ntrials         = totaltrials;
+simvars.maxDraws        = 10;
+simvars.qvals           = [0.8 0.6];
+simvars.conditions      = conditions;
+simvars.contrials       = totaltrials / conditions;
+
+% models to recover 
+% simModels               = {'Csample' 'errorReward' 'CsErrorReward' 'beta' 'BetaCs'};
+simModels               = {'Csample' 'beta' 'BetaCs'};
+num_simModels           = length(simModels); 
+
+for m = 1:num_simModels
+
+    if m == 1
+        
+        % define parameters for simulations
+        cs_bounds               = [-4 0]; % maximum and minimum cost to sample
+        nbins                   = 16;
+        % allCs                   = linspace(cs_bounds(1), cs_bounds(2), nbins+1);
+        allCs                   = [-4 -3 -2 -1 -0.5 -0.25 0];
+        simR.correct            = 10;
+        simR.error              = -10;
+        simR.difference         = -20;
+        simR.initbeta           = 3;
+
+        for thisCs = 1:length(allCs)
+
+            simR.Cs = allCs(thisCs); % use the
+
+            for cond = 1:conditions
+
+                simR.cond           = cond;
+                simoutput{1,cond}   = simBeadsData(simvars, simR);
+                
+                sim_drawsequence = simoutput{1,cond}.simsequences;
+                sim_choiceVecs = simoutput{1,cond}.simchoicevec;
+
+                
+
+
+
+
+            end % end of conditions loop
+        end % end of cs loop
+        
+    end % end of if statement
+    
+
+
+end % end of models loop
 
 %% COMPARE & CHOOSE WINNING MODEL %%
 

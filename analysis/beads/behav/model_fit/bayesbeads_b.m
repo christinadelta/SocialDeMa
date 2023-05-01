@@ -34,18 +34,8 @@ model = R.model; % hich model?
 if model == 1
     param       = R.initsample;
 elseif model == 2
-    % param     = R.initdiff;
-    param(1)    = R.initerror;
-    param(2)    = R.initreward;
-elseif model == 3
-    param(1)    = R.initsample;
-    param(2)    = R.initerror;
-    param(3)    = R.initreward;
-elseif model == 4
-    param       = R.initdiff;
-elseif model == 5
     param       = R.initbeta;
-elseif model == 6
+elseif model == 3
     param(1)    = R.initsample;
     param(2)    = R.initbeta;
 end
