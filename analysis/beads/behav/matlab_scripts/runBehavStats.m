@@ -115,26 +115,20 @@ elseif struct_size >= 4
     all_humandraws      = anova_struct.all_draws; 
     all_iodraws         = anova_struct.all_iodraws; 
     all_model1_draws    = anova_struct.costSample_modelSamples;
-    all_model2_draws    = anova_struct.CerrorReward_modelSamples;
-    all_model3_draws    = anova_struct.CsCerrorReward_modelSamples;
-    all_model4_draws    = anova_struct.costDiff_modelSamples;
-    all_model5_draws    = anova_struct.beta_modelSamples;
-    all_model6_draws    = anova_struct.betaCs_modelSamples;
+    all_model2_draws    = anova_struct.beta_modelSamples;
+    all_model3_draws    = anova_struct.betaCs_modelSamples;
 
     all_humanacc        = anova_struct.all_acc; 
     all_ioacc           = anova_struct.all_ioacc;
     all_model1_acc      = anova_struct.costSample_modelPerf;
-    all_model2_acc      = anova_struct.CerrorReward_modelPerf;
-    all_model3_acc      = anova_struct.CsCerrorReward_modelPerf;
-    all_model4_acc      = anova_struct.costDiff_modelPerf;
-    all_model5_acc      = anova_struct.beta_modelPerf;
-    all_model6_acc      = anova_struct.betaCs_modelPerf;
+    all_model2_acc      = anova_struct.beta_modelPerf;
+    all_model3_acc      = anova_struct.betaCs_modelPerf;
 
     % make arrays to be used in the ANOVAS
-    subvec              = repmat(1:nsubs,1,16)';                             % create a vector with 16 copies participant number 
+    subvec              = repmat(1:nsubs,1,10)';                             % create a vector with 10 copies participant number 
     agentvec            = repmat([ones(1,nsubs*2) ones(1,nsubs*2)*2 ones(1,nsubs*2)*3 ones(1,nsubs*2)*4 ...
-        ones(1,nsubs*2)*5 ones(1,nsubs*2)*6 ones(1,nsubs*2)*7 ones(1,nsubs*2)*8],1,1)'; % create a vector with 2 copies of agent type (indexed as 1=human, 2=io, 3=beta, 4=beta_Cs)
-    probvec             = repmat([ones(1,nsubs) ones(1,nsubs)*2],1,8)';     % create a vector with 2 copies of probability type (indexed as 1=0.8, 2=0.6)
+        ones(1,nsubs*2)*5],1,1)'; % create a vector with 2 copies of agent type (indexed as 1=human, 2=io, 3=beta, 4=beta_Cs)
+    probvec             = repmat([ones(1,nsubs) ones(1,nsubs)*2],1,5)';     % create a vector with 2 copies of probability type (indexed as 1=0.8, 2=0.6)
     
     % create 1 vec with all draws (human, io and parameterised models) 
     drawsmat            = [all_humandraws all_iodraws all_model1_draws all_model2_draws all_model3_draws all_model4_draws all_model5_draws all_model6_draws];

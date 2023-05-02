@@ -297,7 +297,7 @@ R.Cs                = -0.25;
 R.beta              = 3;
 
 % how many models, which models?
-model_names         = {'CostSample' 'ErrorReward' 'CsErrorReward' 'Difference' 'Beta' 'BetaCs'};
+model_names         = {'CostSample' 'Beta' 'BetaCs'};
 model_num           = length(model_names);
 
 % loop over models 
@@ -409,27 +409,25 @@ all_draws                   = [easy_avdraws diff_avdraws];
 
 % extract model samples and performance
 costSample_modelSamples     = allModelsAvSamples{1,1}; % cost-sample model
-CerrorReward_modelSamples   = allModelsAvSamples{1,2}; % cost-error & reward model
-CsCerrorReward_modelSamples = allModelsAvSamples{1,3}; % cost-sample, cost-error & reward model
-costDiff_modelSamples       = allModelsAvSamples{1,4}; % difference model
+% CerrorReward_modelSamples   = allModelsAvSamples{1,2}; % cost-error & reward model
+% CsCerrorReward_modelSamples = allModelsAvSamples{1,3}; % cost-sample, cost-error & reward model
+% costDiff_modelSamples       = allModelsAvSamples{1,4}; % difference model
 beta_modelSamples           = allModelsAvSamples{1,5}; % beta model
 betaCs_modelSamples         = allModelsAvSamples{1,6}; % beta & cost-sample model
 
 costSample_modelPerf        = allModelsAvPerformance{1,1};
-CerrorReward_modelPerf      = allModelsAvPerformance{1,2};
-CsCerrorReward_modelPerf    = allModelsAvPerformance{1,3};
-costDiff_modelPerf          = allModelsAvPerformance{1,4};
+% CerrorReward_modelPerf      = allModelsAvPerformance{1,2};
+% CsCerrorReward_modelPerf    = allModelsAvPerformance{1,3};
+% costDiff_modelPerf          = allModelsAvPerformance{1,4};
 beta_modelPerf              = allModelsAvPerformance{1,5};
 betaCs_modelPerf            = allModelsAvPerformance{1,6};
 
 % make a struct with all the vectors needed for the analysis
 anova_struct        = struct('all_draws', all_draws, 'all_acc', all_acc,...
     'all_ioacc', all_ioacc, 'all_iodraws', all_iodraws,...
-    'costSample_modelSamples', costSample_modelSamples, 'CerrorReward_modelSamples', CerrorReward_modelSamples,...
-    'CsCerrorReward_modelSamples', CsCerrorReward_modelSamples, 'costDiff_modelSamples', costDiff_modelSamples,...
+    'costSample_modelSamples', costSample_modelSamples,...
     'beta_modelSamples', beta_modelSamples, 'betaCs_modelSamples', betaCs_modelSamples,...
-    'costSample_modelPerf', costSample_modelPerf, 'CerrorReward_modelPerf', CerrorReward_modelPerf,...
-    'CsCerrorReward_modelPerf', CsCerrorReward_modelPerf, 'costDiff_modelPerf', costDiff_modelPerf,...
+    'costSample_modelPerf', costSample_modelPerf,...
     'beta_modelPerf', beta_modelPerf, 'betaCs_modelPerf', betaCs_modelPerf);
 
 % run stats function
@@ -464,31 +462,148 @@ for m = 1:num_simModels
         simR.error              = -10;
         simR.difference         = -20;
         simR.initbeta           = 3;
+        simR.freeparams         = 1;
+        simR.model              = m;
 
         for thisCs = 1:length(allCs)
 
-            simR.Cs = allCs(thisCs); % use the
+            simR.Cs             = allCs(thisCs); % use the
+            simR.initsample     = allCs(thisCs);
 
             for cond = 1:conditions
 
-                simR.cond           = cond;
-                simoutput{1,cond}   = simBeadsData(simvars, simR);
+                simR.cond               = cond;
+                simoutput{1,cond}       = simBeadsData(simvars, simR);
                 
-                sim_drawsequence = simoutput{1,cond}.simsequences;
-                sim_choiceVecs = simoutput{1,cond}.simchoicevec;
+                sim_drawsequence        = simoutput{1,cond}.simsequences;
+                sim_choiceVecs          = simoutput{1,cond}.simchoicevec;
+                sim_urntype             = simoutput{1,cond}.simurns;
 
-                
-
-
-
+                sim_modeloutput{1,cond}        = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
+                simX(thisCs,cond)              = simR.initsample;
+                fitX(thisCs,cond)              = sim_modeloutput{1,cond}.fittedX;
+                NLL(thisCs,cond)               = sim_modeloutput{1,cond}.NLL;
+                fitSamples(thisCs,cond)        = sim_modeloutput{1,cond}.avSamples;
+                fitPerf(thisCs,cond)           = sim_modeloutput{1,cond}.modelPerformance;
 
             end % end of conditions loop
         end % end of cs loop
-        
+
+    elseif m == 2 % if this is the beta model
+
+        % define parameters for simulations
+        beta_bounds             = [0 15]; % maximum and minimum cost to sample
+        nbins                   = 16;
+        % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
+        allbetas                = [0 1 3 5 7 10 12 15];
+        simR.correct            = 10;
+        simR.error              = -10;
+        simR.difference         = -20;
+        simR.Cs                 = -0.25; % use the
+        simR.initsample         = -0.25;
+        simR.freeparams         = 1;
+        simR.model              = m;
+
+        for thisBeta = 1:length(allbetas)
+
+            simR.beta = allbetas(thisBeta);
+            simR.initbeta = allbetas(thisBeta);
+
+            for cond = 1:conditions
+                
+                % simulate sequences and responses 
+                simR.cond               = cond;
+                simoutput{1,cond}       = simBeadsData(simvars, simR);
+                
+                % extract info
+                sim_drawsequence        = simoutput{1,cond}.simsequences;
+                sim_choiceVecs          = simoutput{1,cond}.simchoicevec;
+                sim_urntype             = simoutput{1,cond}.simurns;
+                
+                % fit simulated data
+                sim_modeloutput{1,cond}        = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
+                simX(thiBeta,cond)              = simR.initsample;
+                fitX(thisBeta,cond)              = sim_modeloutput{1,cond}.fittedX;
+                NLL(thisBeta,cond)               = sim_modeloutput{1,cond}.NLL;
+                fitSamples(thisBeta,cond)        = sim_modeloutput{1,cond}.avSamples;
+                fitPerf(thisBeta,cond)           = sim_modeloutput{1,cond}.modelPerformance;
+
+            end % end of conditions loop
+        end % end of betas loop
+
+    elseif m == 3
+
+        % define parameters for simulations
+        cs_bounds               = [-4 0]; % maximum and minimum cost to sample
+        beta_bounds             = [0 15]; % maximum and minimum cost to sample
+        nbins                   = [16 16];
+        allCs                   = [-4 -3 -2 -1 -0.5 -0.25 0];
+        % allCs                   = linspace(cs_bounds(1), cs_bounds(2), nbins+1);
+        % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
+        allbetas                = [0 1 3 5 7 10 12 15];
+        simR.correct            = 10;
+        simR.error              = -10;
+        simR.difference         = -20;
+        simR.freeparams         = 2;
+        simR.model              = m;
+
+        for thisCs = 1:length(allCs)
+
+            simR.Cs             = allCs(thisCs); % use the
+            simR.initsample     = allCs(thisCs);
+
+            for thisBeta = 1:length(allbetas)
+
+                simR.beta       = allbetas(thisBeta);
+                simR.initbeta   = allbetas(thisBeta);
+
+                for cond = 1:conditions
+
+                    % simulate sequences and responses 
+                    simR.cond               = cond;
+                    simoutput{1,cond}       = simBeadsData(simvars, simR);
+                
+                    % extract info
+                    sim_drawsequence        = simoutput{1,cond}.simsequences;
+                    sim_choiceVecs          = simoutput{1,cond}.simchoicevec;
+                    sim_urntype             = simoutput{1,cond}.simurns;
+
+                    % fit simulated data
+                    sim_modeloutput{1,cond}             = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
+
+                    tmpsimX1(thisBeta,cond)              = simR.initsample;
+                    tmpsimX2(thisBeta,cond)              = simR.initbeta;
+                    tmpfitX1(thisBeta,cond)              = sim_modeloutput{1,cond}.fittedX(1);
+                    tmpfitX2(thisBeta,cond)              = sim_modeloutput{1,cond}.fittedX(2);
+                    tmpNLL(thisBeta,cond)                = sim_modeloutput{1,cond}.NLL;
+                    tmpfitSamples(thisBeta,cond)         = sim_modeloutput{1,cond}.avSamples;
+                    tmpfitPerf(thisBeta,cond)            = sim_modeloutput{1,cond}.modelPerformance;
+
+                    tmpsimX.sample                      = tmpsimX1;
+                    tmpsimX.beta                        = tmpsimX2;
+                    tmpfitX.sample                      = tmpfitX1;
+                    tmpfitX.beta                        = tmpfitX2;
+
+                end % end of condition loop
+            end % end of betas loop
+
+            simX(thisCs).allsimX            = tmpsimX;
+            fitX(thisCs).allfitX            = tmpfitX;
+            NLL(thisCs).allNLL              = tmpNLL;
+            fitSamples(thisCs).allSamples   = tmpfitSamples;
+            fitPerf(thisCs).allPerf         = tmpfitPerf;
+            
+        end % end of Cs loop
     end % end of if statement
+
+    % store all models recovered parameters 
+    paramRec_simX{1,m}          = simX;
+    paramRec_fitX{1,m}          = fitX;
+    paramRec_NLL{1,m}           = NLL;
+    paramRec_fitSamples{1,m}    = fitSamples;
+    paramRec_fitPerf{1,m}       = fitPerf;
     
-
-
+    clear simX fitX NLL fitSamples fitPerf sim_modeloutput simoutput
 end % end of models loop
 
 %% COMPARE & CHOOSE WINNING MODEL %%

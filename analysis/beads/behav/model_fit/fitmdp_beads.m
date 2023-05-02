@@ -6,7 +6,7 @@ k           = 3;
 % which parameters are free?
 if R.model == 1
     R.sample        = param;        % free
-    beta            = R.beta;       % fixed 
+    beta            = R.initbeta;   % fixed 
     R.costloss      = R.error;      % fixed 
     R.costreward    = R.correct;    % fixed 
 elseif R.model == 2
