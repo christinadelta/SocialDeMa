@@ -114,28 +114,27 @@ elseif struct_size >= 4
     % unpack structure 
     all_humandraws      = anova_struct.all_draws; 
     all_iodraws         = anova_struct.all_iodraws; 
-    all_model1_draws    = anova_struct.costSample_modelSamples;
-    all_model2_draws    = anova_struct.beta_modelSamples;
-    all_model3_draws    = anova_struct.betaCs_modelSamples;
+%     all_model3_draws    = anova_struct.costSample_modelSamples;
+    all_model1_draws    = anova_struct.beta_modelSamples;
+    all_model2_draws    = anova_struct.betaCs_modelSamples;
 
     all_humanacc        = anova_struct.all_acc; 
     all_ioacc           = anova_struct.all_ioacc;
-    all_model1_acc      = anova_struct.costSample_modelPerf;
-    all_model2_acc      = anova_struct.beta_modelPerf;
-    all_model3_acc      = anova_struct.betaCs_modelPerf;
+%     all_model3_acc      = anova_struct.costSample_modelPerf;
+    all_model1_acc      = anova_struct.beta_modelPerf;
+    all_model2_acc      = anova_struct.betaCs_modelPerf;
 
     % make arrays to be used in the ANOVAS
-    subvec              = repmat(1:nsubs,1,10)';                             % create a vector with 10 copies participant number 
-    agentvec            = repmat([ones(1,nsubs*2) ones(1,nsubs*2)*2 ones(1,nsubs*2)*3 ones(1,nsubs*2)*4 ...
-        ones(1,nsubs*2)*5],1,1)'; % create a vector with 2 copies of agent type (indexed as 1=human, 2=io, 3=beta, 4=beta_Cs)
-    probvec             = repmat([ones(1,nsubs) ones(1,nsubs)*2],1,5)';     % create a vector with 2 copies of probability type (indexed as 1=0.8, 2=0.6)
+    subvec              = repmat(1:nsubs,1,8)';                             % create a vector with 10 copies participant number 
+    agentvec            = repmat([ones(1,nsubs*2) ones(1,nsubs*2)*2 ones(1,nsubs*2)*3 ones(1,nsubs*2)*4],1,1)'; % create a vector with 2 copies of agent type (indexed as 1=human, 2=io, 3=beta, 4=beta_Cs)
+    probvec             = repmat([ones(1,nsubs) ones(1,nsubs)*2],1,4)';     % create a vector with 2 copies of probability type (indexed as 1=0.8, 2=0.6)
     
     % create 1 vec with all draws (human, io and parameterised models) 
-    drawsmat            = [all_humandraws all_iodraws all_model1_draws all_model2_draws all_model3_draws all_model4_draws all_model5_draws all_model6_draws];
+    drawsmat            = [all_humandraws all_iodraws all_model1_draws all_model2_draws];
     drawsvec            = drawsmat(:);
     
     % create 1 vec with all acc (human, io and parameterised models) 
-    accmat              = [all_humanacc all_ioacc all_model1_acc all_model2_acc all_model3_acc all_model4_acc all_model5_acc all_model6_acc];
+    accmat              = [all_humanacc all_ioacc all_model1_acc all_model2_acc];
     accvec              = accmat(:);
 
     % make tables vor vis 
@@ -166,11 +165,12 @@ elseif struct_size >= 4
 
     % 1. multicompare draws
     % run multicompare on agent_type and probability factors
-    [draws_results,~,~,groups]  = multcompare(draws_stats.stats,"Dimension",[2 3]); 
+    % [draws_results,~,~,groups]  = multcompare(draws_stats.stats,"Dimension",[2 3]); 
+    [draws, m, h, groups] = multcompare(draws_stats.stats,"Dimension",[2 3],'Alpha',.05, 'CriticalValueType','bonferroni'); 
     
     
     % look at results in a table 
-    draws_tbl                   = array2table(draws_results,"VariableNames",...
+    draws_tbl                   = array2table(draws,"VariableNames",...
         ["Group A","Group B","Lower Limit","A-B","Upper Limit","P-value"]);
     
     % change groups to group-names 
@@ -179,10 +179,11 @@ elseif struct_size >= 4
 
     % 2. multicompare accuracy 
     % run multicompare on agent_type and probability factors
-    [acc_results,~,~,groups]    = multcompare(acc_stats.stats,"Dimension",[2 3]); 
+    % [acc_results,~,~,groups]    = multcompare(acc_stats.stats,"Dimension",[2 3]); 
+    [acc, m, h, groups] = multcompare(acc_stats.stats,"Dimension",[2 3],'Alpha',.05, 'CriticalValueType','bonferroni'); 
     
     % look at results in a table 
-    acc_tbl                     = array2table(acc_results,"VariableNames",...
+    acc_tbl                     = array2table(acc,"VariableNames",...
         ["Group A","Group B","Lower Limit","A-B","Upper Limit","P-value"]);
     
     % change groups to group-names 
@@ -190,8 +191,8 @@ elseif struct_size >= 4
     acc_tbl.("Group B")         = groups(acc_tbl.("Group B"));
 
     % store output
-    pc_results.draws            = draws_results;
-    pc_results.acc              = acc_results;
+    pc_results.draws            = draws;
+    pc_results.acc              = acc;
     pc_tables.draws             = draws_tbl;
     pc_tables.acc               = acc_tbl;
 

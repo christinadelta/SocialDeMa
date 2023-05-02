@@ -4,17 +4,17 @@ maxDraws    = size(thiscond_seqmat,2);
 k           = 3;
 
 % which parameters are free?
-if R.model == 1
+if R.model == 3
     R.sample        = param;        % free
     beta            = R.initbeta;   % fixed 
     R.costloss      = R.error;      % fixed 
     R.costreward    = R.correct;    % fixed 
-elseif R.model == 2
+elseif R.model == 1
     R.sample        = R.Cs;
     R.costloss      = R.error;
     R.costreward    = R.correct;
     beta            = param;
-elseif R.model == 3
+elseif R.model == 2
     R.sample        = param(1);
     R.costloss      = R.error;
     R.costreward    = R.correct;
