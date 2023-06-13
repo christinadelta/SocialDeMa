@@ -31,9 +31,7 @@ function [minParams, lla, Qsad, cprob, model_samples,model_urnchoice] = bayesbea
 % which parameter(s) to free?
 model = R.model; % hich model?
 
-if model == 3
-    param       = R.initsample;
-elseif model == 1
+if model == 1
     param       = R.initbeta;
 elseif model == 2
     param(1)    = R.initsample;

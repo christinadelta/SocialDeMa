@@ -4,16 +4,11 @@ maxDraws    = size(thiscond_seqmat,2);
 k           = 3;
 
 % which parameters are free?
-if R.model == 3
-    R.sample        = param;        % free
-    beta            = R.initbeta;   % fixed 
+if R.model == 1
+    R.sample        = R.initsample; % fixed
+    beta            = param;        % free 
     R.costloss      = R.error;      % fixed 
     R.costreward    = R.correct;    % fixed 
-elseif R.model == 1
-    R.sample        = R.Cs;
-    R.costloss      = R.error;
-    R.costreward    = R.correct;
-    beta            = param;
 elseif R.model == 2
     R.sample        = param(1);
     R.costloss      = R.error;
@@ -51,32 +46,14 @@ for trial = 1:ntrials
         % run backwardutility
         Qsad(trial,draw,1:3)    = backWardUtility_b(trialdraws,draw,maxDraws,R)';
         vVec                    = squeeze(Qsad(trial,draw,:))';
-        
-        % I'll test running softmax seperately for each of the three
-        % options.. let's see if that works or helps with the beta
-        % recovery!! 
-%         cprob_blue              = exp(beta * vVec(1,1)) ./ (exp(beta * vVec(1,1))) + (exp(beta * vVec(1,2))) + (exp(beta * vVec(1,3)));
-%         cprob_green             = exp(beta * vVec(1,2)) ./ (exp(beta * vVec(1,1))) + (exp(beta * vVec(1,2))) + (exp(beta * vVec(1,3)));
-%         cprob_draw              = exp(beta * vVec(1,3)) ./ (exp(beta * vVec(1,1))) + (exp(beta * vVec(1,2))) + (exp(beta * vVec(1,3)));
-
-        cprob_blue              = exp(beta * vVec(1,1)) ./ sum(exp(beta * vVec(1,:)));
-        cprob_green             = exp(beta * vVec(1,2)) ./ sum(exp(beta * vVec(1,:)));
-        cprob_draw              = exp(beta * vVec(1,3)) ./ sum(exp(beta * vVec(1,:)));
-        cVec                    = [cprob_blue cprob_green cprob_draw]';
-        
-        % store all choice probabilities 
-        cprob(trial,draw,1)     = cprob_blue;
-        cprob(trial,draw,2)     = cprob_green;
-        cprob(trial,draw,3)     = cprob_draw;
-        
-%         cprobVals               = exp(beta*vVec(1,1,:))./sum(exp(beta*vVec(1,1,:)));
-%         %cprobVals               = exp(beta*vVec)./sum(exp(beta*vVec)); % softmax to convert action values to probabiltiies of these actions
-%         cvec                    = squeeze(cprobVals);
-%         cprob(trial,draw,:)     = cprobVals; 
+       
+        cprobVals               = exp(beta*vVec)./sum(exp(beta*vVec)); % softmax to convert action values to probabiltiies of these actions
+        cvec                    = cprobVals';
+        cprob(trial,draw,:)     = cprobVals; 
         
         % if model fitting:
         if fitm == 1
-            ll                  = ll - log(this_choices(draw,:)*cVec);
+            ll                  = ll - log(this_choices(draw,:)*cvec);
         end
 
 %         if isnan(ll)

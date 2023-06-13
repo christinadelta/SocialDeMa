@@ -25,12 +25,8 @@
 %       b) run pairwise comparisons to look at differences in model-human, 0.8 & 0.6 conditions
 
 % 4. fit models:
-%   - model 1: free parameter 1 = Cost-sample
-%   - model 2: free parameter 2 = Cost-error & reward (difference (cost-error - reward) didn't work !!!)
-%   - model 3: free parameter 3 = Cost-sample, Cost-error & reward 
-%   - model 4: free parameter 1 = Cost difference (for testing and comparison with model 2)
-%   - model 5: free parameter 1 = beta
-%   - model 6: free parameter 2 = Cost-sample, beta
+%   - model 1: free parameter 1 = beta
+%   - model 2: free parameter 2 = Cost-sample, beta
 
 % POTENTIAL ADDITIONAL MODELS TO INCLUDE (will decide after making the above model fit and parameter recovery work):
 %   - model 7: free parameter 1 = discounting factor (gamma)
@@ -43,8 +39,7 @@
 % TO TEST:
 % To simulate responses I use backward induction and then the choice probabilities computed with the
 % softmax function. Previously, I tried simulating responses using only the Q values but this seems incorrect. Not sure if using the softmax-choices will work, but it looks like the
-% reasonable thing to do as a response model! -- Also, this is consistent
-% with RL models 
+% reasonable thing to do as a response model! -- Also, this is consistent with RL models 
 
 % 6. model comparison
 % 7. compute AQ differences [draw-again higher-option]
@@ -188,10 +183,10 @@ for subI = 1:nsubs
     % define parameters of the ideal observer
     R.alpha             = 1;            % softmax stochasticity parameter (for fitting to human behaviour) - this is not needed here
     R.error             = -10;          % cost for being wrong
-%     R.diff              = -20;          % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
+%     R.diff              = -20;        % The difference between the rewards for being correct (in this case no reward 10) and the cost of being wrong (-10).
     R.correct           = 10;           % reward for being correct
     R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
-    R.sample            = -0.25;            % the cost to sample
+    R.sample            = -0.25;        % the cost to sample
     
     for cond = 1:conditions
         
@@ -303,23 +298,17 @@ model_num           = length(model_names);
 % loop over models 
 for model = 1:model_num
 
-    if model == 3
+    % define free parameters
+    R.initsample    = R.Cs;
+    R.initbeta      = R.beta;
 
-        R.initsample    = R.Cs;
-        R.initbeta      = R.beta;
+    % how many free parameters?
+    if model == 1
         R.freeparams    = 1;
 
-    elseif model == 1
+    elseif model == 2
 
-        R.initbeta      = 3;
-        R.freeparams    = 1;
-
-     elseif model == 2
-
-        R.initsample    = R.Cs;
-        R.initbeta      = 3;
         R.freeparams    = 2;
-
     end
 
     R.model             = model;
@@ -376,14 +365,12 @@ for model = 1:model_num
             allsubNLL(sub,cond)                 = modeloutput.NLL;
             
             if R.freeparams == 1
-                allsubFitParams(sub,cond)       = modeloutput.fittedX; % right now it doesn't really matter which parameter it is
+                allsubFitParams(sub,cond)       = modeloutput.fittedX; % beta 
+                
             elseif R.freeparams == 2
-                allsubFitParams.X1(sub,cond)    = modeloutput.fittedX(1); % cost error or cost sample
-                allsubFitParams.X2(sub,cond)    = modeloutput.fittedX(2); % reward or beta
-            elseif R.freeparams == 3
-                allsubFitParams.X1(sub,cond)    = modeloutput.fittedX(1); % cost sample
-                allsubFitParams.X2(sub,cond)    = modeloutput.fittedX(2); % cost error
-                allsubFitParams.X3(sub,cond)    = modeloutput.fittedX(3); % reward
+                allsubFitParams.X1(sub,cond)    = modeloutput.fittedX(1); % Cs 
+                allsubFitParams.X2(sub,cond)    = modeloutput.fittedX(2); % beta
+               
             end
 
             allsubAvSamples(sub,cond)           = modeloutput.avSamples;
