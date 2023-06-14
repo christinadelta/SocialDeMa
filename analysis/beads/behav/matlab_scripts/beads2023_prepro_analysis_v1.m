@@ -6,6 +6,9 @@
 % This version will take over the previous (beads_prepro_v6.m) one which now is
 % archived. 
 
+% Modified: 12/06/2023 --> fixed bug in model sampling function and cleaned the code a bit
+% Modified: 13/06/2023 --> started coding the plotting stuff 
+
 % changes introduced in this version: 
 % 1) I run everything using this script. The steps are described below 
 % 2) I fixed the beta thingy after discussing with Nick 
@@ -396,17 +399,9 @@ all_acc                     = [easy_avacc diff_avacc];
 all_draws                   = [easy_avdraws diff_avdraws];
 
 % extract model samples and performance
-% costSample_modelSamples     = allModelsAvSamples{1,1}; % cost-sample model
-% CerrorReward_modelSamples   = allModelsAvSamples{1,2}; % cost-error & reward model
-% CsCerrorReward_modelSamples = allModelsAvSamples{1,3}; % cost-sample, cost-error & reward model
-% costDiff_modelSamples       = allModelsAvSamples{1,4}; % difference model
 beta_modelSamples           = allModelsAvSamples{1,1}; % beta model
 betaCs_modelSamples         = allModelsAvSamples{1,2}; % beta & cost-sample model
 
-% costSample_modelPerf        = allModelsAvPerformance{1,1};
-% CerrorReward_modelPerf      = allModelsAvPerformance{1,2};
-% CsCerrorReward_modelPerf    = allModelsAvPerformance{1,3};
-% costDiff_modelPerf          = allModelsAvPerformance{1,4};
 beta_modelPerf              = allModelsAvPerformance{1,1};
 betaCs_modelPerf            = allModelsAvPerformance{1,2};
 
