@@ -3,16 +3,8 @@ function [minParams, lla, Qsad, cprob, model_samples,model_urnchoice] = bayesbea
 % RUN MODEL FITTING USING BRUNO'S VERSION
 
 % this function calls fminsearch to fit free parameters:
-%                       - model 1: free parameter 1 = Cost-sample
-%                       - model 2: free parameter 1 = Cost-error
-%                       - model 3: free parameter 1 = beta
-%                       - model 4: free parameter 2 = Cost-sample, Cost-error
-%                       - model 5: free parameter 2 = Cost-sample, beta
-
-% POTENTIAL MODELS TO INCLUDE (will decide after making the above model fit and parameter recovery work):
-%                       - model 6: free parameter 1 = discounting factor (gamma)
-%                       - model 7: free parameter 3 = Cost-sample, beta, discounting factor (gamma)
-
+%                       - model 1: free parameter 1 = beta
+%                       - model 2: free parameter 2 = Cost-sample, beta
 
 % inputs: 1) m*k matrix (m= number of sequences, k=number of draws) --> i.e., 26x10
 %         2) cell with choices (individual responses on every sequence)

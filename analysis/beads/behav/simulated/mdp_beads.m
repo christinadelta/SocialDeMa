@@ -20,24 +20,19 @@ for trial = 1:ntrials
     for draw = 1 : maxDraws
                    
         Qsad(draw, :) = backWardUtil(thisSequence, draw, maxDraws, simR);
-        vVec  = Qsad(draw, :);
+        vVec          = Qsad(draw,:);
 
         % compute choices using softmax 
-        cprob_blue              = exp(beta * vVec(1,1)) ./ sum(exp(beta * vVec(1,:)));
-        cprob_green             = exp(beta * vVec(1,2)) ./ sum(exp(beta * vVec(1,:)));
-        cprob_draw              = exp(beta * vVec(1,3)) ./ sum(exp(beta * vVec(1,:)));
-        cVec                    = [cprob_blue cprob_green cprob_draw]';
-        
-        % store all choice probabilities 
-        cprob(trial,draw,1)     = cprob_blue;
-        cprob(trial,draw,2)     = cprob_green;
-        cprob(trial,draw,3)     = cprob_draw;
+        cprobVals               = exp(beta*vVec)./sum(exp(beta*vVec)); % softmax to convert action values to probabiltiies of these actions
+        cvec                    = cprobVals';
+        cprob(trial,draw,:)     = cprobVals; 
         
     end
 
     % store this_trial Q values in a cell
     Qsat(trial,:,:) = Qsad;
 
+    clear Qsad 
 end % end of trials loop
 
 

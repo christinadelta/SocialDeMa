@@ -109,18 +109,16 @@ if struct_size <= 4
     output_struct = struct('draws_stats',draws_stats,'acc_stats',acc_stats,...
         'pc_results',pc_results,'pc_tables',pc_tables);
 
-elseif struct_size >= 4
+elseif struct_size > 4
 
     % unpack structure 
     all_humandraws      = anova_struct.all_draws; 
     all_iodraws         = anova_struct.all_iodraws; 
-%     all_model3_draws    = anova_struct.costSample_modelSamples;
     all_model1_draws    = anova_struct.beta_modelSamples;
     all_model2_draws    = anova_struct.betaCs_modelSamples;
 
     all_humanacc        = anova_struct.all_acc; 
     all_ioacc           = anova_struct.all_ioacc;
-%     all_model3_acc      = anova_struct.costSample_modelPerf;
     all_model1_acc      = anova_struct.beta_modelPerf;
     all_model2_acc      = anova_struct.betaCs_modelPerf;
 

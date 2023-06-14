@@ -13,25 +13,13 @@ trials  = length(cprob(:,1,1)); % number of sequences
 % loop over sequences 
 for t = 1:trials
 
-    choiceProbs            = squeeze(cprob(t,:,:)); % extract this trial choice probabilities 
+    choiceProbs                 = squeeze(cprob(t,:,:)); % extract this trial choice probabilities 
 
     % add a stopping point at the competing urn at last draw (just to
     % ensure that model stops drawing)
-    
-    % find competing urn - (i.e., the urn with the highest probability to be chosen)
-    modelc                  = find(squeeze(cprob(t,:,3)) - max(squeeze(cprob(t,:,1:2))') <0); % which options in this trial have urn > than draw?
-    if any(modelc) > 0.1
-        pickdraw                = modelc(1);                            % pick the first one 
-        [val urnchoice]         = max(squeeze(cprob(t,pickdraw,:)));    % which of the two urns was chosen?
-        model_urnchoice(t,1)    = urnchoice;                            % to be used in the ANOVA analyses
-    else % if modelc is empty just pick 
-        modelc = choiceProbs(:,1) - choiceProbs(:,2); 
-        [val urnchoice]         = max(modelc(:,1));
-        model_urnchoice(t,1)    = urnchoice; 
-    end
-    
-    % ensure stopping point at last draw
-    choiceProbs(end,urnchoice)   = Inf; 
+    [val urnchoice]             = max(choiceProbs(end,1:2));
+    choiceProbs(end,urnchoice)  = Inf;
+    model_urnchoice(t,1)        = urnchoice;
 
     % sometimes the model draws les than the actual sequence length; find rows with sum zero...
     for l = 1:size(choiceProbs,1)

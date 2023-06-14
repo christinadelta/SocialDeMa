@@ -67,7 +67,7 @@ end
 % recode 2s to 0s for backward induction 
 drawSequence(find(drawSequence==2))      = 0;
 
-% simulate responses using softmax 
+% get action values and simulate responses using softmax 
 [~, Qsat, cprob] = mdp_beads(simR, drawSequence);
 
 % use the choice probabilities to convert to actual choices 
