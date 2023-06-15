@@ -72,8 +72,16 @@
 
 %% TODO
 
+% 1. FIXED 
 % 14/06/23 --> need to recode how I save the output from parameter recovery
 % of Cs_beta model --> FIXED BUG ON 15/06/2023
+
+% 2.
+% 15/06/2023 --> need to write a function that plots bar plots with stat
+% significance (stars). For now I am using R and Ai.
+
+% 3.
+% 15/06/2023 --> need to plot parameter recovery results 
 
 % END OF PREAMBLE 
 
@@ -444,7 +452,7 @@ for m = 1:num_simModels
         beta_bounds             = [0 15]; % maximum and minimum cost to sample
         nbins                   = 16;
         % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
-        allbetas                = [0 1 3 5 7];
+        allbetas                = [0 1 3 5 7 9 12 15];
         simR.correct            = 10;
         simR.error              = -10;
         simR.difference         = -20;
@@ -487,10 +495,10 @@ for m = 1:num_simModels
         cs_bounds               = [-4 0]; % maximum and minimum cost to sample
         beta_bounds             = [0 15]; % maximum and minimum cost to sample
         nbins                   = [16 16];
-        allCs                   = [-1.25 -1 -0.5 -0.25 0];
+        allCs                   = [-2 -1.5 -1.25 -1 -0.5 -0.25 0];
         % allCs                   = linspace(cs_bounds(1), cs_bounds(2), nbins+1);
         % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
-        allbetas                = [0 1 3 5 7];
+        allbetas                = [0 1 3 5 7 9 12 15];
         simR.correct            = 10;
         simR.error              = -10;
         simR.difference         = -20;
@@ -537,12 +545,13 @@ for m = 1:num_simModels
                 end % end of condition loop
 
             end % end of betas loop
-
-            simX(thisCs).allsimX            = tmpsimX;
-            fitX(thisCs).allfitX            = tmpfitX;
-            NLL(thisCs).allNLL              = tmpNLL;
-            fitSamples(thisCs).allSamples   = tmpfitSamples;
-            fitPerf(thisCs).allPerf         = tmpfitPerf;
+            
+            % store outputs
+            simX{1,thisCs}                          = tmpsimX;
+            fitX{1,thisCs}                          = tmpfitX;
+            NLL{1,thisCs}                           = tmpNLL;
+            fitSamples{1,thisCs}                    = tmpfitSamples;
+            fitPerf{1,thisCs}                       = tmpfitPerf;
 
         end % end of cs loop
 
@@ -579,3 +588,13 @@ end %end of models loop
 
 % 3. plot model comparison stuff
 % 4. plot EEG - Qvals regressions 
+
+% Add ploting directory to the path
+plotpath         = fullfile(behavpath, 'ploting');
+addpath(genpath(fullfile(plotpath))); 
+
+% 1. Plot agent sampling behaviour & performance 
+
+% 2. Plot Paramter recovery for beta model 
+% 3. Plot parameter recovery for Cs_beta model
+hf = plotNLL2D();
