@@ -73,7 +73,7 @@
 %% TODO
 
 % 14/06/23 --> need to recode how I save the output from parameter recovery
-% of Cs_beta model
+% of Cs_beta model --> FIXED BUG ON 15/06/2023
 
 % END OF PREAMBLE 
 
@@ -444,7 +444,7 @@ for m = 1:num_simModels
         beta_bounds             = [0 15]; % maximum and minimum cost to sample
         nbins                   = 16;
         % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
-        allbetas                = [0 1 3 5];
+        allbetas                = [0 1 3 5 7];
         simR.correct            = 10;
         simR.error              = -10;
         simR.difference         = -20;
@@ -487,10 +487,10 @@ for m = 1:num_simModels
         cs_bounds               = [-4 0]; % maximum and minimum cost to sample
         beta_bounds             = [0 15]; % maximum and minimum cost to sample
         nbins                   = [16 16];
-        allCs                   = [-1 -0.5 -0.25 0];
+        allCs                   = [-1.25 -1 -0.5 -0.25 0];
         % allCs                   = linspace(cs_bounds(1), cs_bounds(2), nbins+1);
         % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
-        allbetas                = [0 1 3];
+        allbetas                = [0 1 3 5 7];
         simR.correct            = 10;
         simR.error              = -10;
         simR.difference         = -20;

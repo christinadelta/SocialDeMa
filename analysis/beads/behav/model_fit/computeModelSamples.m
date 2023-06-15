@@ -35,21 +35,22 @@ for t = 1:trials
     
     choiceProbs(any(isnan(choiceProbs), 2), :) = [];
 
-%     % in cases that the model uses less beads than the total sequence (e.g., 6 draws instaed of 10), the
-%     % sequence vector we get is 6 rows long; I fill the rest of column 3
-%     % with -inf and with 1s the column of the competing/chosen urn 
-%     % THIS PART IS NOT REALLY NEEDED FOR NOW
-%     if size(choiceProbs,1) < len
-% 
-%         if urnchoice == 1 % if model chose the blue urn
-%             tmp_diff                        = [ones(len,1) zeros(len,1) zeros(len,1)]; % [1 0 0]
-%         elseif urnchoice == 2 % if model chose the green urn
-%             tmp_diff                        = [zeros(len,1) ones(len,1) zeros(len,1)]; % [0 1 0]
-%         end
-% 
-%         tmp_diff(1:size(choiceProbs,1),:)   = choiceProbs;
-%         choiceProbs                         = tmp_diff;
-%     end 
+    % in cases that the model uses less beads than the total sequence (e.g., 6 draws instaed of 10), the
+    % sequence vector we get is 6 rows long; I fill the rest of column 3
+    % with -inf and with 1s the column of the competing/chosen urn 
+    % THIS PART IS NOT REALLY NEEDED FOR NOW --> actually this part may be
+    % important 
+    if size(choiceProbs,1) < len
+
+        if urnchoice == 1 % if model chose the blue urn
+            tmp_diff                        = [ones(len,1) zeros(len,1) zeros(len,1)]; % [1 0 0]
+        elseif urnchoice == 2 % if model chose the green urn
+            tmp_diff                        = [zeros(len,1) ones(len,1) zeros(len,1)]; % [0 1 0]
+        end
+
+        tmp_diff(1:size(choiceProbs,1),:)   = choiceProbs;
+        choiceProbs                         = tmp_diff;
+    end 
 
     % ok now its time to compute model's sampling rates based on the 
     for i = 1:N
