@@ -1,4 +1,4 @@
-function fGrid = plotGrid(conditions, outmat)
+function fGrid = plotGrid(conditions, outmat, allCs, allbetas)
 
 % plot 2d landscape of of NLL for all combinations of Beta and Cs
 

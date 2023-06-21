@@ -593,15 +593,19 @@ end %end of models loop
 plotpath         = fullfile(behavpath, 'ploting');
 addpath(genpath(fullfile(plotpath))); 
 
+% Re-arrange results first
+[outmat, ffX, ssX]  = reArrangeParams(allbetas, allCs, paramRec_NLL, paramRec_fitX, paramRec_simX, conditions);
+
 % 1. Plot agent sampling behaviour & performance 
 % hf = plotNLL2D();
 
 % 2. Plot Paramter recovery for beta model 
-% Re-arrange results first
-outmat = reArrangeParams(allbetas, allCs, paramRec_NLL, conditions);
-
-fGrid = plotGrid()
-
 
 % 3. Plot parameter recovery for Cs_beta model
+% plot grid 
+fGrid              = plotGrid(conditions, outmat, allCs, allbetas);
+
+% plot correlations between simulated and fitted paramteres
+
+
 
