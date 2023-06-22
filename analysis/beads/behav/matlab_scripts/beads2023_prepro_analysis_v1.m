@@ -1,4 +1,4 @@
-% % PRE-PROCESSING AND ANALYSIS SCRIPT FOR THE BEADS TASK VERSION 1
+% % PRE-PROCESSING AND ANALYSIS SCRIPT FOR THE BEADS TASK VERSION 2
 
 % Part of the Optimal Stopping Problems Project
 
@@ -437,6 +437,7 @@ simvars.maxDraws        = 10;
 simvars.qvals           = [0.8 0.6];
 simvars.conditions      = conditions;
 simvars.contrials       = totaltrials / conditions;
+reps                    = 10;
 
 % models to recover 
 % simModels               = {'Csample' 'errorReward' 'CsErrorReward' 'beta' 'BetaCs'};
@@ -449,10 +450,10 @@ for m = 1:num_simModels
     if m == 1
 
         % define parameters for simulations for the beta model
-        beta_bounds             = [0 15]; % maximum and minimum cost to sample
-        nbins                   = 10;
+        % beta_bounds             = [0.2 25]; % maximum and minimum beta values
+        % nbins                   = 10;
         % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
-        allbetas                = [0.5 1 2 3 4 5 7 9 12 15];
+        % allbetas                = [0.5 1 3 5 7 9 12 15];
         simR.correct            = 10;
         simR.error              = -10;
         simR.difference         = -20;
@@ -461,16 +462,19 @@ for m = 1:num_simModels
         simR.freeparams         = 1;
         simR.model              = m;
         
-        for thisBeta = 1:length(allbetas)
+        % loop over repetitions 
+        for i = 1:reps
 
-            simR.beta = allbetas(thisBeta);
-            simR.initbeta = allbetas(thisBeta);
+            b = exprnd(5); % draw a random number from the exponential distributuion with mean 5
+
+            simBetas(i)     = b;
+            simR.initbeta   = b;
 
             for cond = 1:conditions
                 
                 % simulate sequences and responses 
                 simR.cond                   = cond;
-                simout{1,cond}           = simBeadsData(simvars, simR);
+                simout{1,cond}              = simBeadsData(simvars, simR);
                 
                 % extract info
                 sim_drawsequence            = simout{1,cond}.simsequences;
@@ -479,100 +483,133 @@ for m = 1:num_simModels
                 
                 % fit simulated data
                 sim_modeloutput{1,cond}     = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
-                simX(thisBeta,cond)          = simR.initbeta;
-                fitX(thisBeta,cond)         = sim_modeloutput{1,cond}.fittedX;
-                NLL(thisBeta,cond)          = sim_modeloutput{1,cond}.NLL;
-                fitSamples(thisBeta,cond)   = sim_modeloutput{1,cond}.avSamples;
-                fitPerf(thisBeta,cond)      = sim_modeloutput{1,cond}.modelPerformance;
+                simX(i,cond)                = simR.initbeta;
+                fitX(i,cond)                = sim_modeloutput{1,cond}.fittedX;
+                NLL(i,cond)                 = sim_modeloutput{1,cond}.NLL;
+                fitSamples(i,cond)          = sim_modeloutput{1,cond}.avSamples;
+                fitPerf(i,cond)             = sim_modeloutput{1,cond}.modelPerformance;
 
             end % end of conditions loop
 
-        end % end of betas loop
+        end % end of repetitions loop
 
-    elseif m == 2 % if this is the Cs_beta model
+    elseif m == 2
 
         % define parameters for simulations
-        cs_bounds               = [-4 0]; % maximum and minimum cost to sample
-        beta_bounds             = [0 15]; % maximum and minimum cost to sample
-        nbins                   = [10 10];
-        allCs                   = [-1.5 -1.25 -1 -0.75 -0.5 -0.25 0];
+        cs_bounds               = [-2 0]; % maximum and minimum cost to sample
+        % beta_bounds             = [0 25]; % maximum and minimum cost to sample
+        % nbins                   = [10 10];
+        % allCs                   = [-1.5 -1.25 -1 -0.75 -0.5 -0.25 0];
         % allCs                   = linspace(cs_bounds(1), cs_bounds(2), nbins+1);
         % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
-        allbetas                = [0.5 1 3 5 7 9 12 15];
+        % allbetas                = [0.5 1 3 5 7 9 12 15];
         simR.correct            = 10;
         simR.error              = -10;
         simR.difference         = -20;
         simR.freeparams         = 2;
         simR.model              = m;
 
-        for thisCs = 1:length(allCs)
-
-            simR.Cs             = allCs(thisCs); % use the
-            simR.initsample     = allCs(thisCs);
-
-            for thisBeta = 1:length(allbetas)
-
-                simR.beta       = allbetas(thisBeta);
-                simR.initbeta   = allbetas(thisBeta);
-
+        for sub = 1:nsubs
+            for i = 1:reps
+    
+                b                   = exprnd(5); % draw a random number from the exponential distributuion with mean 5
+                cs                  = (cs_bounds(1) + cs_bounds(2)).*rand(1,1) + cs_bounds(1); % draw a number from a range of [-2 0]
+                simBetas(i)         = b;
+                simR.initbeta       = b;
+                simCs(i)            = cs;
+                simR.Cs             = cs; % use the
+                simR.initsample     = cs;
+    
                 for cond = 1:conditions
-
+    
                     % simulate sequences and responses 
                     simR.cond               = cond;
-                    simout{1,cond}       = simBeadsData(simvars, simR);
+                    simout{1,cond}          = simBeadsData(simvars, simR);
                 
                     % extract info
                     sim_drawsequence        = simout{1,cond}.simsequences;
                     sim_choiceVecs          = simout{1,cond}.simchoicevec;
                     sim_urntype             = simout{1,cond}.simurns;
-
+    
                     % fit simulated data
-                    sim_modeloutput{1,cond}             = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
+                    sim_modeloutput{1,cond} = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
+    
+                    simX{1,cond}(1,i)       = simR.initsample;
+                    simX{1,cond}(2,i)       = simR.initbeta;
+                    fitX{1,cond}(1,i)       = sim_modeloutput{1,cond}.fittedX(1); % cost sample
+                    fitX{1,cond}(2,i)       = sim_modeloutput{1,cond}.fittedX(2); % beta
+                    NLL(i,cond)             = sim_modeloutput{1,cond}.NLL;
+                    simSamples(i,cond)      = simout{1,cond}.avsamples;
+                    fitSamples(i,cond)      = sim_modeloutput{1,cond}.avSamples;
+                    fitPerf(i,cond)         = sim_modeloutput{1,cond}.modelPerformance;
+    
+                end % end of conditions loop
+    
+            end % end of repetitions loop
 
-                    tmpsimX1(thisBeta,cond)              = simR.initsample;
-                    tmpsimX2(thisBeta,cond)              = simR.initbeta;
-                    tmpfitX1(thisBeta,cond)              = sim_modeloutput{1,cond}.fittedX(1);
-                    tmpfitX2(thisBeta,cond)              = sim_modeloutput{1,cond}.fittedX(2);
-                    tmpNLL(thisBeta,cond)                = sim_modeloutput{1,cond}.NLL;
-                    tmpfitSamples(thisBeta,cond)         = sim_modeloutput{1,cond}.avSamples;
-                    tmpfitPerf(thisBeta,cond)            = sim_modeloutput{1,cond}.modelPerformance;
+            simSubSimX{1,sub}       = simX;
+            simSubFitX{1,sub}       = FitX;
+            simSubNLL{1,sub}        = NLL;
+            simSubSimSamples{1,sub} = simSamples;
+            simSubFitSamples{1,sub} = fitSamples;
 
-                    tmpsimX.sample                      = tmpsimX1;
-                    tmpsimX.beta                        = tmpsimX2;
-                    tmpfitX.sample                      = tmpfitX1;
-                    tmpfitX.beta                        = tmpfitX2;
-
-                end % end of condition loop
-
-            end % end of betas loop
-            
-            % store outputs
-            simX{1,thisCs}                          = tmpsimX;
-            fitX{1,thisCs}                          = tmpfitX;
-            NLL{1,thisCs}                           = tmpNLL;
-            fitSamples{1,thisCs}                    = tmpfitSamples;
-            fitPerf{1,thisCs}                       = tmpfitPerf;
-
-        end % end of cs loop
+        end % end of subjects loop
 
     end % end of model if statement 
 
     % store all models recovered parameters 
-    paramRec_simX{1,m}          = simX;
-    paramRec_fitX{1,m}          = fitX;
-    paramRec_NLL{1,m}           = NLL;
-    paramRec_fitSamples{1,m}    = fitSamples;
-    paramRec_fitPerf{1,m}       = fitPerf;
-    
+    paramRec_simX{1,m}          = simSubSimX;
+    paramRec_fitX{1,m}          = simSubFitX;
+    paramRec_NLL{1,m}           = simSubNLL;
+    paramRec_fitSamples{1,m}    = simSubFitSamples;
+    paramRec_simSamples{1,m}    = simSubSimSamples;
+
+    % clear workspace 
     clear simX fitX NLL fitSamples fitPerf sim_modeloutput simout
 
-end %end of models loop
-
-%% COMPARE & CHOOSE WINNING MODEL %%
+end % end of models loop
 
 
+%% CORRELATE FIT AND RECOVERED PARAMETERS
 
-%% PREDICT EEG RESPONSES (EVOKED AND TF) USING AQ DIFFERENCE VALUES %%
+% Re-arrange results first
+% [outmat, ffX, ssX]  = reArrangeParams(allbetas, allCs, paramRec_NLL, paramRec_fitX, paramRec_simX, conditions);
+
+% MODEL 1: BETA 
+msim                = paramRec_simX{1,1};
+mfit                = paramRec_fitX{1,1};
+
+% loop over conditions
+for c = 1:conditions
+    
+    % exctract condition-specific data
+    condsim         = msim(:,c);
+    condfit         = mfit(:,c);
+
+    betaR1{1,c}     = corrcoef(condsim, condfit);
+
+end % end of conditions loop
+
+clear msim mfit
+
+msim                = paramRec_simX{1,2};
+mfit                = paramRec_fitX{1,2};
+
+% MODEL 2: Cs + Beta
+% loop over conditions 
+for cond = 1:conditions
+
+    cfitt           = mfit{1,cond};
+    csim            = msim{1,cond};
+
+    % correlate simulated-recovered Cost-sample and beta
+    CsR{1,cond}     = corrcoef(csim(1,:), cfitt(1,:));
+    betaR{1,cond}   = corrcoef(csim(2,:), cfitt(2,:));
+
+    % recovered the 2 parameters params
+    CsBetaR{1,cond} = corrcoef(cfitt(1,:), cfitt(2,:));
+
+end % end of conditions loop 
 
 %% PLOT STUFF %% 
 
@@ -592,17 +629,36 @@ end %end of models loop
 plotpath         = fullfile(behavpath, 'ploting');
 addpath(genpath(fullfile(plotpath))); 
 
-% Re-arrange results first
-[outmat, ffX, ssX]  = reArrangeParams(allbetas, allCs, paramRec_NLL, paramRec_fitX, paramRec_simX, conditions);
-
 % 2. Plot Paramter recovery for beta model 
 
 % 3. Plot parameter recovery for Cs_beta model
 % plot grid 
-fGrid               = plotGrid(conditions, outmat, allCs, allbetas);
+% mNLL    = paramRec_NLL{1,2}; % extract model 2 NLL
+% fGrid               = plotGrid(conditions, mNLL);
 
 % plot correlations between simulated and fitted paramteres
-fh                  = runCorr(ffX, ssX,conditions, allCs, allbetas);
+mXsim               = paramRec_simX{1,2};
+mXfit               = paramRec_fitX{1,2};
+fh                  = runCorr(mXsim, mXfit, conditions);
 
+% 4. Plot sampling rates for real (fitted) data, simulated and recovered
+% data
+for m = 1:length(simModels )
+
+    rFitSamples     = allModelsAvSamples{1,m};
+    simSamples      = paramRec_simX{1,m};
+    fitSamples      = paramRec_fitX{1,m};
+
+    for cond = 1:conditions
+
+        condRfitSamples     = rFitSamples(:,cond);
+        condSimSamples      = simSamples(:,cond);
+        condFitSamples      = fitSamples(:,cond);
+
+        hfig = plotCorrSamples (condRfitSamples, condSimSamples, condFitSamples);
+
+    end % end of conditions loop
+
+end % end of model loop
 
 

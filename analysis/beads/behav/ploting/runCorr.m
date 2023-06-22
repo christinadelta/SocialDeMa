@@ -1,4 +1,4 @@
-function fh = runCorr(ffX, ssX,conditions, allCs, allbetas)
+function fh = runCorr(mXsim, mXfit, conditions)
 
 
 global AZred AZblue AZcactus AZsky AZriver AZsand AZmesa AZbrick
@@ -13,13 +13,13 @@ AZmesa = [183, 85, 39]/256;
 AZbrick = [74, 48, 39]/256;
 
 names       = {'Cost sample' 'softmax temperature'};
-symbols     = {'\Cs' '\beta'};
+symbols     = {'Cs' '\beta'};
 
 
 for c = 1:conditions
 
-    cond_ssX = ssX{1,c};
-    cond_ffX = ffX{1,c};
+    cond_ssX = mXsim{1,c};
+    cond_ffX = mXfit{1,c};
 
     fh{c}    = figure('Name','Paramteter correlations');
     set(fh{c}, 'Position', [811   613   600   300]);
@@ -36,15 +36,15 @@ for c = 1:conditions
 
     end % end of param values loop 
 
-    % find 'bad' Cs values
-    thresh  = 0.4;
-    ind     = abs(cond_ssX(1,:) - cond_ffX(1,:)) > thresh;
-
-    for i = 1:2
-        axes(ax(i));
-        plot(cond_ssX(i,ind), cond_ffX(i,ind), 'o', 'color', AZblue, 'markersize', 8, 'linewidth', 1, ...
-        'markerfacecolor', [1 1 1]*0.5)
-    end
+%    % find 'bad' Cs values
+%     thresh  = 0.4;
+%     ind     = abs(cond_ssX(1,:) - cond_ffX(1,:)) > thresh;
+% 
+%     for i = 1:2
+%         axes(ax(i));
+%         plot(cond_ssX(i,ind), cond_ffX(i,ind), 'o', 'color', AZblue, 'markersize', 8, 'linewidth', 1, ...
+%         'markerfacecolor', [1 1 1]*0.5)
+%     end
 
     %set(ax(1,2),'xscale', 'log', 'yscale' ,'log')
     

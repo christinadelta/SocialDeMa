@@ -2,7 +2,7 @@ function [ll, Qsat, cprob] = mdp_beads(simR, drawSequence)
 
 maxDraws            = size(drawSequence,2); 
 k                   = simR.k;
-beta                = simR.initbeta
+beta                = simR.initbeta;
 
 
 % get number of trials/sequences 

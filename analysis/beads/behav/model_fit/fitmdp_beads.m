@@ -74,8 +74,8 @@ end % end of trials loop
 %     fprintf(' choice probabilities %3.3f\n',cvec(i))
 % end
 
-fprintf(' beta %3.3f\n',beta)
-fprintf(' ll %3.3f\n',ll)
+% fprintf(' beta %3.3f\n',beta)
+% fprintf(' ll %3.3f\n',ll)
 
 
 return
