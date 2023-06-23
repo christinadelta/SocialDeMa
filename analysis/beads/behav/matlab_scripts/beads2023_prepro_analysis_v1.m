@@ -127,8 +127,6 @@ diff_avacc              = nan(nsubs,1);
 
 for subI = 1:nsubs
 
-   
-
     fprintf('loading beads block data\n')  
     subject = subs(subI).name;
     subdir  = fullfile(resultspath,subject);
@@ -437,7 +435,7 @@ simvars.maxDraws        = 10;
 simvars.qvals           = [0.8 0.6];
 simvars.conditions      = conditions;
 simvars.contrials       = totaltrials / conditions;
-reps                    = 10;
+reps                    = 2;
 
 % models to recover 
 % simModels               = {'Csample' 'errorReward' 'CsErrorReward' 'beta' 'BetaCs'};
@@ -462,36 +460,47 @@ for m = 1:num_simModels
         simR.freeparams         = 1;
         simR.model              = m;
         
-        % loop over repetitions 
-        for i = 1:reps
+        % loop over subjects
+        for sub = 1:nsubs
 
-            b = exprnd(5); % draw a random number from the exponential distributuion with mean 5
-
-            simBetas(i)     = b;
-            simR.initbeta   = b;
-
-            for cond = 1:conditions
-                
-                % simulate sequences and responses 
-                simR.cond                   = cond;
-                simout{1,cond}              = simBeadsData(simvars, simR);
-                
-                % extract info
-                sim_drawsequence            = simout{1,cond}.simsequences;
-                sim_choiceVecs              = simout{1,cond}.simchoicevec;
-                sim_urntype                 = simout{1,cond}.simurns;
-                
-                % fit simulated data
-                sim_modeloutput{1,cond}     = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
-                simX(i,cond)                = simR.initbeta;
-                fitX(i,cond)                = sim_modeloutput{1,cond}.fittedX;
-                NLL(i,cond)                 = sim_modeloutput{1,cond}.NLL;
-                fitSamples(i,cond)          = sim_modeloutput{1,cond}.avSamples;
-                fitPerf(i,cond)             = sim_modeloutput{1,cond}.modelPerformance;
-
-            end % end of conditions loop
-
-        end % end of repetitions loop
+            % loop over repetitions 
+            for i = 1:reps
+    
+                b = exprnd(5); % draw a random number from the exponential distributuion with mean 5
+    
+                simBetas(i)     = b;
+                simR.initbeta   = b;
+    
+                for cond = 1:conditions
+                    
+                    % simulate sequences and responses 
+                    simR.cond                   = cond;
+                    simout{1,cond}              = simBeadsData(simvars, simR);
+                    
+                    % extract info
+                    sim_drawsequence            = simout{1,cond}.simsequences;
+                    sim_choiceVecs              = simout{1,cond}.simchoicevec;
+                    sim_urntype                 = simout{1,cond}.simurns;
+                    
+                    % fit simulated data
+                    sim_modeloutput{1,cond}     = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
+                    simX(i,cond)                = simR.initbeta;
+                    fitX(i,cond)                = sim_modeloutput{1,cond}.fittedX;
+                    NLL(i,cond)                 = sim_modeloutput{1,cond}.NLL;
+                    simSamples(i,cond)          = simout{1,cond}.avsamples;
+                    fitSamples(i,cond)          = sim_modeloutput{1,cond}.avSamples;
+                    fitPerf(i,cond)             = sim_modeloutput{1,cond}.modelPerformance;
+    
+                end % end of conditions loop
+            end % end of repetitions loop
+            
+            simSubSimX{1,sub}               = simX;
+            simSubFitX{1,sub}               = fitX;
+            simSubNLL{1,sub}                = NLL;
+            simSubSimSamples{1,sub}         = simSamples;
+            simSubFitSamples{1,sub}         = fitSamples;
+            
+        end % end of subjects loop
 
     elseif m == 2
 
@@ -548,7 +557,7 @@ for m = 1:num_simModels
             end % end of repetitions loop
 
             simSubSimX{1,sub}       = simX;
-            simSubFitX{1,sub}       = FitX;
+            simSubFitX{1,sub}       = fitX;
             simSubNLL{1,sub}        = NLL;
             simSubSimSamples{1,sub} = simSamples;
             simSubFitSamples{1,sub} = fitSamples;
@@ -571,6 +580,10 @@ end % end of models loop
 
 
 %% CORRELATE FIT AND RECOVERED PARAMETERS
+
+% loop over models 
+
+
 
 % Re-arrange results first
 % [outmat, ffX, ssX]  = reArrangeParams(allbetas, allCs, paramRec_NLL, paramRec_fitX, paramRec_simX, conditions);
