@@ -556,11 +556,11 @@ for m = 1:num_simModels
     
             end % end of repetitions loop
 
-            simSubSimX{1,sub}       = simX;
-            simSubFitX{1,sub}       = fitX;
-            simSubNLL{1,sub}        = NLL;
-            simSubSimSamples{1,sub} = simSamples;
-            simSubFitSamples{1,sub} = fitSamples;
+            simSubSimX{1,sub}               = simX;
+            simSubFitX{1,sub}               = fitX;
+            simSubNLL{1,sub}                = NLL;
+            simSubSimSamples{1,sub}         = simSamples;
+            simSubFitSamples{1,sub}         = fitSamples;
 
         end % end of subjects loop
 
@@ -578,15 +578,33 @@ for m = 1:num_simModels
 
 end % end of models loop
 
-
 %% CORRELATE FIT AND RECOVERED PARAMETERS
 
 % loop over models 
+for m = 1:num_simModels
+
+    % extract model results 
+    mNLL        = paramRec_NLL{1,m};
+    mSimX       = paramRec_simX{1,m};
+    mFitX       = paramRec_fitX{1,m};
+    mSimSamples = paramRec_simSamples{1,m};
+    mFitSampels = paramRec_fitSamples{1,m};
+
+    % Average and re-arrange results first
+    [NLLmat, ffX, ssX, ffSamples, ssSamples]  = reArrangeParams(mNLL,mSimX,...
+        mFitX,mFitSampels,mSimSamples,conditions,m);
+
+    % 
 
 
 
-% Re-arrange results first
-% [outmat, ffX, ssX]  = reArrangeParams(allbetas, allCs, paramRec_NLL, paramRec_fitX, paramRec_simX, conditions);
+
+
+end % end of models loop
+
+
+
+% 
 
 % MODEL 1: BETA 
 msim                = paramRec_simX{1,1};

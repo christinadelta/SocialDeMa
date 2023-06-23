@@ -1,45 +1,24 @@
-function [outmat, ffX, ssX] = reArrangeParams(reps, NLLcell, xfit, xsim, conditions)
+function [NLLmat, ffX, ssX, ffSamples, ssSamples]  = reArrangeParams(mNLL,mSimX, mFitX,mFitSampels,mSimSamples,conditions,m)
 
 % created in June 2023 
-% The function takes as an input the cells from parameter recovery and
-% re-arranges the data as a Cs-by-betas matrix (seperately for each
-% condition
+% The function takes as an input the cells from parameter recovery,
+% avverages across iterations and re-arranges the data for visualisation
 
-model       = 2; % re-arrangement is done for the CsBeta model
+% how many subjects?
+nsubs = size(mNLL,2);
 
-NLLdata     = NLLcell{1,model};
-Xfitdata    = xfit{1, model};
-Xsimdata    = xsim{1, model};
+% loop over participants 
+for sub = 1:nsubs
+    
+    % extract sub parameters
+    subNLL          = mNLL{1,sub};
+    subSimX         = mSimX{1,sub};
+    subFitX         = mFitX{1,sub};
+    subFitSample    = mFitSampels{1,sub};
+    subSimSample    = mSimSamples{1,sub};
 
-count       = 1;
 
-%% Re-arrange params 
-
-% loop over Cs 
-for i = 1:lenCs
-
-    sX = Xsimdata{1,i};
-    fX = Xfitdata{1,i};
-
-    % loop over betas
-    for j = 1:lenBetas
-        
-        % loop over condition
-        for k = 1:conditions
-
-            ssX{1,k}(1,count) = sX.sample(j,k);
-            ssX{1,k}(2,count) = sX.beta(j,k);
-
-            ffX{1,k}(1,count) = fX.sample(j,k);
-            ffX{1,k}(2,count) = fX.beta(j,k);
-
-        end % end of condition loop
-
-        count = count+1; % update counter
-
-    end % end of betas loop
-
-end % end of cs loop
+end % end of subjects loop
 
 
 end 
