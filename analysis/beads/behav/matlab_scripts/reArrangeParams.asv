@@ -1,4 +1,4 @@
-function [avNLL, avSimSample, avFitSample]  = reArrangeParams(mNLL,mSimX, mFitX,mFitSampels,mSimSamples,conditions,m)
+function [avNLL, av]  = reArrangeParams(mNLL,mSimX, mFitX,mFitSampels,mSimSamples,conditions,m)
 
 % created in June 2023 
 % The function takes as an input the cells from parameter recovery,
