@@ -1,4 +1,4 @@
-function simoutput = simBeadsData(simvars, simR)
+function [simR,simoutput] = simBeadsData(simvars, simR)
 
 % created 31/03/23 as part of the BEADS task in OPTIMAL STOPPING PROBLEMS
 
@@ -51,7 +51,7 @@ sim_sequnces                        = tmp_sequences;
 drawSequence                        = tmp_sequences;
 
 simR.thisq                          = thisq;
-simR.sample                         = simR.Cs; 
+% simR.sample                         = simR.Cs; 
 
 % deal with simulated urns, we need that to get simulated agent's
 % choices 
@@ -70,10 +70,11 @@ drawSequence(find(drawSequence==2))      = 0;
 % get action values and simulate responses using softmax 
 [~, Qsat, cprob] = mdp_beads(simR, drawSequence);
 
-% use the choice probabilities to convert to actual choices 
+% use the choice probabilities to compute choices 
 N                               = 1000;
 [cprob_samples,model_urnchoice] = modelSamples(cprob,N);
 
+% get performance and choice vectors based on num samples and urn_choices 
 for dri = 1:size(model_urnchoice,1)          
     if (model_urnchoice(dri) == 1 & urntype(dri) == 1) | (model_urnchoice(dri) == 2 & urntype(dri) == 0)
         correctResp(dri) = 1;

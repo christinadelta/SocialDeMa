@@ -8,6 +8,7 @@
 
 % Modified: 12/06/2023 --> fixed bug in model sampling function and cleaned the code a bit
 % Modified: 13/06/2023 --> started coding the plotting stuff 
+% Modifies: 15/07/2023 --> completed parameter recovery & plotting 
 
 % changes introduced in this version: 
 % 1) I run everything using this script. The steps are described below 
@@ -427,7 +428,7 @@ anova_struct        = struct('all_draws', all_draws, 'all_acc', all_acc,...
 % run stats function
 output_struct_two   = runBehavStats(nsubs, anova_struct); % output will be used for plotting 
 
-clear anova_struct
+clear anova_struct R 
 
 %% RECOVER MODEL PARAMETERS %%
 
@@ -437,10 +438,11 @@ simvars.maxDraws        = 10;
 simvars.qvals           = [0.8 0.6];
 simvars.conditions      = conditions;
 simvars.contrials       = totaltrials / conditions;
-reps                    = 2;
+reps                    = 2; % a number to repeat the simulation and fitting 
+allcs                   = -2:0.25:0;
+allbetas                = 0.1:0.5:5;
 
 % models to recover 
-% simModels               = {'Csample' 'errorReward' 'CsErrorReward' 'beta' 'BetaCs'};
 simModels               = {'beta' 'BetaCs'};
 num_simModels           = length(simModels); 
 
@@ -449,241 +451,133 @@ for m = 1:num_simModels
     % define parameters for each model
     if m == 1
 
-        % define parameters for simulations for the beta model
-        % beta_bounds             = [0.2 25]; % maximum and minimum beta values
-        % nbins                   = 10;
-        % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
-        % allbetas                = [0.5 1 3 5 7 9 12 15];
+        % define parameters for simulations for the beta model       
         simR.correct            = 10;
         simR.error              = -10;
         simR.difference         = -20;
-        simR.Cs                 = -0.25; % use the
         simR.initsample         = -0.25;
         simR.freeparams         = 1;
         simR.model              = m;
-        
-        % loop over subjects
-        for sub = 1:nsubs
+
+        for rep = 1:reps
 
             % loop over repetitions 
-            for i = 1:reps
-    
-                b = exprnd(5); % draw a random number from the exponential distributuion with mean 5
-    
-                simBetas(i)     = b;
+            for i = 1:length(allbetas)
+                
+                % what is the current beta value to run?
+                b               = allbetas(i); 
                 simR.initbeta   = b;
     
                 for cond = 1:conditions
-                    
+    
                     % simulate sequences and responses 
                     simR.cond                   = cond;
-                    simout{1,cond}              = simBeadsData(simvars, simR);
-                    
-                    % extract info
+                    [simR,simout{1,cond}]       = simBeadsData(simvars, simR);
+
+                    % extract info from simulated output (for fitting)
                     sim_drawsequence            = simout{1,cond}.simsequences;
                     sim_choiceVecs              = simout{1,cond}.simchoicevec;
                     sim_urntype                 = simout{1,cond}.simurns;
-                    
+
                     % fit simulated data
-                    sim_modeloutput{1,cond}     = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
-                    simX(i,cond)                = simR.initbeta;
-                    fitX(i,cond)                = sim_modeloutput{1,cond}.fittedX;
-                    NLL(i,cond)                 = sim_modeloutput{1,cond}.NLL;
-                    simSamples(i,cond)          = simout{1,cond}.avsamples;
-                    fitSamples(i,cond)          = sim_modeloutput{1,cond}.avSamples;
-                    fitPerf(i,cond)             = sim_modeloutput{1,cond}.modelPerformance;
+                    sim_fittout{1,cond}         = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
+                    
+                    % store outputs
+                    simX(i,rep,cond)            = simR.initbeta;
+                    simSamples(i,rep,cond)      = simout{1,cond}.avsamples;
+                    fitX(i,rep,cond)            = sim_fittout{1,cond}.fittedX;
+                    NLL(i,rep,cond)             = sim_fittout{1,cond}.NLL;
+                    fitSamples(i,rep,cond)      = sim_fittout{1,cond}.avSamples;
+                    fitPerf(i,rep,cond)         = sim_fittout{1,cond}.modelPerformance;
     
                 end % end of conditions loop
-            end % end of repetitions loop
-            
-            simSubSimX{1,sub}               = simX;
-            simSubFitX{1,sub}               = fitX;
-            simSubNLL{1,sub}                = NLL;
-            simSubSimSamples{1,sub}         = simSamples;
-            simSubFitSamples{1,sub}         = fitSamples;
-            
-        end % end of subjects loop
+    
+            end % end of betas loop
 
+        end % end of reps loop
+
+        % now recover params for model 2
     elseif m == 2
 
         % define parameters for simulations
-        cs_bounds               = [-2 0]; % maximum and minimum cost to sample
-        % beta_bounds             = [0 25]; % maximum and minimum cost to sample
-        % nbins                   = [10 10];
-        % allCs                   = [-1.5 -1.25 -1 -0.75 -0.5 -0.25 0];
-        % allCs                   = linspace(cs_bounds(1), cs_bounds(2), nbins+1);
-        % allbetas                   = linspace(beta_bounds(1), beta_bounds(2), nbins+1);
-        % allbetas                = [0.5 1 3 5 7 9 12 15];
         simR.correct            = 10;
         simR.error              = -10;
         simR.difference         = -20;
         simR.freeparams         = 2;
         simR.model              = m;
 
-        for sub = 1:nsubs
-            for i = 1:reps
-    
-                b                   = exprnd(5); % draw a random number from the exponential distributuion with mean 5
-                cs                  = (cs_bounds(1) + cs_bounds(2)).*rand(1,1) + cs_bounds(1); % draw a number from a range of [-2 0]
-                simBetas(i)         = b;
-                simR.initbeta       = b;
-                simCs(i)            = cs;
-                simR.Cs             = cs; % use the
-                simR.initsample     = cs;
-    
-                for cond = 1:conditions
-    
-                    % simulate sequences and responses 
-                    simR.cond               = cond;
-                    simout{1,cond}          = simBeadsData(simvars, simR);
-                
-                    % extract info
-                    sim_drawsequence        = simout{1,cond}.simsequences;
-                    sim_choiceVecs          = simout{1,cond}.simchoicevec;
-                    sim_urntype             = simout{1,cond}.simurns;
-    
-                    % fit simulated data
-                    sim_modeloutput{1,cond} = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
-    
-                    simX{1,cond}(1,i)       = simR.initsample;
-                    simX{1,cond}(2,i)       = simR.initbeta;
-                    fitX{1,cond}(1,i)       = sim_modeloutput{1,cond}.fittedX(1); % cost sample
-                    fitX{1,cond}(2,i)       = sim_modeloutput{1,cond}.fittedX(2); % beta
-                    NLL(i,cond)             = sim_modeloutput{1,cond}.NLL;
-                    simSamples(i,cond)      = simout{1,cond}.avsamples;
-                    fitSamples(i,cond)      = sim_modeloutput{1,cond}.avSamples;
-                    fitPerf(i,cond)         = sim_modeloutput{1,cond}.modelPerformance;
-    
-                end % end of conditions loop
-    
-            end % end of repetitions loop
+        for rep = 1:reps
+            
+            % loop over betas
+            for i = 1:length(allbetas)
 
-            simSubSimX{1,sub}               = simX;
-            simSubFitX{1,sub}               = fitX;
-            simSubNLL{1,sub}                = NLL;
-            simSubSimSamples{1,sub}         = simSamples;
-            simSubFitSamples{1,sub}         = fitSamples;
+                b               = allbetas(i);
+                simR.initbeta   = b;
 
-        end % end of subjects loop
+                % loop over cs 
+                for j = 1:length(allcs)
 
-    end % end of model if statement 
+                    cs              = allcs(j);
+                    simR.initsample = cs;
 
-    % store all models recovered parameters 
-    paramRec_simX{1,m}          = simSubSimX;
-    paramRec_fitX{1,m}          = simSubFitX;
-    paramRec_NLL{1,m}           = simSubNLL;
-    paramRec_fitSamples{1,m}    = simSubFitSamples;
-    paramRec_simSamples{1,m}    = simSubSimSamples;
+                    for cond = 1:conditions
+
+                        % simulate sequences and responses 
+                        simR.cond                   = cond;
+                        [simR,simout{1,cond}]       = simBeadsData(simvars, simR);
+    
+                        % extract info from simulated output (for fitting)
+                        sim_drawsequence            = simout{1,cond}.simsequences;
+                        sim_choiceVecs              = simout{1,cond}.simchoicevec;
+                        sim_urntype                 = simout{1,cond}.simurns;
+    
+                        % fit simulated data
+                        sim_fittout{1,cond}         = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
+                        
+                        % store output 
+                        simX{1,i}{1,cond}(1,j,rep)       = simR.initsample;
+                        simX{1,i}{1,cond}(2,j,rep)       = simR.initbeta;
+                        simSamples{1,i}(j,cond,rep)      = simout{1,cond}.avsamples;
+                        fitX{1,i}{1,cond}(1,j,rep)       = sim_fittout{1,cond}.fittedX(1); % cost sample
+                        fitX{1,i}{1,cond}(2,j,rep)       = sim_fittout{1,cond}.fittedX(2); % beta
+                        NLL{1,i}(j,cond,rep)             = sim_fittout{1,cond}.NLL;
+                        fitSamples{1,i}(j,cond,rep)      = sim_fittout{1,cond}.avSamples;
+                        fitPerf{1,i}(j,cond,rep)         = sim_fittout{1,cond}.modelPerformance;
+
+                    end % end of conditions loop
+                end % end of cs loop
+            end % end of betas loop
+        end % end of reps loop 
+    end % end of if statement 
+
+    paramRec_simX{1,m}          = simX;
+    paramRec_fitX{1,m}          = fitX;
+    paramRec_NLL{1,m}           = NLL;
+    paramRec_fitSamples{1,m}    = fitSamples;
+    paramRec_simSamples{1,m}    = simSamples;
 
     % clear workspace 
-    clear simX fitX NLL fitSamples fitPerf sim_modeloutput simout
+    clear simX fitX NLL fitSamples simSamples fitPerf simout sim_fittout
 
 end % end of models loop
 
-%% CORRELATE FIT AND RECOVERED PARAMETERS
+%% CORRELATE PARAMS FROM SIM-FIT AND PLOT %%
 
-% loop over models and average over iterations
-for m = 1:num_simModels
+% 1. plot sampling rates for beta model 
+% extract data for ploting 
+mdl_simX        = paramRec_simSamples{1,1};
+mdl_fitX        = paramRec_fitX{1,1};
+mdl_NLL         = paramRec_NLL{1,1};
+mdl_fitsamples  = paramRec_simSamples{1,1};
+mdl_simsamples  = paramRec_simSamples{1,1};
 
-    % extract model results 
-    mNLL        = paramRec_NLL{1,m};
-    mSimX       = paramRec_simX{1,m};
-    mFitX       = paramRec_fitX{1,m};
-    mSimSamples = paramRec_simSamples{1,m};
-    mFitSampels = paramRec_fitSamples{1,m};
+% 1a. plot sampling rates for each parameter value in bar plots
+h = plotBars(mdl_fitsamples);
 
-    % Average and re-arrange results first
-    [avNLL{1,m}, avSimSample{1,m}, avFitSample{1,m}]  = reArrangeParams(mNLL,mSimX,...
-        mFitX,mFitSampels,mSimSamples,conditions,m);
 
-end % end of models loop
+% 1b. plot correlation (scatterplots) between simulated and fitted/estimated sampling rates
 
-% 
-
-% MODEL 1: BETA 
-msim                = paramRec_simX{1,1};
-mfit                = paramRec_fitX{1,1};
-
-% loop over conditions
-for c = 1:conditions
-    
-    % exctract condition-specific data
-    condsim         = msim(:,c);
-    condfit         = mfit(:,c);
-
-    betaR1{1,c}     = corrcoef(condsim, condfit);
-
-end % end of conditions loop
-
-clear msim mfit
-
-msim                = paramRec_simX{1,2};
-mfit                = paramRec_fitX{1,2};
-
-% MODEL 2: Cs + Beta
-% loop over conditions 
-for cond = 1:conditions
-
-    cfitt           = mfit{1,cond};
-    csim            = msim{1,cond};
-
-    % correlate simulated-recovered Cost-sample and beta
-    CsR{1,cond}     = corrcoef(csim(1,:), cfitt(1,:));
-    betaR{1,cond}   = corrcoef(csim(2,:), cfitt(2,:));
-
-    % recovered the 2 parameters params
-    CsBetaR{1,cond} = corrcoef(cfitt(1,:), cfitt(2,:));
-
-end % end of conditions loop 
-
-%% PLOT STUFF %% 
-
-% 1. Plot all agents sampling behaviour and performance:
-%       - humans
-%       - IO
-%       - beta model
-%       - Cs_beta model
-
-% plots sould include statistically significant differences
-
-% 2. Plot parameter recovery results (correlations) 
-% 3. plot model comparison stuff
-% 4. plot EEG - Qvals regressions 
-
-% Add ploting directory to the path
-plotpath         = fullfile(behavpath, 'ploting');
-addpath(genpath(fullfile(plotpath))); 
-
-% 2. Plot Paramter recovery for beta model 
-
-% 3. Plot parameter recovery for Cs_beta model
-% plot grid 
-% mNLL    = paramRec_NLL{1,2}; % extract model 2 NLL
-% fGrid               = plotGrid(conditions, mNLL);
-
-% plot correlations between simulated and fitted paramteres
-mXsim               = paramRec_simX{1,2};
-mXfit               = paramRec_fitX{1,2};
-fh                  = runCorr(mXsim, mXfit, conditions);
-
-% 4. Plot sampling rates for real (fitted) data, simulated and recovered
-% data
-for m = 1:length(simModels )
-
-    rFitSamples     = allModelsAvSamples{1,m};
-    simSamples      = avSimSample{1,m};
-    fitSamples      = avFitSample{1,m};
-
-    for cond = 1:conditions
-
-        condRfitSamples     = rFitSamples(:,cond);
-        condSimSamples      = simSamples(:,cond);
-        condFitSamples      = fitSamples(:,cond);
-
-        hfig = plotCorrSamples (condRfitSamples, condSimSamples, condFitSamples);
-
-    end % end of conditions loop
-
-end % end of model loop
-
+% 2. plot sampling rates for beta + Cs model 
+% 2a. plot sampling rates for each combination of parameter values in bar plots
+% 2b. plot correlation (scatterplots) between simulated and fitted/estimated sampling rates (for each combination of parameter values)
 
