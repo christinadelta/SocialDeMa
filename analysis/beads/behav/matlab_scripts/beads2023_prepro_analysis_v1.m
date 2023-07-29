@@ -438,7 +438,7 @@ simvars.maxDraws        = 10;
 simvars.qvals           = [0.8 0.6];
 simvars.conditions      = conditions;
 simvars.contrials       = totaltrials / conditions;
-reps                    = 2; % a number to repeat the simulation and fitting 
+reps                    = 2; % a number to repeat the simulation and fitting thing (40 sim, one for each subject?) 
 allcs                   = -2:0.25:0;
 allbetas                = 0.1:0.5:5;
 
@@ -571,13 +571,15 @@ mdl_NLL         = paramRec_NLL{1,1};
 mdl_fitsamples  = paramRec_simSamples{1,1};
 mdl_simsamples  = paramRec_simSamples{1,1};
 
-% 1a. plot sampling rates for each parameter value in bar plots
+% 1a. plot fitted sampling rates for each parameter value in bar plots
 h = plotBars(mdl_fitsamples);
 
 
 % 1b. plot correlation (scatterplots) between simulated and fitted/estimated sampling rates
+f = plotScatter(mdl_fitsamples, mdl_simsamples);
 
 % 2. plot sampling rates for beta + Cs model 
-% 2a. plot sampling rates for each combination of parameter values in bar plots
+% 2a. plot sampling rates for each combination of parameter values in bar
+% plots (for each beta plot the Cs param vals [10x10])
 % 2b. plot correlation (scatterplots) between simulated and fitted/estimated sampling rates (for each combination of parameter values)
 

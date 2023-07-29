@@ -4,10 +4,10 @@ function h = plotBars(mdl_fitsamples)
 % plots bar graphs with individual points
 
 
-%% plot for each 
+%% plot for each condition
 
-rows=2;
-cols=1;
+rows=1;
+cols=2;
 ylm = [0 10];
 clf
 
@@ -18,8 +18,8 @@ for jj = 1:2 % 2 conditions
 
     mdl_easy    = mdl_fitsamples(:,:,jj);
     mdl_easyAV  = mean(mdl_easy,2)'; % get mean across reps/subjects and transpose so that the results is a 1xn array
-    h(jj)        = bar(mdl_easyAV);
-    set(h(jj),'FaceColor',[0.85, 0.325, 0.098]) % change colour of bars to green
+    h(jj)        = bar(mdl_easyAV, 0.4, 'hist');
+    set(h(jj),'FaceColor',[0.4940 0.1840 0.5560]) % change colour of bars to green
     
     % add individual points 
     hold on
@@ -36,6 +36,7 @@ for jj = 1:2 % 2 conditions
 	    set(p(ii),'XData',x+randn(size(x))*0.05);
     end
     
+    % rescale the y axis 
     if ~any(isnan(ylm(1,:))), ylim(ylm(1,:)); end
     ym      = get(gca,'ylim');
 
