@@ -537,12 +537,12 @@ for m = 1:num_simModels
                         % store output 
                         simX{1,i}{1,cond}(1,j,rep)       = simR.initsample;
                         simX{1,i}{1,cond}(2,j,rep)       = simR.initbeta;
-                        simSamples{1,i}(j,cond,rep)      = simout{1,cond}.avsamples;
+                        simSamples{1,i}(j,rep,cond)      = simout{1,cond}.avsamples;
                         fitX{1,i}{1,cond}(1,j,rep)       = sim_fittout{1,cond}.fittedX(1); % cost sample
                         fitX{1,i}{1,cond}(2,j,rep)       = sim_fittout{1,cond}.fittedX(2); % beta
                         NLL{1,i}(j,cond,rep)             = sim_fittout{1,cond}.NLL;
-                        fitSamples{1,i}(j,cond,rep)      = sim_fittout{1,cond}.avSamples;
-                        fitPerf{1,i}(j,cond,rep)         = sim_fittout{1,cond}.modelPerformance;
+                        fitSamples{1,i}(j,rep,cond)      = sim_fittout{1,cond}.avSamples;
+                        fitPerf{1,i}(j,rep,cond)         = sim_fittout{1,cond}.modelPerformance;
 
                     end % end of conditions loop
                 end % end of cs loop
@@ -565,20 +565,16 @@ end % end of models loop
 
 % 1. plot sampling rates for beta model 
 % extract data for ploting 
-mdl_simX        = paramRec_simSamples{1,1};
+mdl_simX        = paramRec_simX{1,1};
 mdl_fitX        = paramRec_fitX{1,1};
 mdl_NLL         = paramRec_NLL{1,1};
-mdl_fitsamples  = paramRec_simSamples{1,1};
+mdl_fitsamples  = paramRec_fitSamples{1,1};
 mdl_simsamples  = paramRec_simSamples{1,1};
 
 % 1a. plot fitted sampling rates for each parameter value in bar plots
 h = plotBars(mdl_fitsamples);
 
-
 % 1b. plot correlation (scatterplots) between simulated and fitted/estimated sampling rates
-
-% first extract condition samples 
-
 % loop over conditions and plot scatters
 for jj = 1:conditions
 
@@ -593,8 +589,38 @@ end
 % first extract condition values 
 fh              = plotScatterX(mdl_fitX, mdl_simX);
 
+
+clear mdl_simX mdl_NLL mdl_fitX mdl_simsamples mdl_fitsamples
+%%
 % 2. plot sampling rates for beta + Cs model 
-% 2a. plot sampling rates for each combination of parameter values in bar
+% extract data for ploting 
+mdl_simX        = paramRec_simX{1,2};
+mdl_fitX        = paramRec_fitX{1,2};
+mdl_NLL         = paramRec_NLL{1,2};
+mdl_fitsamples  = paramRec_fitSamples{1,2};
+mdl_simsamples  = paramRec_simSamples{1,2};
+
+% 2a. plot sampling rates for each combination of parameter values in bar 
 % plots (for each beta plot the Cs param vals [10x10])
+
+% first lets deal with the data
+refit_samples  = reArrangeParams(mdl_fitsamples);
+
+% loop over conditions 
+for cond = 1:conditions
+
+    this_fit   = refit_samples{1,cond};
+    h           = plotBars2(this_fit); % 
+
+
+
+
+
+end % end of conditions loop
+
+
+[h, g]          = plotBars2(mdl_fitsamples); % h = easy, g = difficult
+
+
 % 2b. plot correlation (scatterplots) between simulated and fitted/estimated sampling rates (for each combination of parameter values)
 

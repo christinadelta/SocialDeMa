@@ -1,42 +1,29 @@
-function [avNLL, avSimSample, avFitSample]  = reArrangeParams(mNLL,mSimX, mFitX,mFitSampels,mSimSamples,conditions,m)
+function refit_samples  = reArrangeParams(mdl_fitsamples)
 
 % created in June 2023 
 % The function takes as an input the cells from parameter recovery,
-% avverages across iterations and re-arranges the data for visualisation
+% and re-arranges the data for plotting
 
+% output:
+%           - fitsamples{1,cond}{1,1betas}(cs,reps)
+
+% -------------------
 % how many subjects?
-nsubs = size(mNLL,2);
+betas = length(mdl_fitsamples);
 
-% loop over participants 
-for sub = 1:nsubs
-    
-    % extract sub parameters
-    subNLL          = mNLL{1,sub};
-    subSimX         = mSimX{1,sub};
-    subFitX         = mFitX{1,sub};
-    subFitSample    = mFitSampels{1,sub};
-    subSimSample    = mSimSamples{1,sub};
+% loop over betas 
+for i = 1: betas
 
-    % loop over conditions 
-    for cond = 1:conditions
+    thisb                           = mdl_fitsamples{1,i};
 
-        condNLL                 = subNLL(:,cond);
-        avNLL(sub,cond)         = mean(condNLL);
+    for cond = 1:2
 
-        condSimSample           = subSimSample(:,cond);
-        avSimSample(sub,cond)   = mean(condSimSample);
-
-        condFitSample           = subFitSample(:,cond);
-        avFitSample(sub,cond)   = mean(condFitSample);
-
-        % now average the free params (TODO)
-
-
+        tmp                         = thisb(:,:,cond);
+        refit_samples{1,cond}{1,i}  = tmp;
 
     end % end of conditions loop
 
+end % ned of betas loop
 
-end % end of subjects loop
 
-
-end 
+end % end of function

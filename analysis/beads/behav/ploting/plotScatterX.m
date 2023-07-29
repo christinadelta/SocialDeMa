@@ -12,7 +12,7 @@ cols    = 2;
 clf
 
 % loop over conditions
-for jj = 1:conditions
+for jj = 1:2
 
     mdl_fitx        = y(:,:,jj); mdl_fitx = mdl_fitx(:); % flatten
     mdl_simx        = x(:,:,jj); mdl_simx = mdl_simx(:);
