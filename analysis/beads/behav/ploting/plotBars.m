@@ -19,7 +19,7 @@ for jj = 1:2 % 2 conditions
     mdl_easy    = mdl_fitsamples(:,:,jj);
     mdl_easyAV  = mean(mdl_easy,2)'; % get mean across reps/subjects and transpose so that the results is a 1xn array
     h(jj)        = bar(mdl_easyAV, 0.4, 'hist');
-    set(h(jj),'FaceColor',[0.4940 0.1840 0.5560]) % change colour of bars to green
+    set(h(jj),'FaceColor',[1 0 1]) % change colour of bars to green
     
     % add individual points 
     hold on

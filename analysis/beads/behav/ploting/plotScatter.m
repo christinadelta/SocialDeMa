@@ -1,4 +1,4 @@
-function f  = plotScatter(mdl_fitsamples, mdl_simsamples)
+function f  = plotScatter(y, x)
 
 % make scatter plots of simulated and and fitted sampling rates (with line
 % of fit and correlation coefficient)
@@ -6,27 +6,35 @@ function f  = plotScatter(mdl_fitsamples, mdl_simsamples)
 % --------------
 
 % define initial parameters
-colours = [0.4940 0.1840 0.5560]; % let's start with purple?
-rows=1;
-cols=2;
+colours = [1 0 1]; % let's start with magenta?
+rows    = 2;
+cols    = 5;
+ylm     = [0 10];
+xlm     = ylm;
 clf
 
-% loop over conditions 
-for jj = 1:2
+% loop over groups (that is over beta values 
+groups = size(x,1);
 
+for ii = 1:groups
 
-end % end of conditions loop
+    % plot the easy and diff conditions seperately
+    ax(ii)          = subplot(rows,cols,ii);
 
+    yg              = y(ii,:); % get mean across reps/subjects and transpose so that the results is a 1xn array
+    xg              = x(ii,:);
 
+    % add scatter 
+    f               = scatter(ax(ii),xg,yg,'magenta','*');
+    
+    % add line of fit 
+    lfit(ii)        = lsline(ax(ii));
+    lfit(ii).Color  = 'magenta';
 
-
-
-
-
-
-
-
-
-
+    % axis labels
+    ylabel('estimated number of samples')
+    xlabel('simulated number of samples')
+        
+end % end of groups (beta param values) loop
 
 end % end of function 

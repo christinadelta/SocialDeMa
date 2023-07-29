@@ -576,7 +576,22 @@ h = plotBars(mdl_fitsamples);
 
 
 % 1b. plot correlation (scatterplots) between simulated and fitted/estimated sampling rates
-f = plotScatter(mdl_fitsamples, mdl_simsamples);
+
+% first extract condition samples 
+
+% loop over conditions and plot scatters
+for jj = 1:conditions
+
+    mdl_fit     = mdl_fitsamples(:,:,jj);
+    mdl_sim     = mdl_simsamples(:,:,jj);
+
+    f           = plotScatter(mdl_fit, mdl_sim);
+
+end
+
+% 1c. plot correlation (scatterplots) between simulated and fitted/estimated beta values
+% first extract condition values 
+fh              = plotScatterX(mdl_fitX, mdl_simX);
 
 % 2. plot sampling rates for beta + Cs model 
 % 2a. plot sampling rates for each combination of parameter values in bar
