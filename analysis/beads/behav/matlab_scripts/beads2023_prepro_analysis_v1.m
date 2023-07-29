@@ -612,15 +612,8 @@ for cond = 1:conditions
     this_fit   = refit_samples{1,cond};
     h           = plotBars2(this_fit); % 
 
-
-
-
-
 end % end of conditions loop
 
-
-[h, g]          = plotBars2(mdl_fitsamples); % h = easy, g = difficult
-
-
-% 2b. plot correlation (scatterplots) between simulated and fitted/estimated sampling rates (for each combination of parameter values)
+% 2b. plot correlation (scatterplots) between simulated and fitted/estimated sampling 
+% rates (for each combination of parameter values)
 

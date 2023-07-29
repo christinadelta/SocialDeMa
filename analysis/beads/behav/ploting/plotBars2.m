@@ -10,7 +10,8 @@ rows = 2;
 cols = 5;
 ylm = [0 10];
 
-cols = 
+colours = [[171,5,32]/256;[12,35,75]/256; [92, 135, 39]/256; [132, 210, 226]/256; [7, 104, 115]/256; [241, 158, 31]/256;
+    [183, 85, 39]/256; [74, 48, 39]/256; [25, 88, 120]/256; [102, 12, 48]/256];
 % clf
 
 % how many betas?
@@ -26,7 +27,7 @@ for jj = 1:groups
     mdl_easyAV  = mean(mdl_easy,2)'; 
 
     h(jj)        = bar(mdl_easyAV, 0.4, 'hist');
-    set(h(jj),'FaceColor',[1 0 1]) % change colour of bars to green
+    set(h(jj),'FaceColor',colours(jj,:)) % change colour of bars to green
 
     % add individual points 
     hold on
