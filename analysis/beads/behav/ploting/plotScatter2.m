@@ -42,7 +42,7 @@ for i = 1:groups
 
         % add line of fit 
         lfit(cc)            = lsline(ax(cc));
-        lfit(ii).Color      = c(i,:);
+        lfit(cc).Color      = c(i,:);
         lfit(cc).LineWidth  = 0.7;
 
 

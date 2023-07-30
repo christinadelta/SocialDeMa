@@ -535,12 +535,12 @@ for m = 1:num_simModels
                         sim_fittout{1,cond}         = fitAllModel(simR,sim_drawsequence,sim_choiceVecs,sim_urntype);
                         
                         % store output 
-                        simX{1,i}{1,cond}(1,j,rep)       = simR.initsample;
-                        simX{1,i}{1,cond}(2,j,rep)       = simR.initbeta;
+                        simX{1,cond}{1,i}(1,j,rep)       = simR.initsample;
+                        simX{1,cond}{1,i}(2,j,rep)       = simR.initbeta;
                         simSamples{1,i}(j,rep,cond)      = simout{1,cond}.avsamples;
-                        fitX{1,i}{1,cond}(1,j,rep)       = sim_fittout{1,cond}.fittedX(1); % cost sample
-                        fitX{1,i}{1,cond}(2,j,rep)       = sim_fittout{1,cond}.fittedX(2); % beta
-                        NLL{1,i}(j,cond,rep)             = sim_fittout{1,cond}.NLL;
+                        fitX{1,cond}{1,i}(1,j,rep)       = sim_fittout{1,cond}.fittedX(1); % cost sample
+                        fitX{1,cond}{1,i}(2,j,rep)       = sim_fittout{1,cond}.fittedX(2); % beta
+                        NLL{1,i}(j,rep,cond)             = sim_fittout{1,cond}.NLL;
                         fitSamples{1,i}(j,rep,cond)      = sim_fittout{1,cond}.avSamples;
                         fitPerf{1,i}(j,rep,cond)         = sim_fittout{1,cond}.modelPerformance;
 
@@ -636,7 +636,12 @@ end % end of conditions loop
 % 2c. plot correlation (scatterplots) between simulated and fitted parameter values
 % first extract condition values 
 
+% estimated and fitted parameter values for each combination of Beta and Cs 
+for cond = 1:conditions
 
+    condsimX        = mdl_simX{1,cond};
+    condfitX        = mdl_fitX{1,cond};
+    fh              = plotScatterX1(condfitX, condsimX);
 
-
+end % end of condtion loop
 

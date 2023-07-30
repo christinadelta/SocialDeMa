@@ -30,6 +30,7 @@ for ii = 1:groups
     % add line of fit 
     lfit(ii)        = lsline(ax(ii));
     lfit(ii).Color  = 'magenta';
+    lfit(ii).LineWidth  = 0.7;
 
     % axis labels
     ylabel('estimated number of samples')

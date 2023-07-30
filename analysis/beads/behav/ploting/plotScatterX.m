@@ -1,4 +1,4 @@
-function fh  = plotScatterX(y, x)
+function fh = plotScatterX(y, x)
 
 % make scatter plots of simulated and and fitted parameter values (with line
 % of fit and correlation coefficient)
@@ -23,8 +23,9 @@ for jj = 1:2
     fh              = scatter(ax(jj),mdl_simx,mdl_fitx,'magenta','*');
 
     % add line of fit 
-    lfit(jj)        = lsline(ax(jj));
-    lfit(jj).Color  = 'magenta';
+    lfit(jj)            = lsline(ax(jj));
+    lfit(jj).Color      = 'magenta';
+    lfit(jj).LineWidth  = 0.7;
 
     % add x,y labels 
     ylabel('estimated beta value')
