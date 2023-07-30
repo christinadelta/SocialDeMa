@@ -563,6 +563,10 @@ end % end of models loop
 
 %% CORRELATE PARAMS FROM SIM-FIT AND PLOT %%
 
+% add plotting dir to the path
+plotpath         = fullfile(behavpath, 'plotting');
+addpath(genpath(fullfile(plotpath))); 
+
 % 1. plot sampling rates for beta model 
 % extract data for ploting 
 mdl_simX        = paramRec_simX{1,1};
@@ -616,4 +620,23 @@ end % end of conditions loop
 
 % 2b. plot correlation (scatterplots) between simulated and fitted/estimated sampling 
 % rates (for each combination of parameter values)
+% first lets deal with the simulated data
+resim_samples  = reArrangeParams(mdl_simsamples);
+
+for cond = 1:conditions
+
+    this_sim    = resim_samples{1,cond};
+    this_fit    = refit_samples{1,cond};
+    f           = plotScatter2(this_fit, this_sim);
+
+
+end % end of conditions loop
+
+
+% 2c. plot correlation (scatterplots) between simulated and fitted parameter values
+% first extract condition values 
+
+
+
+
 
