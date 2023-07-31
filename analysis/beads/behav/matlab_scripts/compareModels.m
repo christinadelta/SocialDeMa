@@ -1,4 +1,4 @@
-function [groupBIC BEST_M] = compareModels(R, model_names,model_num,cond_data,nsubs,allsub_choiceVec,allsub_sequences)
+function [group_best best] = compareModels(R, cond_data,nsubs,allsub_choiceVec,allsub_sequences)
 
 % Fits the models, computes BIC and select model based on BIC value
 % To Compute the BIC value: Use the formula for BIC to calculate the BIC value for each model:
@@ -181,7 +181,7 @@ end % end of subjects loop
 
 k               = 1; % number of free params
 k2              = 2;
-n               = nusbs; 
+n               = nsubs; 
 
 groupBIC(1)     = -2 * totalNLL_easy + k * log(n);      % beta model easy 
 groupBIC(2)     = -2 * totalNLL_diff + k * log(n);      % beta model difficult
@@ -193,11 +193,38 @@ groupBIC(4)     = -2 * totalNLL2_diff + k2 * log(n);    % beta and Cs model diff
 
 % now lets compute BIC values for each model and condition  for each
 % subject seperately 
+k               = 1; % number of free params
+k2              = 2;
+n               = 26; % number of sequences 
 
+% loop over subjects 
+for sub = 1:nsubs
 
+    % compute BIC vals for each model and condition
+    BIC(sub,1) = -2 * betaModelNLL(sub,1) + k * log(n);     % beta model easy 
+    BIC(sub,2) = -2 * betaModelNLL(sub,2) + k * log(n);     % beta model difficult
+    BIC(sub,3) = -2 * betaCsModelNLL(sub,1) + k2 * log(n);  % beta and Cs model easy 
+    BIC(sub,4) = -2 * betaCsModelNLL(sub,2) + k2 * log(n);  % beta and Cs model difficult
 
+end % end of subjects loop
 
+%% Find best model at group level
 
+[m, ibest]          = min(groupBIC);
+group_best          = ibest;
 
+% best = groupBIC == m;
+% best        = best / sum(best);
+
+%% Find best model at subject level
+
+% loop over subjects 
+for sub = 1:nsubs
+
+    tempBIC             = BIC(sub,:);
+    [m, ibest]          = min(tempBIC);
+    best(sub,1)         = ibest;
+
+end % end of subjects loop
 
 end % end of function 

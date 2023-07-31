@@ -668,8 +668,11 @@ model_names         = {'Beta' 'BetaCs'};
 model_num           = length(model_names);
 
 % run model comparison 
-[BIC BEST_M]        = compareModels(R, model_names, model_num);
+[group_best best]        = compareModels(R,cond_data,nsubs,allsub_choiceVec,allsub_sequences);
 
+% quickly plot model selection for each subject on a histogram
+nbins = 2;
+xh = histogram(best);
 
 
 
