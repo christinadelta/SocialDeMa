@@ -438,7 +438,7 @@ simvars.maxDraws        = 10;
 simvars.qvals           = [0.8 0.6];
 simvars.conditions      = conditions;
 simvars.contrials       = totaltrials / conditions;
-reps                    = 2; % a number to repeat the simulation and fitting thing (40 sim, one for each subject?) 
+reps                    = 50; % a number to repeat the simulation and fitting thing (40 sim, one for each subject?) 
 allcs                   = -2:0.25:0;
 allbetas                = 0.1:0.5:5;
 
@@ -561,7 +561,10 @@ for m = 1:num_simModels
 
 end % end of models loop
 
-%% CORRELATE PARAMS FROM SIM-FIT AND PLOT %%
+
+%% CORRELATE PARAM RECOVERY VALUES ?? %%
+
+%% PLOT CORRELATIONS OF PARAMETER RECOVERY -- SAMPLES AND PARAM VALUES %%
 
 % add plotting dir to the path
 plotpath         = fullfile(behavpath, 'plotting');
@@ -595,6 +598,8 @@ fh              = plotScatterX(mdl_fitX, mdl_simX);
 
 
 clear mdl_simX mdl_NLL mdl_fitX mdl_simsamples mdl_fitsamples
+
+
 %%
 % 2. plot sampling rates for beta + Cs model 
 % extract data for ploting 
@@ -644,4 +649,39 @@ for cond = 1:conditions
     fh              = plotScatterX1(condfitX, condsimX);
 
 end % end of condtion loop
+
+%% MODEL COMPARISON AND SELECTION %%
+
+% model comparison and selection runs at the group and subject levels 
+
+
+% define fixed parameters used in all models 
+R.error             = -10;          % cost for being wrong
+R.correct           = 10;           % reward for being correct
+R.q                 = [0.8 0.6];    % proportion of the majority value in sequence (60:40 split in this case)
+R.difference        = -20;
+R.Cs                = -0.25;
+R.beta              = 3;
+
+% how many models, which models?
+model_names         = {'Beta' 'BetaCs'};
+model_num           = length(model_names);
+
+% run model comparison 
+[BIC BEST_M]        = compareModels(R, model_names, model_num);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -47,8 +47,8 @@ for i = 1:groups
 
 
         % axis labels
-        ylabel('estimated samples')
-        xlabel('simulated samples')
+%         ylabel('estimated samples')
+%         xlabel('simulated samples')
 
     end % end of cs loop
 end % end of betas loop

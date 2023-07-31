@@ -19,6 +19,8 @@ clf
 %% Plot simulated-estimated Betas 
 
 cc      = 0;
+% loop over beta groups 
+groups  = length(condfitX);
 
 for i = 1:groups
 
