@@ -74,6 +74,8 @@
 clear all
 clc
 
+%% 
+
 basedir     = pwd;
 % spmdir      = fullfile(basedir, 'spmDir');
 % addpath(genpath(basedir));
@@ -84,16 +86,17 @@ basedir     = pwd;
 % cropDir     = fullfile(basedir, 'cropped');
 outDir      = '/Volumes/DeepSpaceStuff/optimal_stopping_data/beads/spm_analysis/output';
 jobsDir     = '/Volumes/DeepSpaceStuff/optimal_stopping_data/beads/spm_analysis/jobs';
-cropDir     = '/Volumes/DeepSpaceStuff/optimal_stopping_data/beads/spm_analysis/cropped';
+cropDir     = '/Volumes/DeepSpaceStuff/optimal_stopping_data/beads/spm_analysis/cropped3';
 
-if ~exist(outDir, 'dir') && ~exist(jobsDir, 'dir')
-    mkdir(outDir)
-    mkdir(jobsDir)
-    mkdir(cropDir)
-end
+% if ~exist(outDir, 'dir') && ~exist(jobsDir, 'dir')
+%     mkdir(outDir)
+%     mkdir(jobsDir)
+%     mkdir(cropDir)
+% end
 
 % add directories to the path
 addpath(genpath(jobsDir));
+addpath(genpath(outDir));
 addpath(genpath(fullfile(basedir, 'scripts')));
 addpath(genpath(fullfile(basedir, 'utilities')));
 
@@ -511,7 +514,7 @@ for sub = 1:nsubs
 
     S                       = [];
     S.D                     = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
-    S.freqwin               = 13:30;
+    S.freqwin               = 13:30; % average over beta
     S.prefix                = 'P';
     D                       = spm_eeg_avgfreq(S);
 
@@ -527,6 +530,7 @@ for sub = 1:nsubs
 
     %% STEP 12: Average conditions
 
+    % average conditions beta
     S                       = [];
     S.D                     = fullfile(subout, sprintf('Prtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
     S.robust.ks             = 3;
@@ -536,7 +540,8 @@ for sub = 1:nsubs
     S.circularise           = false;
     S.prefix                = 'm';
     D                       = spm_eeg_average(S);
-    
+
+
     %% STEP 13: Compute contrasts of averaged power file
 
     % As with evoked responses, TFRs also will be contrasted in 5 ways:
@@ -549,6 +554,7 @@ for sub = 1:nsubs
     
     % estimate TF power contrasts
     beadsEstimateContrast(S, tmp, sub)
+
     
     %% STEP 14: Convert TFR contrasts into 3D volumes
     
@@ -706,8 +712,7 @@ for sub = 1:nsubs
     S.timewin       = [-Inf Inf];
     % S.timewin       = [300 500];
     S.freqwin       = [-Inf Inf];
-    S.channels      = {'F1','F3','F5','F7','FC5','FC3','FC1','CP5','CP3','CP1','P1','P3','P5','P7','P9','Pz','CPz',
-        'Fz','F2','F4','F6','F8','FC6','FC4','FC2','FCz','CP6','CP4','CP2','P2','P4','P6','P8','P10'};
+    S.channels      = {'F1','F3','F5','F7','P1','P3','P5','P7','P9','Pz','Fz','F2','F4','F6','F8','P2','P4','P6','P8','P10'};
     % S.channels    = {'all'};
     S.prefix        = 'p';
     D               = spm_eeg_crop(S);
@@ -743,6 +748,7 @@ for sub = 1:nsubs
    
     % save data in sub directory
     filepath        = fullfile(cropDir, sprintf('tfrcropped_data_sub_%02d.mat',sub));
+    % filepath        = fullfile(cropDir, sprintf('erpcropped_data_sub_%02d.mat',sub));
     save(filepath, 'cropped_struct')
     
     clear cropped_struct data sub_conds sub_events evnts 
@@ -751,4 +757,152 @@ end % end of subjects loop
 
 %% RUN EXPLORATORY ANALYSES %%
 
+for sub = 1:nsubs
 
+     % get subject's output path:
+     subout          = fullfile(outDir, sprintf('sub-%02d', sub));
+
+    % ANALYSIS 1:
+    % STEP 11.1 Average power over alpha frequency and over gamma frequency 
+    
+    % average over alpha
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.freqwin               = 8:12; % average over alpha
+    S.prefix                = 'Palpha_';
+    D                       = spm_eeg_avgfreq(S);
+    
+    % average over (entire) gamma
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.freqwin               = 31:50; % average over beta
+    S.prefix                = 'Pgamma_';
+    D                       = spm_eeg_avgfreq(S);
+    
+    % average over specific gamma range
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.freqwin               = 38:42; % average around 40Hz... this seems to be of particular interest in research
+    S.prefix                = 'Pgamma_sp_';
+    D                       = spm_eeg_avgfreq(S);
+
+    % ANALYSIS 2:
+    % STEP 12.1: Average conditions for alpha and gamma 
+
+    % average conditions alpha 
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('Palpha_rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.robust.ks             = 3;
+    S.robust.bycondition    = true;
+    S.robust.savew          = false;
+    S.robust.removebad      = false;
+    S.circularise           = false;
+    S.prefix                = 'm';
+    D                       = spm_eeg_average(S);
+
+    % average conditions gamma
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('Pgamma_rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.robust.ks             = 3;
+    S.robust.bycondition    = true;
+    S.robust.savew          = false;
+    S.robust.removebad      = false;
+    S.circularise           = false;
+    S.prefix                = 'm';
+    D                       = spm_eeg_average(S);
+
+    % average conditions gamma-specific 
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('Pgamma_sp_rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.robust.ks             = 3;
+    S.robust.bycondition    = true;
+    S.robust.savew          = false;
+    S.robust.removebad      = false;
+    S.circularise           = false;
+    S.prefix                = 'm';
+    D                       = spm_eeg_average(S);
+
+    % ANALYSIS 3:
+    % STEP 13.1: Compute contrasts of averaged power file for alpha and gamma
+
+    %%% compute contrasts for alpha %%%
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('mPalpha_rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.object                = spm_eeg_load(S.D);
+    tmp                     = S.object.conditions;
+    
+    % estimate TF power contrasts
+    beadsEstimateContrast(S, tmp, sub)
+
+    %%% compute contrasts for gamma %%%
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('mPgamma_rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.object                = spm_eeg_load(S.D);
+    tmp                     = S.object.conditions;
+    
+    % estimate TF power contrasts
+    beadsEstimateContrast(S, tmp, sub)
+
+     %%% compute contrasts for gamma specific %%%
+    S                       = [];
+    S.D                     = fullfile(subout, sprintf('mPgamma_sp_rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', sub));
+    S.object                = spm_eeg_load(S.D);
+    tmp                     = S.object.conditions;
+    
+    % estimate TF power contrasts
+    beadsEstimateContrast(S, tmp, sub)
+
+    % ANALYSIS 4:
+    % STEP 14.1: Convert TFR contrasts into 3D volumes
+    
+    % convert the 5 contrast MEEG objects into .nii files (alpha)
+    for c = 1:nconstrasts
+
+        S               = [];
+        S.D             = fullfile(subout, sprintf('%smPalpha_rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', contrastpref{c}, sub));
+        S.mode          = 'scalp x time';
+        S.conditions    = {};
+        S.channels      = 'EEG';
+        S.timewin       = [-Inf Inf];
+        S.freqwin       = [-Inf Inf];
+        S.prefix        = '';
+
+        D               = spm_eeg_convert2images(S);
+
+    end
+
+    % convert the 5 contrast MEEG objects into .nii files (gamma)
+    for c = 1:nconstrasts
+
+        S               = [];
+        S.D             = fullfile(subout, sprintf('%smPgamma_rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', contrastpref{c}, sub));
+        S.mode          = 'scalp x time';
+        S.conditions    = {};
+        S.channels      = 'EEG';
+        S.timewin       = [-Inf Inf];
+        S.freqwin       = [-Inf Inf];
+        S.prefix        = '';
+
+        D               = spm_eeg_convert2images(S);
+
+    end
+
+    % convert the 5 contrast MEEG objects into .nii files (gamma specific)
+    for c = 1:nconstrasts
+
+        S               = [];
+        S.D             = fullfile(subout, sprintf('%smPgamma_sp_rtf_cetfrfdfMspmeeg_sub_%02d_beads_block_01.mat', contrastpref{c}, sub));
+        S.mode          = 'scalp x time';
+        S.conditions    = {};
+        S.channels      = 'EEG';
+        S.timewin       = [-Inf Inf];
+        S.freqwin       = [-Inf Inf];
+        S.prefix        = '';
+
+        D               = spm_eeg_convert2images(S);
+
+    end
+
+end
+
+%%
